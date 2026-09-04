@@ -41,6 +41,12 @@
             min-width: 2200px;
             width: 100%; 
         }
+
+        .chart-container-no-scroll {
+            position: relative; 
+            height: 400px; 
+            width: 100%;
+        }
         
         ::-webkit-scrollbar { width: 8px; height: 10px; }
         ::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 8px; }
@@ -537,6 +543,23 @@
                                 </div>
                             </div>
 
+                            <div class="relative">
+                                <label class="block text-[11px] font-semibold text-slate-500 mb-0.5">Locais (Saída)</label>
+                                <button type="button" onclick="toggleDropdown('dropdownTab4Locais')" class="bg-white border border-slate-300 rounded-lg text-xs px-3 py-1.5 shadow-sm w-44 flex justify-between items-center">
+                                    <span id="labelTab4Locais">Todos os Locais</span>
+                                    <i class="fa-solid fa-chevron-down text-slate-400 text-xs"></i>
+                                </button>
+                                <div id="dropdownTab4Locais" class="hidden absolute z-50 mt-1 w-56 bg-white border border-slate-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+                                    <div class="p-2 border-b border-slate-200 bg-slate-50 sticky top-0 z-10">
+                                        <label class="flex items-center gap-2 px-1 py-1 hover:bg-slate-100 rounded cursor-pointer text-xs font-bold text-emerald-600 transition">
+                                            <input type="checkbox" id="selectAllLocaisTab4" checked onchange="toggleSelectAllLocais(this)" class="w-3.5 h-3.5 text-emerald-600 rounded">
+                                            Selecionar / Desmarcar
+                                        </label>
+                                    </div>
+                                    <div class="p-2 flex flex-col gap-1" id="localCheckboxesTab4"></div>
+                                </div>
+                            </div>
+
                             <div>
                                 <label class="block text-[11px] font-semibold text-slate-500 mb-0.5">Data Inicial</label>
                                 <input type="date" id="filterStartDateTab4" onchange="applyFiltersTab4()" class="bg-white border border-slate-300 rounded-lg text-xs px-2.5 py-1.5 shadow-sm">
@@ -561,7 +584,49 @@
                             <p class="text-xs text-slate-500">Exibe o volume total jorado (em barras) e as horas trabalhadas (no topo) de cada poço no período filtrado.</p>
                         </div>
                     </div>
-                    <div class="chart-scroll-wrapper mt-3"><div class="chart-container"><canvas id="entradaAguaChart"></canvas></div></div>
+                    <div class="chart-container-no-scroll mt-3"><canvas id="entradaAguaChart"></canvas></div>
+                </div>
+
+                <!-- KPIs Saída -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+                    <div class="kpi-compact-card flex items-center gap-3.5 border-l-4 border-emerald-500">
+                        <div class="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-seedling text-lg"></i>
+                        </div>
+                        <div>
+                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Volume Total Saída</p>
+                            <h3 id="kpi4_saidaVol" class="text-xl font-bold text-slate-800">-- L</h3>
+                        </div>
+                    </div>
+                    <div class="kpi-compact-card flex items-center gap-3.5 border-l-4 border-emerald-500">
+                        <div class="w-10 h-10 rounded-lg bg-teal-50 text-teal-600 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-map-location-dot text-lg"></i>
+                        </div>
+                        <div>
+                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Total de Locais/Blocos</p>
+                            <h3 id="kpi4_saidaLocais" class="text-xl font-bold text-slate-800">--</h3>
+                        </div>
+                    </div>
+                    <div class="kpi-compact-card flex items-center gap-3.5 border-l-4 border-emerald-500">
+                        <div class="w-10 h-10 rounded-lg bg-cyan-50 text-cyan-600 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-stopwatch text-lg"></i>
+                        </div>
+                        <div>
+                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Tempo de Irrigação</p>
+                            <h3 id="kpi4_saidaTempo" class="text-xl font-bold text-slate-800">-- h</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Saída Chart -->
+                <div class="glass-card p-5 mb-8">
+                    <div class="flex justify-between items-center mb-1 flex-wrap gap-2">
+                        <div>
+                            <h3 class="text-base font-bold text-slate-800">Saída de Água - Irrigação por Bloco (Período Selecionado)</h3>
+                            <p class="text-xs text-slate-500">Exibe o volume de água calculado para cada local baseado na duração, tipo e quantidade de aspersores ativos.</p>
+                        </div>
+                    </div>
+                    <div class="chart-container-no-scroll mt-3"><canvas id="saidaAguaChart"></canvas></div>
                 </div>
             </div>
 
@@ -576,12 +641,14 @@
         Chart.register(ChartDataLabels);
 
         // URLs das Planilhas do Google Sheets
-        const GOOGLE_SHEETS_URLS = [
+        const ENTRADA_SHEETS = [
             "https://docs.google.com/spreadsheets/d/e/2PACX-1vSafB5fd5osyELyMS1T-pVO-WbL25l53ICs1dmVMgByrAlQsqSHT2YscIE-ClYrJvzPS-dGZSp25ysi/pub?output=csv",
             "https://docs.google.com/spreadsheets/d/e/2PACX-1vQAcr8_XCwnJWwn5DMCKsb3-03ZogzTgiJ9qtCtnEp9fnLMtEuTcCXpxeslsvQGzJ81nDkLy7DYBX8d/pub?output=csv"
         ];
+        const SAIDA_SHEET = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSgiT6EB01QIsB7Ekq5gidSwpi-CY8DBGXn87zoz7P4HJ5gh0oqiQ4v2HNQjja-qUho09H_gsOdWL6n/pub?output=csv";
 
         let globalRawData = [];
+        let globalSaidaData = [];
         const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
 
         let charts = {
@@ -589,7 +656,8 @@
             weeklyFlow: null,
             monthlyVolume: null,
             trend: null,
-            entradaAgua: null
+            entradaAgua: null,
+            saidaAgua: null
         };
 
         const vibrantColors = [
@@ -633,6 +701,7 @@
             document.getElementById('loginError').classList.add('hidden');
             
             globalRawData = [];
+            globalSaidaData = [];
         }
 
         function toggleDropdown(id) {
@@ -648,6 +717,7 @@
                 document.getElementById('dropdownTab3')?.classList.add('hidden');
                 document.getElementById('dropdownMonthTab3')?.classList.add('hidden');
                 document.getElementById('dropdownTab4')?.classList.add('hidden');
+                document.getElementById('dropdownTab4Locais')?.classList.add('hidden');
             }
         });
 
@@ -740,33 +810,39 @@
             const loadingIcon = document.getElementById('loadingIcon');
             loadingIcon.className = "fa-solid fa-spinner fa-spin text-blue-400";
 
-            Promise.all(GOOGLE_SHEETS_URLS.map(url => fetchSingleSheet(url)))
-                .then(resultsArray => {
-                    let combinedRows = [];
-                    resultsArray.forEach(data => {
+            const pEntrada = Promise.all(ENTRADA_SHEETS.map(url => fetchSingleSheet(url)));
+            const pSaida = fetchSingleSheet(SAIDA_SHEET);
+
+            Promise.all([pEntrada, pSaida])
+                .then(([resultsEntrada, resultsSaida]) => {
+                    let combinedEntrada = [];
+                    resultsEntrada.forEach(data => {
                         if (Array.isArray(data)) {
-                            combinedRows = combinedRows.concat(data);
+                            combinedEntrada = combinedEntrada.concat(data);
                         }
                     });
 
-                    if (combinedRows.length > 0) {
-                        try {
-                            globalRawData = cleanAndNormalizeData(combinedRows);
-                            loadingIcon.className = "fa-solid fa-circle-check text-emerald-400";
-                            
-                            populateWellSelectors();
-                            populateMonthSelectors();
-
-                            applyFiltersTab1();
-                            applyFiltersTab2();
-                            applyFiltersTab3();
-                            applyFiltersTab4();
-                        } catch (e) {
-                            console.error("Erro ao processar dados:", e);
-                            loadingIcon.className = "fa-solid fa-triangle-exclamation text-rose-400";
+                    try {
+                        if (combinedEntrada.length > 0) {
+                            globalRawData = cleanAndNormalizeData(combinedEntrada);
                         }
-                    } else {
-                        loadingIcon.className = "fa-solid fa-circle-exclamation text-amber-400";
+                        if (resultsSaida.length > 0) {
+                            globalSaidaData = cleanAndNormalizeSaidaData(resultsSaida);
+                        }
+
+                        loadingIcon.className = "fa-solid fa-circle-check text-emerald-400";
+                        
+                        populateWellSelectors();
+                        populateMonthSelectors();
+                        populateLocalSelectors();
+
+                        applyFiltersTab1();
+                        applyFiltersTab2();
+                        applyFiltersTab3();
+                        applyFiltersTab4();
+                    } catch (e) {
+                        console.error("Erro ao processar dados:", e);
+                        loadingIcon.className = "fa-solid fa-triangle-exclamation text-rose-400";
                     }
                 })
                 .catch(err => {
@@ -813,6 +889,58 @@
                             Horas: horasVal,
                             VolumeCalculado: volCalculado,
                             RawPeriodo: row[hourKey] || ''
+                        });
+                    }
+                }
+            });
+            return normalized.sort((a, b) => a.DataObj - b.DataObj);
+        }
+
+        function cleanAndNormalizeSaidaData(data) {
+            let normalized = [];
+            data.forEach(row => {
+                const keys = Object.keys(row);
+                const findKey = (searchStrings) => keys.find(k => searchStrings.some(s => k.toLowerCase().trim().includes(s)));
+                
+                const dateKey = findKey(['data', 'date']);
+                const localKey = findKey(['local', 'bloco']);
+                const culturaKey = findKey(['cultura', 'plantio']);
+                const qtdeKey = findKey(['qtde', 'aspersor', 'ativos']);
+                const tipoKey = findKey(['tipo']);
+                const inicioKey = findKey(['inicio', 'início']);
+                const fimKey = findKey(['fim', 'termino', 'término']);
+
+                const local = row[localKey] ? String(row[localKey]).trim() : null;
+                if (local) {
+                    let parsedDate = parsePortugueseDate(row[dateKey] || '');
+                    let hStart = parseHours(row[inicioKey]);
+                    let hEnd = parseHours(row[fimKey]);
+                    let diffHours = hEnd - hStart;
+                    if (diffHours < 0) diffHours += 24; // Ajuste caso passe de meia-noite
+
+                    let qtde = parseBrazilianNumber(row[qtdeKey]);
+                    let tipo = String(row[tipoKey] || '').toLowerCase();
+                    let flowRate = 0;
+                    
+                    // Identifica se é microaspersor (90) ou aspersor (520)
+                    if (tipo.includes('90')) flowRate = 90;
+                    else if (tipo.includes('520')) flowRate = 520;
+                    else if (tipo.includes('micro')) flowRate = 90;
+                    else if (tipo.includes('aspersor')) flowRate = 520;
+
+                    // Cálculo: Tempo Horas * Qtde Aspersores * Taxa do Aspersor
+                    let volume = diffHours * qtde * flowRate;
+
+                    if (parsedDate) {
+                        normalized.push({
+                            DataObj: parsedDate,
+                            DataFormatted: parsedDate.toLocaleDateString('pt-BR'),
+                            Local: local,
+                            Cultura: row[culturaKey] ? String(row[culturaKey]).trim() : 'N/A',
+                            Qtde: qtde,
+                            FlowRate: flowRate,
+                            DiffHours: diffHours,
+                            VolumeCalculado: volume
                         });
                     }
                 }
@@ -880,6 +1008,49 @@
                     updateWellLabel(tab);
                 }
             });
+        }
+
+        function populateLocalSelectors() {
+            const locaisSet = new Set(globalSaidaData.map(d => d.Local));
+            const locaisArray = Array.from(locaisSet).sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
+
+            const cont = document.getElementById('localCheckboxesTab4');
+            if(cont) {
+                cont.innerHTML = '';
+                locaisArray.forEach(local => {
+                    cont.innerHTML += `
+                    <label class="flex items-center gap-2 px-2 py-1 hover:bg-slate-50 rounded cursor-pointer text-xs font-medium text-slate-700 transition">
+                        <input type="checkbox" value="${local}" checked onchange="updateLocalLabel(); applyFiltersTab4()" class="local-chk-4 w-3.5 h-3.5 text-emerald-600 bg-slate-100 border-slate-300 rounded focus:ring-emerald-500 cursor-pointer">
+                        ${local}
+                    </label>`;
+                });
+                updateLocalLabel();
+            }
+        }
+
+        function updateLocalLabel() {
+            const checks = document.querySelectorAll('.local-chk-4');
+            const checked = Array.from(checks).filter(c => c.checked);
+            const label = document.getElementById('labelTab4Locais');
+            const masterBtn = document.getElementById('selectAllLocaisTab4');
+            if (masterBtn) masterBtn.checked = (checked.length === checks.length && checks.length > 0);
+            if (!label) return;
+            
+            if (checked.length === checks.length) label.textContent = "Todos os Locais";
+            else if (checked.length === 1) label.textContent = "1 Local";
+            else if (checked.length === 0) label.textContent = "Nenhum";
+            else label.textContent = `${checked.length} Locais`;
+        }
+
+        function toggleSelectAllLocais(masterCheckbox) {
+            const isChecked = masterCheckbox.checked;
+            document.querySelectorAll('.local-chk-4').forEach(c => c.checked = isChecked);
+            updateLocalLabel();
+            applyFiltersTab4();
+        }
+
+        function getSelectedLocaisTab4() {
+            return Array.from(document.querySelectorAll('.local-chk-4')).filter(c => c.checked).map(c => c.value);
         }
 
         function populateMonthSelectors() {
@@ -953,8 +1124,13 @@
         }
         function resetFiltersTab4() {
             document.querySelectorAll('.well-chk-4').forEach(c => c.checked = true); updateWellLabel(4);
-            document.getElementById('filterStartDateTab4').value = '';
-            document.getElementById('filterEndDateTab4').value = '';
+            document.querySelectorAll('.local-chk-4').forEach(c => c.checked = true); updateLocalLabel();
+            
+            const startInput = document.getElementById('filterStartDateTab4');
+            const endInput = document.getElementById('filterEndDateTab4');
+            if (startInput) startInput.value = '';
+            if (endInput) endInput.value = '';
+            
             applyFiltersTab4();
         }
 
@@ -992,17 +1168,34 @@
         }
 
         function applyFiltersTab4() {
-            if (!globalRawData.length) return;
-            const wells = getSelectedWells(4);
-            const start = document.getElementById('filterStartDateTab4').value;
-            const end = document.getElementById('filterEndDateTab4').value;
+            if (globalRawData.length) {
+                const wells = getSelectedWells(4);
+                const startEl = document.getElementById('filterStartDateTab4');
+                const endEl = document.getElementById('filterEndDateTab4');
+                const start = startEl ? startEl.value : '';
+                const end = endEl ? endEl.value : '';
 
-            let filtered = globalRawData.filter(d => wells.includes(d.Poco));
-            if (start) { const s = new Date(start+'T00:00:00'); filtered = filtered.filter(d => d.DataObj >= s); }
-            if (end) { const e = new Date(end+'T23:59:59'); filtered = filtered.filter(d => d.DataObj <= e); }
+                let filtered = globalRawData.filter(d => wells.includes(d.Poco));
+                if (start) { const s = new Date(start+'T00:00:00'); filtered = filtered.filter(d => d.DataObj >= s); }
+                if (end) { const e = new Date(end+'T23:59:59'); filtered = filtered.filter(d => d.DataObj <= e); }
 
-            updateTab4KPIs(filtered);
-            renderTab4(filtered);
+                updateTab4KPIs(filtered);
+                renderTab4(filtered);
+            }
+            if (globalSaidaData.length) {
+                const locais = getSelectedLocaisTab4();
+                const startEl = document.getElementById('filterStartDateTab4');
+                const endEl = document.getElementById('filterEndDateTab4');
+                const start = startEl ? startEl.value : '';
+                const end = endEl ? endEl.value : '';
+
+                let filtered = globalSaidaData.filter(d => locais.includes(d.Local));
+                if (start) { const s = new Date(start+'T00:00:00'); filtered = filtered.filter(d => d.DataObj >= s); }
+                if (end) { const e = new Date(end+'T23:59:59'); filtered = filtered.filter(d => d.DataObj <= e); }
+
+                updateSaidaKPIs(filtered);
+                renderSaidaChart(filtered);
+            }
         }
 
         function updateTab1KPIs(data) {
@@ -1127,6 +1320,29 @@
             document.getElementById('kpi4_totalVol').textContent = totalVol.toLocaleString('pt-BR', { maximumFractionDigits: 0 }) + ' L';
             document.getElementById('kpi4_avgHours').textContent = avgHours.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' h/dia';
             document.getElementById('kpi4_maxPeak').textContent = maxPeak > 0 ? `${maxPeak.toLocaleString('pt-BR', { maximumFractionDigits: 0 })} L (${maxPeakLabel})` : 'N/A';
+        }
+
+        function updateSaidaKPIs(data) {
+            if (!data.length) {
+                document.getElementById('kpi4_saidaVol').textContent = "0 L";
+                document.getElementById('kpi4_saidaLocais').textContent = "0";
+                document.getElementById('kpi4_saidaTempo').textContent = "0 h";
+                return;
+            }
+
+            let totalVol = 0;
+            let totalTempo = 0;
+            let locaisSet = new Set();
+
+            data.forEach(d => {
+                totalVol += d.VolumeCalculado;
+                totalTempo += d.DiffHours;
+                locaisSet.add(d.Local);
+            });
+
+            document.getElementById('kpi4_saidaVol').textContent = totalVol.toLocaleString('pt-BR', { maximumFractionDigits: 0 }) + ' L';
+            document.getElementById('kpi4_saidaLocais').textContent = locaisSet.size;
+            document.getElementById('kpi4_saidaTempo').textContent = totalTempo.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' h';
         }
 
         function getStandardChartOptions(yTitle) {
@@ -1345,7 +1561,8 @@
                 label: 'Volume Total (L)',
                 data: wellsArray.map(w => wellsMap[w].volCalculado),
                 backgroundColor: '#0ea5e9',
-                borderRadius: 6
+                borderRadius: 6,
+                maxBarThickness: 60 // Evita que as barras fiquem gigantes em larguras menores
             }];
 
             renderChart('entradaAguaChart', 'entradaAgua', 'bar', { labels: wellsArray, datasets }, {
@@ -1410,6 +1627,88 @@
                             color: '#0284c7'
                         },
                         title: { display: true, text: 'Horas Trabalhadas no Período', font: { weight: 'bold', size: 11 }, color: '#64748b' }
+                    }
+                }
+            });
+        }
+
+        function renderSaidaChart(data) {
+            const locaisMap = {};
+            data.forEach(d => {
+                if (!locaisMap[d.Local]) {
+                    locaisMap[d.Local] = { volume: 0, cultura: d.Cultura };
+                }
+                locaisMap[d.Local].volume += d.VolumeCalculado;
+                // Atualiza a cultura caso tenha no registro
+                if (d.Cultura && d.Cultura.length > 2) locaisMap[d.Local].cultura = d.Cultura;
+            });
+
+            // Ordena os locais/blocos em ordem alfabética
+            const locaisArray = Object.keys(locaisMap).sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
+
+            const datasets = [{
+                type: 'bar',
+                label: 'Volume de Saída (L)',
+                data: locaisArray.map(l => locaisMap[l].volume),
+                backgroundColor: '#10b981', // Verde Esmeralda
+                borderRadius: 6,
+                maxBarThickness: 60 // Evita que as barras fiquem gigantes
+            }];
+
+            renderChart('saidaAguaChart', 'saidaAgua', 'bar', { labels: locaisArray, datasets }, {
+                responsive: true,
+                maintainAspectRatio: false,
+                layout: { padding: { top: 40 } },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `Volume: ${context.raw.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} L`;
+                            }
+                        }
+                    },
+                    datalabels: {
+                        display: (ctx) => ctx.dataset.data[ctx.dataIndex] > 0,
+                        anchor: 'end',
+                        align: 'top',
+                        formatter: (val) => val ? `${val.toLocaleString('pt-BR', { maximumFractionDigits: 0 })} L` : '',
+                        font: { weight: 'bold', size: 11 },
+                        color: '#334155'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: { display: true, text: 'Volume Total Saída (L)', font: { weight: 'bold' } },
+                        grid: { color: '#f1f5f9' },
+                        suggestedMax: (ctx) => {
+                            let m = 0;
+                            ctx.chart.data.datasets.forEach(d => {
+                                let max = Math.max(...d.data.filter(n => n !== null));
+                                if (max > m) m = max;
+                            });
+                            return m * 1.25;
+                        }
+                    },
+                    x: {
+                        position: 'bottom',
+                        grid: { display: false },
+                        ticks: { font: { weight: 'bold', size: 11 } }
+                    },
+                    xTop: {
+                        position: 'top',
+                        type: 'category',
+                        grid: { display: false },
+                        ticks: {
+                            callback: function(val, index) {
+                                const local = locaisArray[index];
+                                return locaisMap[local]?.cultura || '-';
+                            },
+                            font: { weight: 'bold', size: 12 },
+                            color: '#059669' // text-emerald-600
+                        },
+                        title: { display: true, text: 'Cultura', font: { weight: 'bold', size: 11 }, color: '#64748b' }
                     }
                 }
             });
