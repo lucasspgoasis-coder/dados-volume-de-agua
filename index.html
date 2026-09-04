@@ -38,7 +38,7 @@
         .chart-container { 
             position: relative; 
             height: 550px; 
-            min-width: 2200px; /* Aumentado para dar mais espaço horizontal e evitar que números cruzem */
+            min-width: 2200px;
             width: 100%; 
         }
 
@@ -84,402 +84,457 @@
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03), 0 2px 4px -2px rgba(0, 0, 0, 0.03);
             border-radius: 1rem;
         }
+
+        #login-screen {
+            backdrop-filter: blur(10px);
+            background: rgba(15, 23, 42, 0.95);
+        }
     </style>
 </head>
 <body class="text-slate-800 min-h-screen flex flex-col antialiased">
 
-    <header class="bg-gradient-to-r from-slate-900 via-blue-950 to-indigo-950 text-white shadow-xl border-b border-slate-800">
-        <div class="max-w-[1700px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-5 flex flex-wrap justify-between items-center gap-4">
-            <div class="flex items-center gap-3">
-                <div class="bg-blue-600/30 p-2.5 rounded-xl border border-blue-400/30 text-blue-400">
-                    <i class="fa-solid fa-water text-2xl"></i>
+    <div id="login-screen" class="fixed inset-0 z-50 flex items-center justify-center transition-opacity duration-300">
+        <div class="glass-card p-8 max-w-md w-full mx-4 shadow-2xl border-slate-700 bg-white">
+            <div class="text-center mb-6">
+                <div class="bg-blue-100 p-3 rounded-full inline-block mb-3">
+                    <i class="fa-solid fa-water text-3xl text-blue-600"></i>
+                </div>
+                <h2 class="text-2xl font-extrabold text-slate-800">Acesso Restrito</h2>
+                <p class="text-sm text-slate-500 mt-1">Insira suas credenciais para acessar o painel</p>
+            </div>
+
+            <form id="loginForm" onsubmit="event.preventDefault(); handleLogin();" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-semibold text-slate-600 mb-1">Usuário</label>
+                    <input type="text" id="username" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="Digite seu usuário">
                 </div>
                 <div>
-                    <h1 class="text-2xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-100 to-blue-200">
-                        Monitoramento Hidrográfico Pro
-                    </h1>
-                    <p class="text-xs text-slate-400 font-medium">Análise de Desempenho e Vazão de Poços Artesianos</p>
+                    <label class="block text-sm font-semibold text-slate-600 mb-1">Senha</label>
+                    <input type="password" id="password" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="••••••••">
                 </div>
-            </div>
-            
-            <div class="flex items-center gap-3 bg-slate-900/80 px-4 py-2 rounded-xl border border-slate-800 text-sm">
-                <div id="statusIndicator" class="font-semibold text-slate-300 flex items-center gap-2">
-                    <i class="fa-solid fa-spinner fa-spin text-blue-400" id="loadingIcon"></i>
-                    <span id="statusText">Carregando dados da planilha...</span>
+                
+                <div id="loginError" class="hidden text-rose-500 text-sm font-semibold text-center bg-rose-50 p-2 rounded-lg border border-rose-200">
+                    Usuário ou senha incorretos!
                 </div>
-                <button onclick="loadGoogleSheetsData()" title="Atualizar Dados" class="ml-2 text-slate-400 hover:text-white transition">
-                    <i class="fa-solid fa-rotate-right"></i>
+
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-4 rounded-lg transition-colors mt-2">
+                    Entrar no Sistema
                 </button>
-            </div>
+            </form>
         </div>
-    </header>
+    </div>
 
-    <main class="max-w-[1700px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1">
-        
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div class="glass-card p-6 flex items-center gap-5 border-l-4 border-l-blue-600 hover:shadow-md transition-shadow">
-                <div class="bg-blue-50 p-4 rounded-2xl text-blue-600 border border-blue-100">
-                    <i class="fa-solid fa-faucet-drip text-3xl"></i>
-                </div>
-                <div>
-                    <p class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Vazão Média Geral</p>
-                    <h3 id="kpiAvgFlow" class="text-3xl font-extrabold text-slate-800">-- L/h</h3>
-                </div>
-            </div>
-            
-            <div class="glass-card p-6 flex items-center gap-5 border-l-4 border-l-emerald-500 hover:shadow-md transition-shadow">
-                <div class="bg-emerald-50 p-4 rounded-2xl text-emerald-600 border border-emerald-100">
-                    <i class="fa-solid fa-droplet text-3xl"></i>
-                </div>
-                <div>
-                    <p class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Volume Total Extraído</p>
-                    <h3 id="kpiTotalVolume" class="text-3xl font-extrabold text-slate-800">-- L</h3>
-                </div>
-            </div>
-
-            <div class="glass-card p-6 flex items-center gap-5 border-l-4 border-l-indigo-600 hover:shadow-md transition-shadow">
-                <div class="bg-indigo-50 p-4 rounded-2xl text-indigo-600 border border-indigo-100">
-                    <i class="fa-solid fa-layer-group text-3xl"></i>
-                </div>
-                <div>
-                    <p class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Total de Poços Monitorados</p>
-                    <h3 id="kpiTotalWells" class="text-3xl font-extrabold text-slate-800">--</h3>
-                </div>
-            </div>
-        </div>
-
-        <div class="border-b border-slate-200 mb-6 flex flex-wrap justify-between items-end gap-4">
-            <nav class="flex gap-2" aria-label="Tabs">
-                <button onclick="switchTab('diario')" id="tab-diario" class="tab-btn tab-active flex items-center gap-2">
-                    <i class="fa-solid fa-chart-bar"></i> 1. Análise de Vazão (Poços e Geral)
-                </button>
-                <button onclick="switchTab('mensal')" id="tab-mensal" class="tab-btn tab-inactive flex items-center gap-2">
-                    <i class="fa-solid fa-chart-line"></i> 2. Análise de Volumes & Tendência
-                </button>
-            </nav>
-        </div>
-
-        <!-- ================================================================= -->
-        <!-- ABA 1: Visão Diária, Semanal e Mensal (Vazão Média) -->
-        <!-- ================================================================= -->
-        <div id="content-diario" class="space-y-6">
-            
-            <div class="glass-card p-5 bg-slate-50/80 border-slate-200">
-                <div class="flex flex-wrap items-center justify-between gap-4">
-                    <div class="flex items-center gap-2 text-slate-700 font-bold text-sm uppercase tracking-wide">
-                        <i class="fa-solid fa-filter text-blue-600"></i> Filtros de Pesquisa:
+    <div id="app-content" class="hidden flex-col flex-1">
+        <header class="bg-gradient-to-r from-slate-900 via-blue-950 to-indigo-950 text-white shadow-xl border-b border-slate-800">
+            <div class="max-w-[1700px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-5 flex flex-wrap justify-between items-center gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="bg-blue-600/30 p-2.5 rounded-xl border border-blue-400/30 text-blue-400">
+                        <i class="fa-solid fa-water text-2xl"></i>
                     </div>
-                    <div class="flex flex-wrap items-center gap-3">
-                        <div class="relative">
-                            <label class="block text-xs font-semibold text-slate-500 mb-1">Poços</label>
-                            <button type="button" onclick="toggleDropdown('dropdownTab1')" class="bg-white border border-slate-300 rounded-lg text-sm px-3 py-2 font-medium focus:ring-2 focus:ring-blue-500 focus:outline-none shadow-sm w-48 flex justify-between items-center">
-                                <span id="labelTab1">Todos os Poços</span>
-                                <i class="fa-solid fa-chevron-down text-slate-400"></i>
-                            </button>
-                            <div id="dropdownTab1" class="hidden absolute z-50 mt-1 w-56 bg-white border border-slate-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
-                                <div class="p-2 flex flex-col gap-1" id="wellCheckboxesTab1">
-                                    <!-- Gerado via JS -->
+                    <div>
+                        <h1 class="text-2xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-100 to-blue-200">
+                            Monitoramento Hidrográfico Pro
+                        </h1>
+                        <p class="text-xs text-slate-400 font-medium">Análise de Desempenho, Vazão e Volume de Poços Artesianos (Multi-Planilhas)</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-3 bg-slate-900/80 px-4 py-2 rounded-xl border border-slate-800 text-sm">
+                    <div id="statusIndicator" class="font-semibold text-slate-300 flex items-center gap-2">
+                        <i class="fa-solid fa-spinner fa-spin text-blue-400" id="loadingIcon"></i>
+                        <span id="statusText">Aguardando login...</span>
+                    </div>
+                    <button onclick="loadGoogleSheetsData()" title="Atualizar Dados" class="ml-2 text-slate-400 hover:text-white transition">
+                        <i class="fa-solid fa-rotate-right"></i>
+                    </button>
+                    <button onclick="logout()" title="Sair" class="ml-2 text-rose-400 hover:text-rose-300 transition border-l border-slate-700 pl-3">
+                        <i class="fa-solid fa-right-from-bracket"></i> Sair
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <main class="max-w-[1700px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1">
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="glass-card p-6 flex items-center gap-5 border-l-4 border-l-blue-600 hover:shadow-md transition-shadow">
+                    <div class="bg-blue-50 p-4 rounded-2xl text-blue-600 border border-blue-100">
+                        <i class="fa-solid fa-faucet-drip text-3xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Vazão Média Geral</p>
+                        <h3 id="kpiAvgFlow" class="text-3xl font-extrabold text-slate-800">-- L/h</h3>
+                    </div>
+                </div>
+                
+                <div class="glass-card p-6 flex items-center gap-5 border-l-4 border-l-emerald-500 hover:shadow-md transition-shadow">
+                    <div class="bg-emerald-50 p-4 rounded-2xl text-emerald-600 border border-emerald-100">
+                        <i class="fa-solid fa-droplet text-3xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Volume Total Extraído</p>
+                        <h3 id="kpiTotalVolume" class="text-3xl font-extrabold text-slate-800">-- L</h3>
+                    </div>
+                </div>
+
+                <div class="glass-card p-6 flex items-center gap-5 border-l-4 border-l-indigo-600 hover:shadow-md transition-shadow">
+                    <div class="bg-indigo-50 p-4 rounded-2xl text-indigo-600 border border-indigo-100">
+                        <i class="fa-solid fa-layer-group text-3xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Total de Poços</p>
+                        <h3 id="kpiTotalWells" class="text-3xl font-extrabold text-slate-800">--</h3>
+                    </div>
+                </div>
+            </div>
+
+            <div class="border-b border-slate-200 mb-6 flex flex-wrap justify-between items-end gap-4">
+                <nav class="flex gap-2" aria-label="Tabs">
+                    <button onclick="switchTab('diario')" id="tab-diario" class="tab-btn tab-active flex items-center gap-2">
+                        <i class="fa-solid fa-chart-bar"></i> 1. Análise Diária/Geral
+                    </button>
+                    <button onclick="switchTab('mensal')" id="tab-mensal" class="tab-btn tab-inactive flex items-center gap-2">
+                        <i class="fa-solid fa-chart-line"></i> 2. Volumes e Tendência Mês a Mês
+                    </button>
+                    <button onclick="switchTab('comparacao')" id="tab-comparacao" class="tab-btn tab-inactive flex items-center gap-2">
+                        <i class="fa-solid fa-table"></i> 3. Dados Tabulares
+                    </button>
+                </nav>
+            </div>
+
+            <div id="content-diario" class="space-y-6">
+                <div class="glass-card p-5 bg-slate-50/80 border-slate-200">
+                    <div class="flex flex-wrap items-center justify-between gap-4">
+                        <div class="flex items-center gap-2 text-slate-700 font-bold text-sm uppercase tracking-wide">
+                            <i class="fa-solid fa-filter text-blue-600"></i> Filtros da Aba 1:
+                        </div>
+                        <div class="flex flex-wrap items-center gap-3">
+                            <div class="relative">
+                                <label class="block text-xs font-semibold text-slate-500 mb-1">Poços</label>
+                                <button type="button" onclick="toggleDropdown('dropdownTab1')" class="bg-white border border-slate-300 rounded-lg text-sm px-3 py-2 font-medium focus:ring-2 focus:ring-blue-500 shadow-sm w-48 flex justify-between items-center">
+                                    <span id="labelTab1">Todos os Poços</span>
+                                    <i class="fa-solid fa-chevron-down text-slate-400"></i>
+                                </button>
+                                <div id="dropdownTab1" class="hidden absolute z-50 mt-1 w-56 bg-white border border-slate-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+                                    <div class="p-2 border-b border-slate-200 bg-slate-50 sticky top-0 z-10">
+                                        <label class="flex items-center gap-2 px-1 py-1 hover:bg-slate-100 rounded cursor-pointer text-xs font-bold text-blue-600 transition">
+                                            <input type="checkbox" id="selectAllWellsTab1" checked onchange="toggleSelectAll(1, 'well', this)" class="w-4 h-4 text-blue-600 rounded">
+                                            Selecionar / Desmarcar Todos
+                                        </label>
+                                    </div>
+                                    <div class="p-2 flex flex-col gap-1" id="wellCheckboxesTab1"></div>
                                 </div>
                             </div>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-500 mb-1">Data Inicial</label>
-                            <input type="date" id="filterStartDateTab1" onchange="applyFiltersTab1()" class="bg-white border border-slate-300 rounded-lg text-sm px-3 py-2 font-medium focus:ring-2 focus:ring-blue-500 focus:outline-none shadow-sm">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-500 mb-1">Data Final</label>
-                            <input type="date" id="filterEndDateTab1" onchange="applyFiltersTab1()" class="bg-white border border-slate-300 rounded-lg text-sm px-3 py-2 font-medium focus:ring-2 focus:ring-blue-500 focus:outline-none shadow-sm">
-                        </div>
-                        <div class="flex items-end">
-                            <button onclick="resetFiltersTab1()" class="mt-5 bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 py-2 rounded-lg text-sm font-semibold transition flex items-center gap-1">
-                                <i class="fa-solid fa-xmark"></i> Limpar
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
-            <!-- Gráfico 1: Semanal -->
-            <div class="glass-card p-6">
-                <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
-                    <div>
-                        <h3 class="text-lg font-bold text-slate-800">Vazão Média por Poço (Por Semana)</h3>
-                        <p class="text-xs text-slate-500">Exibe os dados semanais. Exemplo: Semana 29 - Poço 01 com média X.</p>
-                    </div>
-                </div>
-                <div class="chart-scroll-wrapper">
-                    <div class="chart-container">
-                        <canvas id="weeklyFlowChart"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Gráfico 2: Mensal com Linha Geral -->
-            <div class="glass-card p-6">
-                <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
-                    <div>
-                        <h3 class="text-lg font-bold text-slate-800">Vazão Média por Poço e Média Geral (Por Mês)</h3>
-                        <p class="text-xs text-slate-500">Média de vazão agrupada por mês (barras) comparada com a Média Geral do período (linha).</p>
-                    </div>
-                    <span class="text-xs font-bold px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 flex items-center gap-1.5">
-                        <i class="fa-solid fa-chart-mixed"></i> Média Geral Inclusa
-                    </span>
-                </div>
-                <div class="chart-scroll-wrapper">
-                    <div class="chart-container">
-                        <canvas id="monthlyAvgFlowChart"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Gráfico 3: Diário com Linha Geral -->
-            <div class="glass-card p-6">
-                <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
-                    <div>
-                        <h3 class="text-lg font-bold text-slate-800">Vazão Média por Data Específica (Diária)</h3>
-                        <p class="text-xs text-slate-500">Acompanhamento da vazão exata extraída por data em cada poço e o comparativo diário com a média geral.</p>
-                    </div>
-                </div>
-                <div class="chart-scroll-wrapper">
-                    <div class="chart-container">
-                        <canvas id="dailyFlowChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- ================================================================= -->
-        <!-- ABA 2: Visão Mensal e Regressão -->
-        <!-- ================================================================= -->
-        <div id="content-mensal" class="hidden space-y-6">
-            
-            <div class="glass-card p-5 bg-slate-50/80 border-slate-200">
-                <div class="flex flex-wrap items-center justify-between gap-4">
-                    <div class="flex items-center gap-2 text-slate-700 font-bold text-sm uppercase tracking-wide">
-                        <i class="fa-solid fa-filter text-indigo-600"></i> Filtros de Volume:
-                    </div>
-                    <div class="flex flex-wrap items-center gap-3">
-                        <div class="relative">
-                            <label class="block text-xs font-semibold text-slate-500 mb-1">Poços</label>
-                            <button type="button" onclick="toggleDropdown('dropdownTab2')" class="bg-white border border-slate-300 rounded-lg text-sm px-3 py-2 font-medium focus:ring-2 focus:ring-indigo-500 focus:outline-none shadow-sm w-48 flex justify-between items-center">
-                                <span id="labelTab2">Todos os Poços</span>
-                                <i class="fa-solid fa-chevron-down text-slate-400"></i>
-                            </button>
-                            <div id="dropdownTab2" class="hidden absolute z-50 mt-1 w-56 bg-white border border-slate-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
-                                <div class="p-2 flex flex-col gap-1" id="wellCheckboxesTab2">
-                                    <!-- Gerado via JS -->
+                            <div class="relative">
+                                <label class="block text-xs font-semibold text-slate-500 mb-1">Meses</label>
+                                <button type="button" onclick="toggleDropdown('dropdownMonthTab1')" class="bg-white border border-slate-300 rounded-lg text-sm px-3 py-2 shadow-sm w-48 flex justify-between items-center">
+                                    <span id="labelMonthTab1">Todos os Meses</span>
+                                    <i class="fa-solid fa-chevron-down text-slate-400"></i>
+                                </button>
+                                <div id="dropdownMonthTab1" class="hidden absolute z-50 mt-1 w-56 bg-white border border-slate-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+                                    <div class="p-2 border-b border-slate-200 bg-slate-50 sticky top-0 z-10">
+                                        <label class="flex items-center gap-2 px-1 py-1 hover:bg-slate-100 rounded cursor-pointer text-xs font-bold text-blue-600 transition">
+                                            <input type="checkbox" id="selectAllMonthsTab1" checked onchange="toggleSelectAll(1, 'month', this)" class="w-4 h-4 text-blue-600 rounded">
+                                            Selecionar / Desmarcar Todos
+                                        </label>
+                                    </div>
+                                    <div class="p-2 flex flex-col gap-1" id="monthCheckboxesTab1"></div>
                                 </div>
                             </div>
-                        </div>
-                        <div class="relative">
-                            <label class="block text-xs font-semibold text-slate-500 mb-1">Meses</label>
-                            <button type="button" onclick="toggleDropdown('dropdownMonthTab2')" class="bg-white border border-slate-300 rounded-lg text-sm px-3 py-2 font-medium focus:ring-2 focus:ring-indigo-500 focus:outline-none shadow-sm w-48 flex justify-between items-center">
-                                <span id="labelMonthTab2">Todos os Meses</span>
-                                <i class="fa-solid fa-chevron-down text-slate-400"></i>
-                            </button>
-                            <div id="dropdownMonthTab2" class="hidden absolute z-50 mt-1 w-56 bg-white border border-slate-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
-                                <div class="p-2 flex flex-col gap-1" id="monthCheckboxesTab2">
-                                    <!-- Gerado via JS -->
-                                </div>
+
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-500 mb-1">Data Inicial</label>
+                                <input type="date" id="filterStartDateTab1" onchange="applyFiltersTab1()" class="bg-white border border-slate-300 rounded-lg text-sm px-3 py-2 shadow-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-500 mb-1">Data Final</label>
+                                <input type="date" id="filterEndDateTab1" onchange="applyFiltersTab1()" class="bg-white border border-slate-300 rounded-lg text-sm px-3 py-2 shadow-sm">
+                            </div>
+                            <div class="flex items-end">
+                                <button onclick="resetFiltersTab1()" class="mt-5 bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 py-2 rounded-lg text-sm font-semibold transition flex items-center gap-1">
+                                    <i class="fa-solid fa-xmark"></i> Limpar
+                                </button>
                             </div>
                         </div>
-                        <div class="flex items-end">
-                            <button onclick="resetFiltersTab2()" class="mt-5 bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 py-2 rounded-lg text-sm font-semibold transition flex items-center gap-1">
-                                <i class="fa-solid fa-xmark"></i> Limpar
-                            </button>
+                    </div>
+                </div>
+
+                <div class="glass-card p-6">
+                    <h3 class="text-lg font-bold text-slate-800">Vazão Média por Poço (Por Semana)</h3>
+                    <div class="chart-scroll-wrapper mt-4"><div class="chart-container"><canvas id="weeklyFlowChart"></canvas></div></div>
+                </div>
+
+                <div class="glass-card p-6">
+                    <h3 class="text-lg font-bold text-slate-800">Vazão Média Diária exata</h3>
+                    <div class="chart-scroll-wrapper mt-4"><div class="chart-container"><canvas id="dailyFlowChart"></canvas></div></div>
+                </div>
+            </div>
+
+            <div id="content-mensal" class="hidden space-y-6">
+                <div class="glass-card p-5 bg-slate-50/80 border-slate-200">
+                    <div class="flex flex-wrap items-center justify-between gap-4">
+                        <div class="flex items-center gap-2 text-slate-700 font-bold text-sm uppercase tracking-wide">
+                            <i class="fa-solid fa-filter text-indigo-600"></i> Filtros da Aba 2:
                         </div>
+                        <div class="flex flex-wrap items-center gap-3">
+                            <div class="relative">
+                                <label class="block text-xs font-semibold text-slate-500 mb-1">Poços</label>
+                                <button type="button" onclick="toggleDropdown('dropdownTab2')" class="bg-white border border-slate-300 rounded-lg text-sm px-3 py-2 shadow-sm w-48 flex justify-between items-center">
+                                    <span id="labelTab2">Todos os Poços</span>
+                                    <i class="fa-solid fa-chevron-down text-slate-400"></i>
+                                </button>
+                                <div id="dropdownTab2" class="hidden absolute z-50 mt-1 w-56 bg-white border border-slate-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+                                    <div class="p-2 border-b border-slate-200 bg-slate-50 sticky top-0 z-10">
+                                        <label class="flex items-center gap-2 px-1 py-1 hover:bg-slate-100 rounded cursor-pointer text-xs font-bold text-indigo-600 transition">
+                                            <input type="checkbox" id="selectAllWellsTab2" checked onchange="toggleSelectAll(2, 'well', this)" class="w-4 h-4 text-indigo-600 rounded">
+                                            Selecionar / Desmarcar Todos
+                                        </label>
+                                    </div>
+                                    <div class="p-2 flex flex-col gap-1" id="wellCheckboxesTab2"></div>
+                                </div>
+                            </div>
+                            <div class="relative">
+                                <label class="block text-xs font-semibold text-slate-500 mb-1">Meses</label>
+                                <button type="button" onclick="toggleDropdown('dropdownMonthTab2')" class="bg-white border border-slate-300 rounded-lg text-sm px-3 py-2 shadow-sm w-48 flex justify-between items-center">
+                                    <span id="labelMonthTab2">Todos os Meses</span>
+                                    <i class="fa-solid fa-chevron-down text-slate-400"></i>
+                                </button>
+                                <div id="dropdownMonthTab2" class="hidden absolute z-50 mt-1 w-56 bg-white border border-slate-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+                                    <div class="p-2 border-b border-slate-200 bg-slate-50 sticky top-0 z-10">
+                                        <label class="flex items-center gap-2 px-1 py-1 hover:bg-slate-100 rounded cursor-pointer text-xs font-bold text-indigo-600 transition">
+                                            <input type="checkbox" id="selectAllMonthsTab2" checked onchange="toggleSelectAll(2, 'month', this)" class="w-4 h-4 text-indigo-600 rounded">
+                                            Selecionar / Desmarcar Todos
+                                        </label>
+                                    </div>
+                                    <div class="p-2 flex flex-col gap-1" id="monthCheckboxesTab2"></div>
+                                </div>
+                            </div>
+                            <div class="flex items-end">
+                                <button onclick="resetFiltersTab2()" class="mt-5 bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 py-2 rounded-lg text-sm font-semibold transition flex items-center gap-1">
+                                    <i class="fa-solid fa-xmark"></i> Limpar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 gap-8">
+                    <!-- Título Atualizado para Volume Total Mensal por Poço -->
+                    <div class="glass-card p-6">
+                        <h3 class="text-lg font-bold text-slate-800 mb-1">Volume Total Mensal por Poço (L)</h3>
+                        <div class="chart-scroll-wrapper mt-4"><div class="chart-container"><canvas id="monthlyVolumeChart"></canvas></div></div>
+                    </div>
+
+                    <div class="glass-card p-6">
+                        <div class="flex justify-between items-center mb-1 flex-wrap gap-2">
+                            <div>
+                                <h3 class="text-lg font-bold text-slate-800">Regressão e Tendência da Média de Vazão por Poço (Mês a Mês)</h3>
+                                <p class="text-xs text-slate-500">Exibe a variação mês a mês com balões alternados (alto/baixo) e indicadores direcionais <b class="text-emerald-600">↑ Aumento</b> e <b class="text-rose-600">↓ Queda</b>.</p>
+                            </div>
+                        </div>
+                        <div class="chart-scroll-wrapper mt-4"><div class="chart-container"><canvas id="trendChart"></canvas></div></div>
                     </div>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 gap-8">
-                <!-- Gráfico Volume Mensal Expandido -->
-                <div class="glass-card p-6">
-                    <h3 class="text-lg font-bold text-slate-800 mb-1">Soma da Vazão Total Mensal por Poço (L/h)</h3>
-                    <p class="text-xs text-slate-500 mb-4">Soma de toda a vazão registrada de cada poço agrupada por mês</p>
-                    <div class="chart-scroll-wrapper">
-                        <div class="chart-container">
-                            <canvas id="monthlyVolumeChart"></canvas>
+            <div id="content-comparacao" class="hidden space-y-6">
+                <div class="glass-card p-5 bg-slate-50/80 border-slate-200">
+                    <div class="flex flex-wrap items-center justify-between gap-4">
+                        <div class="flex items-center gap-2 text-slate-700 font-bold text-sm uppercase tracking-wide">
+                            <i class="fa-solid fa-filter text-orange-600"></i> Filtros de Consulta:
+                        </div>
+                        <div class="flex flex-wrap items-center gap-3">
+                            <div class="relative">
+                                <label class="block text-xs font-semibold text-slate-500 mb-1">Poços</label>
+                                <button type="button" onclick="toggleDropdown('dropdownTab3')" class="bg-white border border-slate-300 rounded-lg text-sm px-3 py-2 shadow-sm w-48 flex justify-between items-center">
+                                    <span id="labelTab3">Todos os Poços</span>
+                                    <i class="fa-solid fa-chevron-down text-slate-400"></i>
+                                </button>
+                                <div id="dropdownTab3" class="hidden absolute z-50 mt-1 w-56 bg-white border border-slate-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+                                    <div class="p-2 border-b border-slate-200 bg-slate-50 sticky top-0 z-10">
+                                        <label class="flex items-center gap-2 px-1 py-1 hover:bg-slate-100 rounded cursor-pointer text-xs font-bold text-orange-600 transition">
+                                            <input type="checkbox" id="selectAllWellsTab3" checked onchange="toggleSelectAll(3, 'well', this)" class="w-4 h-4 text-orange-600 rounded">
+                                            Selecionar / Desmarcar Todos
+                                        </label>
+                                    </div>
+                                    <div class="p-2 flex flex-col gap-1" id="wellCheckboxesTab3"></div>
+                                </div>
+                            </div>
+                            <div class="relative">
+                                <label class="block text-xs font-semibold text-slate-500 mb-1">Meses</label>
+                                <button type="button" onclick="toggleDropdown('dropdownMonthTab3')" class="bg-white border border-slate-300 rounded-lg text-sm px-3 py-2 shadow-sm w-48 flex justify-between items-center">
+                                    <span id="labelMonthTab3">Todos os Meses</span>
+                                    <i class="fa-solid fa-chevron-down text-slate-400"></i>
+                                </button>
+                                <div id="dropdownMonthTab3" class="hidden absolute z-50 mt-1 w-56 bg-white border border-slate-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+                                    <div class="p-2 border-b border-slate-200 bg-slate-50 sticky top-0 z-10">
+                                        <label class="flex items-center gap-2 px-1 py-1 hover:bg-slate-100 rounded cursor-pointer text-xs font-bold text-orange-600 transition">
+                                            <input type="checkbox" id="selectAllMonthsTab3" checked onchange="toggleSelectAll(3, 'month', this)" class="w-4 h-4 text-orange-600 rounded">
+                                            Selecionar / Desmarcar Todos
+                                        </label>
+                                    </div>
+                                    <div class="p-2 flex flex-col gap-1" id="monthCheckboxesTab3"></div>
+                                </div>
+                            </div>
+                            <div class="flex items-end">
+                                <button onclick="resetFiltersTab3()" class="mt-5 bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 py-2 rounded-lg text-sm font-semibold transition flex items-center gap-1">
+                                    <i class="fa-solid fa-xmark"></i> Limpar
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Gráfico de Regressão Expandido -->
                 <div class="glass-card p-6">
-                    <div class="flex justify-between items-center mb-1 flex-wrap gap-2">
-                        <div>
-                            <h3 class="text-lg font-bold text-slate-800">Tendência de Vazão por Poço (Variação de Aumento ou Queda)</h3>
-                            <p class="text-xs text-slate-500">Exibe a diferença exata comparada ao mês anterior (Aumento em Verde, Queda em Vermelho)</p>
-                        </div>
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                            <i class="fa-solid fa-table-list text-orange-500"></i> Resumo Tabular dos Dados
+                        </h3>
                     </div>
-                </div>
-
-                <!-- Gráfico de Regressão Expandido -->
-                <div class="glass-card p-6">
-                    <div class="flex justify-between items-center mb-1 flex-wrap gap-2">
-                        <div>
-                            <h3 class="text-lg font-bold text-slate-800">Regressão e Tendência de Vazão por Poço (Mês a Mês)</h3>
-                            <p class="text-xs text-slate-500">Compara a variação exata da vazão em relação ao mês anterior (Aumento ↑, Queda ↓ ou Estável =)</p>
-                        </div>
-                        <span id="trendStatusBadge" class="text-xs font-bold px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200 flex items-center gap-1.5">
-                            <i class="fa-solid fa-chart-line"></i> Análise Comparativa Ativa
-                        </span>
-                    </div>
-                    <div class="chart-scroll-wrapper mt-4">
-                        <div class="chart-container">
-                            <canvas id="trendChart"></canvas>
-                        </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead>
+                                <tr class="bg-slate-100 text-slate-700 uppercase text-xs tracking-wider border-b border-slate-200">
+                                    <th class="p-3">Poço</th>
+                                    <th class="p-3">Mês / Ano</th>
+                                    <th class="p-3 text-right">Vazão Média (L/h)</th>
+                                    <th class="p-3 text-right">Volume Total (L)</th>
+                                    <th class="p-3 text-center">Registros Processados</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tab3TableBody" class="divide-y divide-slate-100 text-slate-600">
+                                <tr><td colspan="5" class="p-4 text-center text-slate-400">Carregando dados...</td></tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
 
-            <div class="glass-card p-6 max-w-5xl mx-auto">
-                <div class="text-center mb-4">
-                    <h3 class="text-lg font-bold text-slate-800">Percentual de Volume Extraído por Mês</h3>
-                    <p class="text-xs text-slate-500">Proporção mensal em relação ao total extraído no período</p>
-                </div>
-                <div class="chart-container-pie">
-                    <canvas id="monthPieChart"></canvas>
-                </div>
-            </div>
-        </div>
+        </main>
 
-    </main>
-
-    <footer class="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-500 mt-auto">
-        Sistema de Monitoramento Hidrográfico &bull; Atualizado via Google Sheets em Tempo Real
-    </footer>
+        <footer class="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-500 mt-auto">
+            Sistema de Monitoramento Hidrográfico &bull; Atualizado via Google Sheets em Tempo Real (Fontes Múltiplas)
+        </footer>
+    </div>
 
     <script>
-        // Registrar o plugin de rótulos de dados nos gráficos
         Chart.register(ChartDataLabels);
 
-        // URL da Planilha do Google Sheets definida conforme solicitação
-        const GOOGLE_SHEETS_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSafB5fd5osyELyMS1T-pVO-WbL25l53ICs1dmVMgByrAlQsqSHT2YscIE-ClYrJvzPS-dGZSp25ysi/pub?output=csv";
+        // URLs das Planilhas do Google Sheets (Suporte a múltiplos links)
+        const GOOGLE_SHEETS_URLS = [
+            "https://docs.google.com/spreadsheets/d/e/2PACX-1vSafB5fd5osyELyMS1T-pVO-WbL25l53ICs1dmVMgByrAlQsqSHT2YscIE-ClYrJvzPS-dGZSp25ysi/pub?output=csv",
+            "https://docs.google.com/spreadsheets/d/e/2PACX-1vQAcr8_XCwnJWwn5DMCKsb3-03ZogzTgiJ9qtCtnEp9fnLMtEuTcCXpxeslsvQGzJ81nDkLy7DYBX8d/pub?output=csv"
+        ];
 
-        // Variável Global com os dados brutos carregados
         let globalRawData = [];
         const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
 
-        // Instâncias dos gráficos
         let charts = {
             dailyFlow: null,
             weeklyFlow: null,
-            monthlyAvgFlow: null,
             monthlyVolume: null,
-            trend: null,
-            monthPie: null
+            trend: null
         };
-
-        // Função para abrir/fechar dropdowns customizados
-        function toggleDropdown(id) {
-            const el = document.getElementById(id);
-            el.classList.toggle('hidden');
-        }
-
-        // Fechar dropdowns ao clicar fora
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('.relative')) {
-                document.getElementById('dropdownTab1')?.classList.add('hidden');
-                document.getElementById('dropdownTab2')?.classList.add('hidden');
-                document.getElementById('dropdownMonthTab2')?.classList.add('hidden');
-            }
-        });
 
         const vibrantColors = [
             '#2563eb', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4', 
             '#ec4899', '#f97316', '#14b8a6', '#6366f1'
         ];
 
-        document.addEventListener('DOMContentLoaded', () => {
-            populateMonthSelectors();
-            loadGoogleSheetsData();
-        });
+        function handleLogin() {
+            const u = document.getElementById('username').value;
+            const p = document.getElementById('password').value;
+            const err = document.getElementById('loginError');
 
-        // Alternância de Abas
-        function switchTab(tab) {
-            const tabDiario = document.getElementById('tab-diario');
-            const tabMensal = document.getElementById('tab-mensal');
-            const contentDiario = document.getElementById('content-diario');
-            const contentMensal = document.getElementById('content-mensal');
-
-            if (tab === 'diario') {
-                tabDiario.className = 'tab-btn tab-active flex items-center gap-2';
-                tabMensal.className = 'tab-btn tab-inactive flex items-center gap-2';
-                contentDiario.classList.remove('hidden');
-                contentMensal.classList.add('hidden');
+            if (u === 'adm123' && p === 'lucas@2026') {
+                err.classList.add('hidden');
+                document.getElementById('login-screen').classList.add('opacity-0', 'pointer-events-none');
+                
+                setTimeout(() => {
+                    document.getElementById('login-screen').style.display = 'none';
+                    document.getElementById('app-content').classList.remove('hidden');
+                    document.getElementById('app-content').classList.add('flex');
+                    loadGoogleSheetsData();
+                }, 300);
             } else {
-                tabMensal.className = 'tab-btn tab-active flex items-center gap-2';
-                tabDiario.className = 'tab-btn tab-inactive flex items-center gap-2';
-                contentMensal.classList.remove('hidden');
-                contentDiario.classList.add('hidden');
+                err.classList.remove('hidden');
             }
         }
 
-        // Parse robusto de números para lidar com padrões do Brasil (vírgula como decimal e pontos)
+        function logout() {
+            document.getElementById('app-content').classList.add('hidden');
+            document.getElementById('app-content').classList.remove('flex');
+            
+            const loginScreen = document.getElementById('login-screen');
+            loginScreen.style.display = 'flex';
+            
+            setTimeout(() => {
+                loginScreen.classList.remove('opacity-0', 'pointer-events-none');
+            }, 50);
+
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+            document.getElementById('loginError').classList.add('hidden');
+            
+            globalRawData = [];
+        }
+
+        function toggleDropdown(id) {
+            document.getElementById(id).classList.toggle('hidden');
+        }
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.relative')) {
+                document.getElementById('dropdownTab1')?.classList.add('hidden');
+                document.getElementById('dropdownMonthTab1')?.classList.add('hidden');
+                document.getElementById('dropdownTab2')?.classList.add('hidden');
+                document.getElementById('dropdownMonthTab2')?.classList.add('hidden');
+                document.getElementById('dropdownTab3')?.classList.add('hidden');
+                document.getElementById('dropdownMonthTab3')?.classList.add('hidden');
+            }
+        });
+
+        function switchTab(tab) {
+            const tabs = ['diario', 'mensal', 'comparacao'];
+            tabs.forEach(t => {
+                const btn = document.getElementById(`tab-${t}`);
+                const content = document.getElementById(`content-${t}`);
+                if (t === tab) {
+                    btn.className = 'tab-btn tab-active flex items-center gap-2';
+                    content.classList.remove('hidden');
+                } else {
+                    btn.className = 'tab-btn tab-inactive flex items-center gap-2';
+                    content.classList.add('hidden');
+                }
+            });
+        }
+
+        function renderChart(canvasId, chartKey, type, data, options) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            if (charts[chartKey]) {
+                charts[chartKey].destroy();
+            }
+            charts[chartKey] = new Chart(ctx, { type, data, options });
+        }
+
         function parseBrazilianNumber(val) {
             if (val === null || val === undefined || val === '') return 0;
             let str = String(val).trim().replace(/\s/g, '');
-            
-            // Se tiver ponto de milhar e vírgula decimal ex: 1.234,56
             if (str.includes('.') && str.includes(',')) {
-                str = str.replace(/\./g, '').replace(',', '.');
-            } 
-            // Se só tiver vírgula
-            else if (str.includes(',')) {
+                let lastDot = str.lastIndexOf('.');
+                let lastComma = str.lastIndexOf(',');
+                if (lastComma > lastDot) {
+                    str = str.replace(/\./g, '').replace(',', '.');
+                } else {
+                    str = str.replace(/,/g, '');
+                }
+            } else if (str.includes(',')) {
                 str = str.replace(',', '.');
-            } 
-            // Se só tiver ponto (ex: 1.234)
-            else if (str.includes('.')) {
-                // Checa se é separador de milhar. (Se os últimos dígitos após o ponto forem exatamente 3)
-                let parts = str.split('.');
-                if (parts[parts.length - 1].length === 3) {
-                    str = str.replace(/\./g, ''); // Remove os pontos de milhar para não quebrar o valor
-                }
             }
-            
             return parseFloat(str) || 0;
-        }
-
-        function loadGoogleSheetsData() {
-            const statusText = document.getElementById('statusText');
-            const loadingIcon = document.getElementById('loadingIcon');
-            
-            statusText.textContent = "Carregando dados da planilha...";
-            loadingIcon.className = "fa-solid fa-spinner fa-spin text-blue-400";
-
-            Papa.parse(GOOGLE_SHEETS_URL, {
-                download: true,
-                header: true,
-                skipEmptyLines: true,
-                complete: function(results) {
-                    if (results.data && results.data.length > 0) {
-                        try {
-                            globalRawData = cleanAndNormalizeData(results.data);
-                            
-                            statusText.textContent = "Ao vivo";
-                            loadingIcon.className = "fa-solid fa-circle-check text-emerald-400";
-                            
-                            populateWellSelectors();
-                            applyFiltersTab1();
-                            applyFiltersTab2();
-
-                        } catch (e) {
-                            console.error("Erro ao processar dados:", e);
-                            statusText.textContent = "Erro de leitura dos dados";
-                            loadingIcon.className = "fa-solid fa-triangle-exclamation text-rose-400";
-                        }
-                    } else {
-                        statusText.textContent = "Planilha sem dados";
-                        loadingIcon.className = "fa-solid fa-circle-exclamation text-amber-400";
-                    }
-                },
-                error: function(err) {
-                    console.error("Erro ao carregar CSV:", err);
-                    statusText.textContent = "Erro de conexão";
-                    loadingIcon.className = "fa-solid fa-triangle-exclamation text-rose-400";
-                }
-            });
         }
 
         function formatWellName(rawWell) {
@@ -493,21 +548,81 @@
             return str;
         }
 
+        function fetchSingleSheet(url) {
+            return new Promise((resolve) => {
+                Papa.parse(url, {
+                    download: true,
+                    header: true,
+                    skipEmptyLines: true,
+                    complete: function(results) {
+                        resolve(results.data || []);
+                    },
+                    error: function(err) {
+                        console.error("Erro ao carregar planilha:", url, err);
+                        resolve([]);
+                    }
+                });
+            });
+        }
+
+        function loadGoogleSheetsData() {
+            const statusText = document.getElementById('statusText');
+            const loadingIcon = document.getElementById('loadingIcon');
+            
+            statusText.textContent = "Baixando planilhas...";
+            loadingIcon.className = "fa-solid fa-spinner fa-spin text-blue-400";
+
+            Promise.all(GOOGLE_SHEETS_URLS.map(url => fetchSingleSheet(url)))
+                .then(resultsArray => {
+                    let combinedRows = [];
+                    resultsArray.forEach(data => {
+                        if (Array.isArray(data)) {
+                            combinedRows = combinedRows.concat(data);
+                        }
+                    });
+
+                    if (combinedRows.length > 0) {
+                        try {
+                            globalRawData = cleanAndNormalizeData(combinedRows);
+                            
+                            statusText.textContent = `Conectado e Ao Vivo (${globalRawData.length} registros)`;
+                            loadingIcon.className = "fa-solid fa-circle-check text-emerald-400";
+                            
+                            populateWellSelectors();
+                            populateMonthSelectors();
+
+                            applyFiltersTab1();
+                            applyFiltersTab2();
+                            applyFiltersTab3();
+                        } catch (e) {
+                            console.error("Erro ao processar dados:", e);
+                            statusText.textContent = "Erro na formatação dos dados";
+                            loadingIcon.className = "fa-solid fa-triangle-exclamation text-rose-400";
+                        }
+                    } else {
+                        statusText.textContent = "Planilhas sem dados";
+                        loadingIcon.className = "fa-solid fa-circle-exclamation text-amber-400";
+                    }
+                })
+                .catch(err => {
+                    console.error("Erro no carregamento das planilhas:", err);
+                    statusText.textContent = "Erro de conexão";
+                    loadingIcon.className = "fa-solid fa-triangle-exclamation text-rose-400";
+                });
+        }
+
         function cleanAndNormalizeData(data) {
             let normalized = [];
             data.forEach(row => {
                 const keys = Object.keys(row);
-                // Expandimos a busca pelas colunas para garantir que "Média Geral" funcione e seja encontrada
-                const findKey = (searchStrings) => keys.find(k => searchStrings.some(s => k.toLowerCase().includes(s)));
+                const findKey = (searchStrings) => keys.find(k => searchStrings.some(s => k.toLowerCase().trim().includes(s)));
                 
                 const dateKey = findKey(['data', 'date']);
-                const wellKey = findKey(['poço', 'poco', 'well', 'nome']);
-                const flowKey = findKey(['vazao', 'vazão', 'flow', 'media', 'média', 'l/h', 'litros/h']);
-                const volKey = findKey(['volume', 'vol', 'm3', 'total']);
+                const wellKey = findKey(['poço', 'poco', 'well', 'nome', 'estacao', 'estação']);
+                const flowKey = findKey(['vazao media', 'vazão média', 'vazao', 'vazão', 'flow', 'media', 'média', 'l/h', 'litros/h']);
+                const volKey = findKey(['volume total', 'volume', 'vol', 'm3', 'total', 'litros']);
 
                 const wellFormatted = formatWellName(row[wellKey]);
-                
-                // Aplicamos o parse brasileiro para evitar que o KPI fique zerado
                 const vazaoVal = parseBrazilianNumber(row[flowKey]);
                 const volumeVal = parseBrazilianNumber(row[volKey]);
 
@@ -533,13 +648,11 @@
             return normalized.sort((a, b) => a.DataObj - b.DataObj);
         }
 
-        // Função auxiliar para calcular o número da semana do ano
         function getWeekNumber(d) {
             d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
             d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
             var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
-            var weekNo = Math.ceil(( ( (d - yearStart) / 86400000) + 1)/7);
-            return weekNo;
+            return Math.ceil(( ( (d - yearStart) / 86400000) + 1)/7);
         }
 
         function parsePortugueseDate(dateStr) {
@@ -563,154 +676,138 @@
             return isNaN(d.getTime()) ? null : d;
         }
 
+        function toggleSelectAll(tab, type, masterCheckbox) {
+            const isChecked = masterCheckbox.checked;
+            const chkClass = type === 'well' ? `well-chk-${tab}` : `month-chk-${tab}`;
+            document.querySelectorAll(`.${chkClass}`).forEach(c => c.checked = isChecked);
+            
+            if (type === 'well') updateWellLabel(tab);
+            else updateMonthLabel(tab);
+
+            if (tab === 1) applyFiltersTab1();
+            if (tab === 2) applyFiltersTab2();
+            if (tab === 3) applyFiltersTab3();
+        }
+
         function populateWellSelectors() {
             const wellsSet = new Set(globalRawData.map(d => d.Poco));
             const wellsArray = Array.from(wellsSet).sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
 
-            const cont1 = document.getElementById('wellCheckboxesTab1');
-            const cont2 = document.getElementById('wellCheckboxesTab2');
-
-            cont1.innerHTML = '';
-            cont2.innerHTML = '';
-
-            const createOption = (well, tab) => {
-                return `
-                <label class="flex items-center gap-2 px-2 py-1.5 hover:bg-slate-50 rounded cursor-pointer text-sm font-medium text-slate-700 transition">
-                    <input type="checkbox" value="${well}" checked onchange="updateWellLabel(${tab}); applyFiltersTab${tab}()" class="well-chk-${tab} w-4 h-4 text-blue-600 bg-slate-100 border-slate-300 rounded focus:ring-blue-500 focus:ring-2 cursor-pointer">
-                    ${well}
-                </label>`;
-            };
-
-            wellsArray.forEach(well => {
-                cont1.innerHTML += createOption(well, 1);
-                cont2.innerHTML += createOption(well, 2);
+            [1, 2, 3].forEach(tab => {
+                const cont = document.getElementById(`wellCheckboxesTab${tab}`);
+                if(cont) {
+                    cont.innerHTML = '';
+                    wellsArray.forEach(well => {
+                        cont.innerHTML += `
+                        <label class="flex items-center gap-2 px-2 py-1.5 hover:bg-slate-50 rounded cursor-pointer text-sm font-medium text-slate-700 transition">
+                            <input type="checkbox" value="${well}" checked onchange="updateWellLabel(${tab}); applyFiltersTab${tab}()" class="well-chk-${tab} w-4 h-4 text-blue-600 bg-slate-100 border-slate-300 rounded focus:ring-blue-500 cursor-pointer">
+                            ${well}
+                        </label>`;
+                    });
+                    updateWellLabel(tab);
+                }
             });
-            
-            updateWellLabel(1);
-            updateWellLabel(2);
         }
 
         function populateMonthSelectors() {
-            const cont = document.getElementById('monthCheckboxesTab2');
-            if(!cont) return;
-            cont.innerHTML = '';
-            monthNames.forEach((month, index) => {
-                cont.innerHTML += `
-                <label class="flex items-center gap-2 px-2 py-1.5 hover:bg-slate-50 rounded cursor-pointer text-sm font-medium text-slate-700 transition">
-                    <input type="checkbox" value="${index}" checked onchange="updateMonthLabel(); applyFiltersTab2()" class="month-chk-2 w-4 h-4 text-indigo-600 bg-slate-100 border-slate-300 rounded focus:ring-indigo-500 focus:ring-2 cursor-pointer">
-                    ${month}
-                </label>`;
+            [1, 2, 3].forEach(tab => {
+                const cont = document.getElementById(`monthCheckboxesTab${tab}`);
+                if(cont) {
+                    cont.innerHTML = '';
+                    monthNames.forEach((month, index) => {
+                        cont.innerHTML += `
+                        <label class="flex items-center gap-2 px-2 py-1.5 hover:bg-slate-50 rounded cursor-pointer text-sm font-medium text-slate-700 transition">
+                            <input type="checkbox" value="${index}" checked onchange="updateMonthLabel(${tab}); applyFiltersTab${tab}()" class="month-chk-${tab} w-4 h-4 text-indigo-600 bg-slate-100 border-slate-300 rounded focus:ring-indigo-500 cursor-pointer">
+                            ${month}
+                        </label>`;
+                    });
+                    updateMonthLabel(tab);
+                }
             });
-            updateMonthLabel();
         }
 
-        function updateMonthLabel() {
-            const checks = document.querySelectorAll('.month-chk-2');
+        function updateMonthLabel(tab) {
+            const checks = document.querySelectorAll(`.month-chk-${tab}`);
             const checked = Array.from(checks).filter(c => c.checked);
-            const label = document.getElementById('labelMonthTab2');
+            const label = document.getElementById(`labelMonthTab${tab}`);
+            const masterBtn = document.getElementById(`selectAllMonthsTab${tab}`);
+            if (masterBtn) masterBtn.checked = (checked.length === checks.length && checks.length > 0);
+            if (!label) return;
             
-            if (checked.length === checks.length) {
-                label.textContent = "Todos os Meses";
-            } else if (checked.length === 1) {
-                label.textContent = "1 Mês Selecionado";
-            } else if (checked.length === 0) {
-                label.textContent = "Nenhum Selecionado";
-            } else {
-                label.textContent = `${checked.length} Meses`;
-            }
-        }
-
-        function getSelectedMonths() {
-            const checks = document.querySelectorAll('.month-chk-2');
-            return Array.from(checks).filter(c => c.checked).map(c => parseInt(c.value, 10));
+            if (checked.length === checks.length) label.textContent = "Todos os Meses";
+            else if (checked.length === 1) label.textContent = "1 Mês";
+            else if (checked.length === 0) label.textContent = "Nenhum";
+            else label.textContent = `${checked.length} Meses`;
         }
 
         function updateWellLabel(tab) {
             const checks = document.querySelectorAll(`.well-chk-${tab}`);
             const checked = Array.from(checks).filter(c => c.checked);
             const label = document.getElementById(`labelTab${tab}`);
+            const masterBtn = document.getElementById(`selectAllWellsTab${tab}`);
+            if (masterBtn) masterBtn.checked = (checked.length === checks.length && checks.length > 0);
+            if (!label) return;
             
-            if (checked.length === checks.length) {
-                label.textContent = "Todos os Poços";
-            } else if (checked.length === 1) {
-                label.textContent = "1 Poço Selecionado";
-            } else if (checked.length === 0) {
-                label.textContent = "Nenhum Selecionado";
-            } else {
-                label.textContent = `${checked.length} Poços`;
-            }
+            if (checked.length === checks.length) label.textContent = "Todos os Poços";
+            else if (checked.length === 1) label.textContent = "1 Poço";
+            else if (checked.length === 0) label.textContent = "Nenhum";
+            else label.textContent = `${checked.length} Poços`;
         }
 
         function getSelectedWells(tab) {
-            const checks = document.querySelectorAll(`.well-chk-${tab}`);
-            return Array.from(checks).filter(c => c.checked).map(c => c.value);
+            return Array.from(document.querySelectorAll(`.well-chk-${tab}`)).filter(c => c.checked).map(c => c.value);
+        }
+        function getSelectedMonths(tab) {
+            return Array.from(document.querySelectorAll(`.month-chk-${tab}`)).filter(c => c.checked).map(c => parseInt(c.value, 10));
         }
 
         function resetFiltersTab1() {
-            document.querySelectorAll('.well-chk-1').forEach(c => c.checked = true);
-            updateWellLabel(1);
+            document.querySelectorAll('.well-chk-1').forEach(c => c.checked = true); updateWellLabel(1);
+            document.querySelectorAll('.month-chk-1').forEach(c => c.checked = true); updateMonthLabel(1);
             document.getElementById('filterStartDateTab1').value = '';
             document.getElementById('filterEndDateTab1').value = '';
             applyFiltersTab1();
         }
-
         function resetFiltersTab2() {
-            document.querySelectorAll('.well-chk-2').forEach(c => c.checked = true);
-            updateWellLabel(2);
-            document.querySelectorAll('.month-chk-2').forEach(c => c.checked = true);
-            updateMonthLabel();
+            document.querySelectorAll('.well-chk-2').forEach(c => c.checked = true); updateWellLabel(2);
+            document.querySelectorAll('.month-chk-2').forEach(c => c.checked = true); updateMonthLabel(2);
             applyFiltersTab2();
+        }
+        function resetFiltersTab3() {
+            document.querySelectorAll('.well-chk-3').forEach(c => c.checked = true); updateWellLabel(3);
+            document.querySelectorAll('.month-chk-3').forEach(c => c.checked = true); updateMonthLabel(3);
+            applyFiltersTab3();
         }
 
         function applyFiltersTab1() {
             if (!globalRawData.length) return;
-            const selectedWells = getSelectedWells(1);
-            const startDateVal = document.getElementById('filterStartDateTab1').value;
-            const endDateVal = document.getElementById('filterEndDateTab1').value;
+            const wells = getSelectedWells(1);
+            const months = getSelectedMonths(1);
+            const start = document.getElementById('filterStartDateTab1').value;
+            const end = document.getElementById('filterEndDateTab1').value;
 
-            let filtered = [...globalRawData];
+            let filtered = globalRawData.filter(d => wells.includes(d.Poco) && months.includes(d.MesNumero));
+            if (start) { const s = new Date(start+'T00:00:00'); filtered = filtered.filter(d => d.DataObj >= s); }
+            if (end) { const e = new Date(end+'T23:59:59'); filtered = filtered.filter(d => d.DataObj <= e); }
 
-            if (selectedWells.length > 0) {
-                filtered = filtered.filter(d => selectedWells.includes(d.Poco));
-            } else {
-                filtered = []; // Se nada for selecionado, limpa os dados
-            }
-
-            if (startDateVal || endDateVal) {
-                if (startDateVal) {
-                    const start = new Date(startDateVal + 'T00:00:00');
-                    filtered = filtered.filter(d => d.DataObj >= start);
-                }
-                if (endDateVal) {
-                    const end = new Date(endDateVal + 'T23:59:59');
-                    filtered = filtered.filter(d => d.DataObj <= end);
-                }
-            }
-
-            renderTab1(filtered);
             updateKPIs(filtered);
+            renderTab1(filtered);
         }
 
         function applyFiltersTab2() {
             if (!globalRawData.length) return;
-            const selectedWells = getSelectedWells(2);
-            const selectedMonths = getSelectedMonths();
-
-            let filtered = [...globalRawData];
-            
-            if (selectedWells.length > 0) {
-                filtered = filtered.filter(d => selectedWells.includes(d.Poco));
-            } else {
-                filtered = []; // Se nada for selecionado, limpa os dados
-            }
-
-            if (selectedMonths.length > 0) {
-                filtered = filtered.filter(d => selectedMonths.includes(d.MesNumero));
-            } else {
-                filtered = [];
-            }
-            
+            const wells = getSelectedWells(2);
+            const months = getSelectedMonths(2);
+            let filtered = globalRawData.filter(d => wells.includes(d.Poco) && months.includes(d.MesNumero));
             renderTab2(filtered);
+        }
+
+        function applyFiltersTab3() {
+            if (!globalRawData.length) return;
+            const wells = getSelectedWells(3);
+            const months = getSelectedMonths(3);
+            let filtered = globalRawData.filter(d => wells.includes(d.Poco) && months.includes(d.MesNumero));
+            renderTab3Table(filtered);
         }
 
         function updateKPIs(data) {
@@ -720,240 +817,82 @@
                 document.getElementById('kpiAvgFlow').textContent = "0 L/h";
                 return;
             }
-
-            let totalVolume = 0;
-            let wellsSet = new Set();
-            
-            // Variáveis para a vazão média geral corrigida
-            let sumVazaoGeral = 0;
-            let countVazaoGeral = 0;
+            let totalVolume = 0; let wellsSet = new Set();
+            let sumVazaoGeral = 0; let countVazaoGeral = 0;
 
             data.forEach(d => {
-                totalVolume += d.Volume;
-                wellsSet.add(d.Poco);
-                
-                if (d.Vazao > 0) {
-                    sumVazaoGeral += d.Vazao;
-                    countVazaoGeral++;
-                }
+                totalVolume += d.Volume; wellsSet.add(d.Poco);
+                if (d.Vazao > 0) { sumVazaoGeral += d.Vazao; countVazaoGeral++; }
             });
 
             let generalAvgFlow = countVazaoGeral > 0 ? (sumVazaoGeral / countVazaoGeral) : 0;
-
             document.getElementById('kpiTotalWells').textContent = wellsSet.size;
-            document.getElementById('kpiTotalVolume').textContent = totalVolume.toLocaleString('pt-BR', { maximumFractionDigits: 2 }) + ' L';
-            document.getElementById('kpiAvgFlow').textContent = generalAvgFlow.toLocaleString('pt-BR', { maximumFractionDigits: 2 }) + ' L/h';
+            document.getElementById('kpiTotalVolume').textContent = totalVolume.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' L';
+            document.getElementById('kpiAvgFlow').textContent = generalAvgFlow.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' L/h';
         }
 
         function renderTab1(data) {
-            const wellsSet = new Set(data.map(d => d.Poco));
-            const wellsArray = Array.from(wellsSet).sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
+            const wellsArray = Array.from(new Set(data.map(d => d.Poco))).sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
 
-            /* ==========================================================
-               1. Gráfico Semanal (Exigência: "Semana 29 poço:01 deu a media...")
-               ========================================================== */
+            // Gráfico 1: Semanal
             const weeklyMap = {};
             data.forEach(d => {
-                let weekLabel = `S. ${String(d.SemanaNum).padStart(2, '0')}`;
-                if (!weeklyMap[weekLabel]) weeklyMap[weekLabel] = {};
-                if (!weeklyMap[weekLabel][d.Poco]) weeklyMap[weekLabel][d.Poco] = { sum: 0, count: 0 };
-                if (d.Vazao > 0) {
-                    weeklyMap[weekLabel][d.Poco].sum += d.Vazao;
-                    weeklyMap[weekLabel][d.Poco].count += 1;
-                }
+                let w = `S. ${String(d.SemanaNum).padStart(2, '0')}`;
+                if (!weeklyMap[w]) weeklyMap[w] = {};
+                if (!weeklyMap[w][d.Poco]) weeklyMap[w][d.Poco] = { sum: 0, count: 0 };
+                if (d.Vazao > 0) { weeklyMap[w][d.Poco].sum += d.Vazao; weeklyMap[w][d.Poco].count++; }
             });
-
-            const weeksArray = Object.keys(weeklyMap).sort(); // Sort alfanumérico correto devido ao padStart
-
-            const weeklyDatasets = wellsArray.map((well, idx) => ({
-                type: 'bar',
-                label: well,
-                data: weeksArray.map(w => {
-                    let wd = weeklyMap[w][well];
-                    return (wd && wd.count > 0) ? (wd.sum / wd.count) : null;
-                }),
-                backgroundColor: vibrantColors[idx % vibrantColors.length],
-                borderRadius: 6,
-                maxBarThickness: 45
+            const weeksArray = Object.keys(weeklyMap).sort();
+            const wDatasets = wellsArray.map((well, idx) => ({
+                type: 'bar', label: well,
+                data: weeksArray.map(w => (weeklyMap[w][well] && weeklyMap[w][well].count > 0) ? (weeklyMap[w][well].sum / weeklyMap[w][well].count) : null),
+                backgroundColor: vibrantColors[idx % vibrantColors.length], borderRadius: 6
             }));
+            renderChart('weeklyFlowChart', 'weeklyFlow', 'bar', { labels: weeksArray, datasets: wDatasets }, getStandardChartOptions('Vazão Média Semanal (L/h)'));
 
-            // Custom tooltip e labels para Gráfico 1
-            const weeklyOptions = getStandardChartOptions('Vazão Média (L/h)');
-            weeklyOptions.plugins.tooltip = {
-                callbacks: {
-                    title: (ctx) => `${ctx[0].label}`, // Ex: S. 29
-                    label: (ctx) => `${ctx.dataset.label} deu a média de ${ctx.parsed.y.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} L/h`
-                }
-            };
-            
-            renderChart('weeklyFlowChart', 'weeklyFlow', 'bar', {
-                labels: weeksArray,
-                datasets: weeklyDatasets
-            }, weeklyOptions);
-
-            /* ==========================================================
-               2. Gráfico Mensal (Exigência: meses embaixo, vazão média total e por poço)
-               ========================================================== */
-            const monthlyMap = {};
+            // Gráfico 2: Diário
+            const datesArray = Array.from(new Set(data.map(d => d.DataFormatted)));
+            const dMap = {};
             data.forEach(d => {
-                let sortKey = `${d.Ano}-${String(d.MesNumero + 1).padStart(2, '0')}`;
-                let label = monthNames[d.MesNumero]; // Nome do mês embaixo
-                
-                if (!monthlyMap[sortKey]) monthlyMap[sortKey] = { label: label, geral: {sum: 0, count: 0}, wells: {} };
-                if (!monthlyMap[sortKey].wells[d.Poco]) monthlyMap[sortKey].wells[d.Poco] = { sum: 0, count: 0 };
-                
+                if (!dMap[d.DataFormatted]) dMap[d.DataFormatted] = { geral: {sum: 0, count: 0}, wells: {} };
+                if (!dMap[d.DataFormatted].wells[d.Poco]) dMap[d.DataFormatted].wells[d.Poco] = { sum: 0, count: 0 };
                 if (d.Vazao > 0) {
-                    monthlyMap[sortKey].wells[d.Poco].sum += d.Vazao;
-                    monthlyMap[sortKey].wells[d.Poco].count += 1;
-                    
-                    // Somatório para a média geral do mês
-                    monthlyMap[sortKey].geral.sum += d.Vazao;
-                    monthlyMap[sortKey].geral.count += 1;
+                    dMap[d.DataFormatted].wells[d.Poco].sum += d.Vazao; dMap[d.DataFormatted].wells[d.Poco].count++;
+                    dMap[d.DataFormatted].geral.sum += d.Vazao; dMap[d.DataFormatted].geral.count++;
                 }
             });
-
-            const sortedMonthKeys = Object.keys(monthlyMap).sort();
-            const monthsLabels = sortedMonthKeys.map(k => monthlyMap[k].label); // Nomes dos meses p/ o eixo X
-
-            const monthlyDatasets = wellsArray.map((well, idx) => ({
-                type: 'bar',
-                label: well,
-                data: sortedMonthKeys.map(k => {
-                    let wd = monthlyMap[k].wells[well];
-                    return (wd && wd.count > 0) ? (wd.sum / wd.count) : null;
-                }),
-                backgroundColor: vibrantColors[idx % vibrantColors.length],
-                borderRadius: 6,
-                maxBarThickness: 45
+            const dDatasets = wellsArray.map((well, idx) => ({
+                type: 'bar', label: well,
+                data: datesArray.map(dt => (dMap[dt].wells[well] && dMap[dt].wells[well].count > 0) ? (dMap[dt].wells[well].sum / dMap[dt].wells[well].count) : null),
+                backgroundColor: vibrantColors[idx % vibrantColors.length], borderRadius: 4
             }));
-            
-            // Adicionar Dataset de Média Geral (Linha)
-            monthlyDatasets.push({
-                type: 'line',
-                label: 'Média Geral do Mês (Todos)',
-                data: sortedMonthKeys.map(k => {
-                    let mg = monthlyMap[k].geral;
-                    return (mg && mg.count > 0) ? (mg.sum / mg.count) : null;
-                }),
-                borderColor: '#0f172a',
-                backgroundColor: '#0f172a',
-                borderWidth: 3,
-                tension: 0.3,
-                pointRadius: 6,
-                datalabels: {
-                    backgroundColor: '#0f172a',
-                    color: '#ffffff',
-                    borderRadius: 4,
-                    padding: 4,
-                    font: { weight: 'bold', size: 10 }
-                }
+            dDatasets.push({
+                type: 'line', label: 'Média Geral do Dia',
+                data: datesArray.map(dt => (dMap[dt].geral.count > 0) ? (dMap[dt].geral.sum / dMap[dt].geral.count) : null),
+                borderColor: '#ef4444', backgroundColor: '#ef4444', borderWidth: 2, tension: 0.2,
+                datalabels: { display: false }
             });
-
-            renderChart('monthlyAvgFlowChart', 'monthlyAvgFlow', 'bar', {
-                labels: monthsLabels,
-                datasets: monthlyDatasets
-            }, getStandardChartOptions('Vazão Média (L/h)'));
-
-
-            /* ==========================================================
-               3. Gráfico Diário com Média Geral
-               ========================================================== */
-            const datesSet = new Set(data.map(d => d.DataFormatted));
-            const datesArray = Array.from(datesSet); 
-
-            const dailyDataMap = {};
-            data.forEach(d => {
-                if (!dailyDataMap[d.DataFormatted]) dailyDataMap[d.DataFormatted] = { geral: {sum: 0, count: 0}, wells: {} };
-                if (!dailyDataMap[d.DataFormatted].wells[d.Poco]) dailyDataMap[d.DataFormatted].wells[d.Poco] = { sum: 0, count: 0 };
-                
-                if (d.Vazao > 0) {
-                    dailyDataMap[d.DataFormatted].wells[d.Poco].sum += d.Vazao;
-                    dailyDataMap[d.DataFormatted].wells[d.Poco].count += 1;
-                    
-                    // Somatório para a média geral do dia
-                    dailyDataMap[d.DataFormatted].geral.sum += d.Vazao;
-                    dailyDataMap[d.DataFormatted].geral.count += 1;
-                }
-            });
-
-            const dailyFlowDatasets = wellsArray.map((well, idx) => ({
-                type: 'bar',
-                label: well,
-                data: datesArray.map(dateStr => {
-                    let wd = dailyDataMap[dateStr].wells[well];
-                    return (wd && wd.count > 0) ? (wd.sum / wd.count) : null;
-                }),
-                backgroundColor: vibrantColors[idx % vibrantColors.length],
-                borderRadius: 4,
-                maxBarThickness: 25
-            }));
-            
-            // Adicionar Dataset de Média Geral (Linha) no diário também
-            dailyFlowDatasets.push({
-                type: 'line',
-                label: 'Média Geral do Dia',
-                data: datesArray.map(dateStr => {
-                    let dg = dailyDataMap[dateStr].geral;
-                    return (dg && dg.count > 0) ? (dg.sum / dg.count) : null;
-                }),
-                borderColor: '#ef4444', // Vermelho para destacar no diário
-                backgroundColor: '#ef4444',
-                borderWidth: 2,
-                tension: 0.2,
-                pointRadius: 4,
-                datalabels: {
-                    display: false // Esconde datalabels na linha do dia pra não poluir
-                }
-            });
-
-            renderChart('dailyFlowChart', 'dailyFlow', 'bar', {
-                labels: datesArray,
-                datasets: dailyFlowDatasets
-            }, getStandardChartOptions('Vazão Média (L/h)'));
+            renderChart('dailyFlowChart', 'dailyFlow', 'bar', { labels: datesArray, datasets: dDatasets }, getStandardChartOptions('Vazão Média Diária (L/h)'));
         }
 
-        // Função utilitária para manter o padrão visual
         function getStandardChartOptions(yTitle) {
             return {
-                responsive: true,
-                maintainAspectRatio: false,
-                layout: { padding: { top: 40 } }, 
+                responsive: true, maintainAspectRatio: false, layout: { padding: { top: 40 } }, 
                 plugins: {
                     legend: { position: 'top' },
                     datalabels: {
-                        display: function(context) { 
-                            // Mostrar rótulo apenas se existir valor, evitando poluição
-                            if (context.dataset.type === 'line' && context.dataset.datalabels?.display === false) return false;
-                            return context.dataset.data[context.dataIndex] > 0; 
+                        display: (ctx) => {
+                            if(ctx.dataset.datalabels?.display === false) return false;
+                            return ctx.dataset.data[ctx.dataIndex] > 0;
                         },
-                        anchor: 'end',
-                        align: 'top',
-                        rotation: 0, // Garante que fica na horizontal
-                        formatter: (val) => val ? val.toLocaleString('pt-BR', { maximumFractionDigits: 2 }) : '',
-                        font: { weight: 'bold', size: 10 },
-                        color: (ctx) => ctx.dataset.type === 'line' ? '#ffffff' : '#334155',
-                        offset: 4,
-                        clip: false
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} L/h`
-                        }
+                        anchor: 'end', align: 'top', 
+                        formatter: (val) => val ? val.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 2 }) : '',
+                        font: { weight: 'bold', size: 10 }, color: (ctx) => ctx.dataset.type === 'line' ? '#ffffff' : '#334155'
                     }
                 },
                 scales: {
-                    y: { 
-                        beginAtZero: true, 
-                        title: { display: true, text: yTitle, font: { weight: 'bold' } },
-                        grid: { color: '#f1f5f9' },
-                        suggestedMax: function(context) {
-                            let maxVal = 0;
-                            context.chart.data.datasets.forEach(d => {
-                                let m = Math.max(...d.data.filter(n => n !== null));
-                                if (m > maxVal) maxVal = m;
-                            });
-                            return maxVal * 1.15; // 15% de margem no topo
-                        }
+                    y: { beginAtZero: true, title: { display: true, text: yTitle, font: { weight: 'bold' } }, grid: { color: '#f1f5f9' },
+                         suggestedMax: (ctx) => { let m = 0; ctx.chart.data.datasets.forEach(d => { let max = Math.max(...d.data.filter(n => n)); if(max>m) m=max; }); return m*1.2; }
                     },
                     x: { grid: { display: false } }
                 }
@@ -961,281 +900,168 @@
         }
 
         function renderTab2(data) {
-            const wellsSet = new Set(data.map(d => d.Poco));
-            const wellsArray = Array.from(wellsSet).sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
-
+            const wellsArray = Array.from(new Set(data.map(d => d.Poco))).sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
             const monthlyData = {};
-            data.forEach(d => {
-                let monthKey = `${d.Ano}-${String(d.MesNumero + 1).padStart(2, '0')}`;
-                let displayLabel = `${monthNames[d.MesNumero]} ${d.Ano}`;
-                
-                if (!monthlyData[monthKey]) monthlyData[monthKey] = { label: displayLabel, geral: { vazaoSum: 0, count: 0 }, wells: {} };
-                if (!monthlyData[monthKey].wells[d.Poco]) monthlyData[monthKey].wells[d.Poco] = { volume: 0, vazaoSum: 0, count: 0 };
-                
-                monthlyData[monthKey].wells[d.Poco].volume += d.Volume;
-                if (d.Vazao > 0) {
-                    monthlyData[monthKey].wells[d.Poco].vazaoSum += d.Vazao;
-                    monthlyData[monthKey].wells[d.Poco].count += 1;
-                    
-                    monthlyData[monthKey].geral.vazaoSum += d.Vazao;
-                    monthlyData[monthKey].geral.count += 1;
-                }
-            });
-
-            const sortedMonthKeys = Object.keys(monthlyData).sort();
-            const monthsLabels = sortedMonthKeys.map(k => monthlyData[k].label);
-
-            const monthlyVolumeDatasets = wellsArray.map((well, idx) => {
-                return {
-                    label: well,
-                    data: sortedMonthKeys.map(k => {
-                        let wd = monthlyData[k].wells[well];
-                        // Mostrando soma da vazão total ao invés do volume
-                        return wd ? wd.vazaoSum : 0;
-                    }),
-                    backgroundColor: vibrantColors[idx % vibrantColors.length],
-                    borderRadius: 6
-                };
-            });
-
-            renderChart('monthlyVolumeChart', 'monthlyVolume', 'bar', {
-                labels: monthsLabels,
-                datasets: monthlyVolumeDatasets
-            }, {
-                responsive: true,
-                maintainAspectRatio: false,
-                layout: { padding: { top: 30 } },
-                plugins: {
-                    legend: { position: 'top' },
-                    datalabels: {
-                        display: (ctx) => ctx.dataset.data[ctx.dataIndex] > 0,
-                        anchor: 'end',
-                        align: 'top',
-                        rotation: 0,
-                        formatter: (val) => val ? val.toLocaleString('pt-BR', { maximumFractionDigits: 2 }) : '',
-                        font: { weight: 'bold', size: 10 },
-                        color: '#475569',
-                        clip: false
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: (ctx) => `${ctx.dataset.label}: ${ctx.raw.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} L/h`
-                        }
-                    }
-                },
-                scales: {
-                    y: { 
-                        title: { display: true, text: 'Soma da Vazão Total (L/h)', font: { weight: 'bold' } },
-                        grid: { color: '#f1f5f9' },
-                        suggestedMax: function(context) {
-                            let maxVal = 0;
-                            context.chart.data.datasets.forEach(d => {
-                                let m = Math.max(...d.data.filter(n => n !== null));
-                                if (m > maxVal) maxVal = m;
-                            });
-                            return maxVal * 1.15;
-                        }
-                    },
-                    x: { grid: { display: false } }
-                }
-            });
-
-            const trendDatasets = wellsArray.map((well, idx) => {
-                return {
-                    type: 'line',
-                    label: well,
-                    data: sortedMonthKeys.map(k => {
-                        let wd = monthlyData[k].wells[well];
-                        return (wd && wd.count > 0) ? (wd.vazaoSum / wd.count) : null;
-                    }),
-                    borderColor: vibrantColors[idx % vibrantColors.length],
-                    backgroundColor: vibrantColors[idx % vibrantColors.length],
-                    borderWidth: 4,
-                    tension: 0.3, // Ondulada suave
-                    pointRadius: 6,
-                    pointHoverRadius: 9,
-                    pointBackgroundColor: '#ffffff'
-                };
-            });
             
-            // Adicionando a Linha de Média Geral por Mês no Gráfico de Tendência
-            trendDatasets.push({
-                type: 'line',
-                label: 'Média Geral (Todos os Poços)',
-                data: sortedMonthKeys.map(k => {
-                    let mg = monthlyData[k].geral;
-                    return (mg && mg.count > 0) ? (mg.vazaoSum / mg.count) : null;
-                }),
-                borderColor: '#0f172a',
-                backgroundColor: '#0f172a',
-                borderWidth: 4,
-                borderDash: [6, 6],
-                tension: 0.3,
-                pointRadius: 7,
-                pointBackgroundColor: '#ffffff'
+            data.forEach(d => {
+                let mKey = `${d.Ano}-${String(d.MesNumero + 1).padStart(2, '0')}`;
+                if (!monthlyData[mKey]) monthlyData[mKey] = { label: `${monthNames[d.MesNumero]} ${d.Ano}`, geral: { sum: 0, count: 0 }, wells: {} };
+                if (!monthlyData[mKey].wells[d.Poco]) monthlyData[mKey].wells[d.Poco] = { vazaoSum: 0, volumeSum: 0, count: 0 };
+                
+                if (d.Vazao > 0) {
+                    monthlyData[mKey].wells[d.Poco].vazaoSum += d.Vazao;
+                    monthlyData[mKey].wells[d.Poco].count += 1;
+                    monthlyData[mKey].geral.sum += d.Vazao;
+                    monthlyData[mKey].geral.count += 1;
+                }
+                monthlyData[mKey].wells[d.Poco].volumeSum += d.Volume;
             });
 
-            renderChart('trendChart', 'trend', 'line', {
-                labels: monthsLabels,
-                datasets: trendDatasets
-            }, {
-                responsive: true,
-                maintainAspectRatio: false,
-                layout: { padding: { top: 60, bottom: 20 } }, // Aumentado para afastar labels
+            const mKeys = Object.keys(monthlyData).sort();
+            const mLabels = mKeys.map(k => monthlyData[k].label);
+
+            // 2.1 Volume Total Mensal por Poço (Usando os dados da coluna Volume)
+            const volDatasets = wellsArray.map((well, idx) => ({
+                label: well, backgroundColor: vibrantColors[idx % vibrantColors.length], borderRadius: 6,
+                data: mKeys.map(k => monthlyData[k].wells[well] ? monthlyData[k].wells[well].volumeSum : 0)
+            }));
+            renderChart('monthlyVolumeChart', 'monthlyVolume', 'bar', { labels: mLabels, datasets: volDatasets }, getStandardChartOptions('Volume Total (L)'));
+
+            // 2.2 Gráfico de Tendência da Vazão Média
+            const trendDatasets = wellsArray.map((well, idx) => ({
+                type: 'line', label: well,
+                data: mKeys.map(k => {
+                    let wd = monthlyData[k].wells[well];
+                    return (wd && wd.count > 0) ? (wd.vazaoSum / wd.count) : null;
+                }),
+                borderColor: vibrantColors[idx % vibrantColors.length], 
+                backgroundColor: vibrantColors[idx % vibrantColors.length],
+                borderWidth: 3.5, 
+                tension: 0.25, 
+                pointRadius: 6, 
+                pointHoverRadius: 8,
+                pointBackgroundColor: '#fff'
+            }));
+
+            trendDatasets.push({
+                type: 'line', label: 'Média Geral do Mês',
+                data: mKeys.map(k => (monthlyData[k].geral.count > 0) ? (monthlyData[k].geral.sum / monthlyData[k].geral.count) : null),
+                borderColor: '#0f172a', backgroundColor: '#0f172a', borderWidth: 4, borderDash: [6, 6], tension: 0.25, pointRadius: 7, pointBackgroundColor: '#fff'
+            });
+
+            renderChart('trendChart', 'trend', 'line', { labels: mLabels, datasets: trendDatasets }, {
+                responsive: true, 
+                maintainAspectRatio: false, 
+                layout: { padding: { top: 75, bottom: 40 } },
                 plugins: {
                     legend: { position: 'top' },
                     datalabels: {
-                        display: function(context) {
-                            return context.dataset.data[context.dataIndex] !== null;
-                        },
-                        align: 'top',
-                        anchor: 'end',
+                        display: (ctx) => ctx.dataset.data[ctx.dataIndex] !== null,
+                        align: (ctx) => (ctx.datasetIndex % 2 === 0) ? 'top' : 'bottom',
+                        anchor: (ctx) => (ctx.datasetIndex % 2 === 0) ? 'end' : 'start',
+                        offset: 6,
                         formatter: (val, ctx) => {
                             if (val === null) return '';
-                            const dataset = ctx.dataset.data;
-                            const index = ctx.dataIndex;
+                            const ds = ctx.dataset.data;
+                            let prev = null;
+                            for (let i = ctx.dataIndex - 1; i >= 0; i--) { if (ds[i] !== null) { prev = ds[i]; break; } }
                             
-                            let prevVal = null;
-                            for (let i = index - 1; i >= 0; i--) {
-                                if (dataset[i] !== null) {
-                                    prevVal = dataset[i];
-                                    break;
-                                }
-                            }
+                            let vStr = val.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 2 }); 
+                            if (prev === null) return vStr;
                             
-                            let valStr = val.toLocaleString('pt-BR', { maximumFractionDigits: 0 }); // Exibe o valor do mês
+                            let diff = val - prev;
+                            let dStr = Math.abs(diff).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
                             
-                            if (prevVal === null) return valStr; // Primeiro registro
-                            
-                            let diff = val - prevVal;
-                            let diffFormatted = Math.abs(diff).toLocaleString('pt-BR', { maximumFractionDigits: 0 });
-                            
-                            // Retorna um array quebra o texto em duas linhas (Valor em cima, diferença embaixo)
-                            if (diff > 0) return [valStr, `(+${diffFormatted})`];
-                            if (diff < 0) return [valStr, `(-${diffFormatted})`];
-                            return [valStr, `(=)`];
-                        },
-                        color: (ctx) => {
-                            if (ctx.dataset.label.includes('Média Geral')) return '#ffffff'; // Cor branca para média geral
-                            
-                            const val = ctx.dataset.data[ctx.dataIndex];
-                            if (val === null) return '#64748b';
-                            
-                            let prevVal = null;
-                            for (let i = ctx.dataIndex - 1; i >= 0; i--) {
-                                if (ctx.dataset.data[i] !== null) {
-                                    prevVal = ctx.dataset.data[i];
-                                    break;
-                                }
-                            }
-                            
-                            if (prevVal === null) return '#334155'; // Sem diferença
-                            
-                            let diff = val - prevVal;
-                            if (diff > 0) return '#059669'; // Verde mais forte para aumento
-                            if (diff < 0) return '#dc2626'; // Vermelho mais forte para queda
-                            return '#475569'; // Cinza para mantido
-                        },
-                        font: { weight: '900', size: 11 },
-                        backgroundColor: (ctx) => {
-                             return ctx.dataset.label.includes('Média Geral') ? 'rgba(15, 23, 42, 0.9)' : 'rgba(255, 255, 255, 0.9)';
-                        },
-                        borderRadius: 4,
-                        padding: { top: 4, bottom: 4, left: 6, right: 6 },
-                        textAlign: 'center',
-                        offset: 8, // Afasta um pouco mais da linha
-                        clip: false
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: (ctx) => `${ctx.dataset.label}: ${ctx.raw.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} L/h`
-                        }
-                    }
-                },
-                scales: {
-                    y: { 
-                        title: { display: true, text: 'Vazão Média (L/h)', font: { weight: 'bold' } },
-                        grid: { color: '#f1f5f9' },
-                        suggestedMax: function(context) {
-                            let maxVal = 0;
-                            context.chart.data.datasets.forEach(d => {
-                                let m = Math.max(...d.data.filter(n => n !== null));
-                                if (m > maxVal) maxVal = m;
-                            });
-                            return maxVal * 1.15;
-                        }
-                    },
-                    x: { grid: { display: false } }
-                }
-            });
-
-            const volumePerMonth = sortedMonthKeys.map(k => {
-                return wellsArray.reduce((sum, well) => sum + (monthlyData[k].wells[well] ? monthlyData[k].wells[well].volume : 0), 0);
-            });
-
-            const totalVolumeAllMonths = volumePerMonth.reduce((a, b) => a + b, 0);
-
-            renderChart('monthPieChart', 'monthPie', 'pie', {
-                labels: monthsLabels,
-                datasets: [{
-                    data: volumePerMonth,
-                    backgroundColor: sortedMonthKeys.map((_, idx) => vibrantColors[(idx + 2) % vibrantColors.length]),
-                    borderWidth: 2,
-                    borderColor: '#ffffff'
-                }]
-            }, {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { position: 'right' },
-                    datalabels: {
-                        formatter: (value, ctx) => {
-                            if (!value) return '';
-                            let percentage = ((value * 100) / totalVolumeAllMonths).toFixed(1) + '%';
-                            return percentage;
+                            if (diff > 0) return [vStr, `↑ +${dStr}`];
+                            if (diff < 0) return [vStr, `↓ -${dStr}`];
+                            return [vStr, `= ${dStr}`];
                         },
                         color: '#ffffff',
-                        font: { weight: 'bold', size: 12 },
-                        display: function(context) {
-                            return context.dataset.data[context.dataIndex] > 0;
-                        }
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: (ctx) => {
-                                let val = ctx.raw || 0;
-                                let percentage = ((val * 100) / totalVolumeAllMonths).toFixed(1) + '%';
-                                return `${ctx.label}: ${val.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} L (${percentage})`;
-                            }
-                        }
+                        font: { weight: 'bold', size: 10 },
+                        backgroundColor: (ctx) => {
+                            if (ctx.dataset.label.includes('Geral')) return 'rgba(15, 23, 42, 0.95)';
+                            const ds = ctx.dataset.data;
+                            const val = ds[ctx.dataIndex];
+                            let prev = null;
+                            for (let i = ctx.dataIndex - 1; i >= 0; i--) { if (ds[i] !== null) { prev = ds[i]; break; } }
+                            if (prev === null) return 'rgba(51, 65, 85, 0.9)';
+                            
+                            let diff = val - prev;
+                            if (diff > 0) return 'rgba(16, 185, 129, 0.95)';
+                            if (diff < 0) return 'rgba(239, 68, 68, 0.95)';
+                            return 'rgba(100, 116, 139, 0.9)';
+                        },
+                        borderRadius: 6, 
+                        padding: { top: 3, bottom: 3, left: 6, right: 6 }
                     }
+                },
+                scales: { 
+                    y: { 
+                        title: { display: true, text: 'Média de Vazão (L/h) e Tendência', font: { weight: 'bold' } }, 
+                        grid: { color: '#f1f5f9' },
+                        suggestedMax: (ctx) => { 
+                            let m = 0; 
+                            ctx.chart.data.datasets.forEach(d => { 
+                                let max = Math.max(...d.data.filter(n => n !== null)); 
+                                if(max > m) m = max; 
+                            }); 
+                            return m * 1.35; 
+                        }
+                    }, 
+                    x: { grid: { display: false } } 
                 }
             });
         }
 
-        function renderChart(canvasId, chartKey, type, data, options) {
-            const canvasEl = document.getElementById(canvasId);
-            if (!canvasEl) return;
-            const ctx = canvasEl.getContext('2d');
-            
-            if (charts[chartKey]) {
-                charts[chartKey].destroy();
+        function renderTab3Table(data) {
+            const tbody = document.getElementById('tab3TableBody');
+            if (!tbody) return;
+
+            if (!data.length) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-400">Nenhum registro encontrado para os filtros selecionados.</td></tr>`;
+                return;
             }
 
-            charts[chartKey] = new Chart(ctx, {
-                type: type, // O Chart.js aceita "bar" como tipo principal e podemos passar "type: 'line'" nos datasets individuais para gráficos mistos
-                data: data,
-                options: {
-                    ...options,
-                    plugins: {
-                        ...options.plugins,
-                        legend: {
-                            labels: { font: { family: "'Inter', sans-serif", weight: '500' } },
-                            ...((options.plugins || {}).legend || {})
-                        }
-                    }
+            // Agrupamento detalhado por Poço e Mês com precisão total
+            const aggregated = {};
+            data.forEach(d => {
+                let key = `${d.Poco}__${d.Ano}-${String(d.MesNumero + 1).padStart(2, '0')}`;
+                if (!aggregated[key]) {
+                    aggregated[key] = {
+                        poco: d.Poco,
+                        mesLabel: `${monthNames[d.MesNumero]} ${d.Ano}`,
+                        vazaoSum: 0,
+                        vazaoCount: 0,
+                        volumeTotal: 0,
+                        registros: 0
+                    };
                 }
+                if (d.Vazao > 0) {
+                    aggregated[key].vazaoSum += d.Vazao;
+                    aggregated[key].vazaoCount++;
+                }
+                aggregated[key].volumeTotal += d.Volume;
+                aggregated[key].registros++;
             });
+
+            const rows = Object.values(aggregated).sort((a, b) => {
+                let cmp = a.poco.localeCompare(b.poco, undefined, { numeric: true });
+                return cmp !== 0 ? cmp : a.mesLabel.localeCompare(b.mesLabel);
+            });
+
+            // Exibe todos os números sem omissões nem trucamentos arbitrários
+            tbody.innerHTML = rows.map(r => {
+                let avg = r.vazaoCount > 0 ? (r.vazaoSum / r.vazaoCount) : 0;
+                return `
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="p-3 font-semibold text-slate-800">${r.poco}</td>
+                        <td class="p-3">${r.mesLabel}</td>
+                        <td class="p-3 text-right font-medium text-blue-600">${avg.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} L/h</td>
+                        <td class="p-3 text-right font-medium text-emerald-600">${r.volumeTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} L</td>
+                        <td class="p-3 text-center font-medium text-slate-700">${r.registros}</td>
+                    </tr>
+                `;
+            }).join('');
         }
     </script>
 </body>
