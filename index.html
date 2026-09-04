@@ -77,7 +77,6 @@
             border-radius: 0.75rem;
         }
 
-        /* Estilo sutil para os cards de estatística sem bordas e contornos grossos */
         .kpi-compact-card {
             background: #ffffff;
             border: 1px solid rgba(226, 232, 240, 0.8);
@@ -143,7 +142,6 @@
                     </div>
                 </div>
                 
-                <!-- Status bar sem exibições brutas ocultas -->
                 <div class="flex items-center gap-3 bg-slate-900/80 px-3.5 py-1.5 rounded-lg border border-slate-800 text-xs">
                     <div id="statusIndicator" class="font-semibold text-slate-300 flex items-center gap-2">
                         <i class="fa-solid fa-spinner fa-spin text-blue-400" id="loadingIcon"></i>
@@ -172,12 +170,13 @@
                     <button onclick="switchTab('comparacao')" id="tab-comparacao" class="tab-btn tab-inactive flex items-center gap-2">
                         <i class="fa-solid fa-table text-sm"></i> 3. Dados Tabulares
                     </button>
+                    <button onclick="switchTab('entrada')" id="tab-entrada" class="tab-btn tab-inactive flex items-center gap-2">
+                        <i class="fa-solid fa-faucet text-sm"></i> 4. Entrada e Saída
+                    </button>
                 </nav>
             </div>
 
             <div id="content-diario" class="space-y-6">
-                
-                <!-- Três Campos Gerais na Aba 01 (Sutis, limpos e sem bordas grossas) -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div class="kpi-compact-card flex items-center gap-3.5">
                         <div class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
@@ -273,14 +272,12 @@
                 </div>
 
                 <div class="glass-card p-5">
-                    <h3 class="text-base font-bold text-slate-800">Vazão Média Diária exata</h3>
+                    <h3 class="text-base font-bold text-slate-800">Vazão Média Diária Exata</h3>
                     <div class="chart-scroll-wrapper mt-3"><div class="chart-container"><canvas id="dailyFlowChart"></canvas></div></div>
                 </div>
             </div>
 
             <div id="content-mensal" class="hidden space-y-6">
-                
-                <!-- Três Campos Gerais com base nos gráficos da Aba 02 -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div class="kpi-compact-card flex items-center gap-3.5">
                         <div class="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
@@ -379,8 +376,6 @@
             </div>
 
             <div id="content-comparacao" class="hidden space-y-6">
-                
-                <!-- Três Campos Gerais na Aba 03 com base nas informações tabulares -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div class="kpi-compact-card flex items-center gap-3.5">
                         <div class="w-10 h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
@@ -466,7 +461,6 @@
                             <i class="fa-solid fa-table-list text-orange-500"></i> Resumo Tabular dos Dados
                         </h3>
                     </div>
-                    <!-- Tabela ajustada para que NENHUM número fique oculto ou cortado -->
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse text-sm">
                             <thead>
@@ -483,6 +477,91 @@
                             </tbody>
                         </table>
                     </div>
+                </div>
+            </div>
+
+            <div id="content-entrada" class="hidden space-y-6">
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="kpi-compact-card flex items-center gap-3.5">
+                        <div class="w-10 h-10 rounded-lg bg-cyan-50 text-cyan-600 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-faucet text-lg"></i>
+                        </div>
+                        <div>
+                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Volume Total Jorado</p>
+                            <h3 id="kpi4_totalVol" class="text-xl font-bold text-slate-800">-- L</h3>
+                        </div>
+                    </div>
+
+                    <div class="kpi-compact-card flex items-center gap-3.5">
+                        <div class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-clock text-lg"></i>
+                        </div>
+                        <div>
+                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Média Horas Ligadas</p>
+                            <h3 id="kpi4_avgHours" class="text-xl font-bold text-slate-800">-- h/dia</h3>
+                        </div>
+                    </div>
+
+                    <div class="kpi-compact-card flex items-center gap-3.5">
+                        <div class="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-chart-line text-lg"></i>
+                        </div>
+                        <div>
+                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Pico de Volume em 1 Dia</p>
+                            <h3 id="kpi4_maxPeak" class="text-xl font-bold text-slate-800">--</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card p-4 bg-slate-50/80 border-slate-200">
+                    <div class="flex flex-wrap items-center justify-between gap-4">
+                        <div class="flex items-center gap-2 text-slate-700 font-bold text-xs uppercase tracking-wide">
+                            <i class="fa-solid fa-filter text-sky-600"></i> Filtros da Aba 4:
+                        </div>
+                        <div class="flex flex-wrap items-center gap-3">
+                            <div class="relative">
+                                <label class="block text-[11px] font-semibold text-slate-500 mb-0.5">Poços</label>
+                                <button type="button" onclick="toggleDropdown('dropdownTab4')" class="bg-white border border-slate-300 rounded-lg text-xs px-3 py-1.5 shadow-sm w-44 flex justify-between items-center">
+                                    <span id="labelTab4">Todos os Poços</span>
+                                    <i class="fa-solid fa-chevron-down text-slate-400 text-xs"></i>
+                                </button>
+                                <div id="dropdownTab4" class="hidden absolute z-50 mt-1 w-56 bg-white border border-slate-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+                                    <div class="p-2 border-b border-slate-200 bg-slate-50 sticky top-0 z-10">
+                                        <label class="flex items-center gap-2 px-1 py-1 hover:bg-slate-100 rounded cursor-pointer text-xs font-bold text-sky-600 transition">
+                                            <input type="checkbox" id="selectAllWellsTab4" checked onchange="toggleSelectAll(4, 'well', this)" class="w-3.5 h-3.5 text-sky-600 rounded">
+                                            Selecionar / Desmarcar Todos
+                                        </label>
+                                    </div>
+                                    <div class="p-2 flex flex-col gap-1" id="wellCheckboxesTab4"></div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-[11px] font-semibold text-slate-500 mb-0.5">Data Inicial</label>
+                                <input type="date" id="filterStartDateTab4" onchange="applyFiltersTab4()" class="bg-white border border-slate-300 rounded-lg text-xs px-2.5 py-1.5 shadow-sm">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-semibold text-slate-500 mb-0.5">Data Final</label>
+                                <input type="date" id="filterEndDateTab4" onchange="applyFiltersTab4()" class="bg-white border border-slate-300 rounded-lg text-xs px-2.5 py-1.5 shadow-sm">
+                            </div>
+                            <div class="flex items-end">
+                                <button onclick="resetFiltersTab4()" class="mt-4 bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1">
+                                    <i class="fa-solid fa-xmark"></i> Limpar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card p-5">
+                    <div class="flex justify-between items-center mb-1 flex-wrap gap-2">
+                        <div>
+                            <h3 class="text-base font-bold text-slate-800">Volume Diário Jorado por Poço (Vazão Média L/h × Período em Horas)</h3>
+                            <p class="text-xs text-slate-500">Calcula e exibe em tempo real o volume total (L) de cada poço com base na multiplicação da Média L/h pelas horas trabalhadas no dia (até 24h).</p>
+                        </div>
+                    </div>
+                    <div class="chart-scroll-wrapper mt-3"><div class="chart-container"><canvas id="entradaAguaChart"></canvas></div></div>
                 </div>
             </div>
 
@@ -509,7 +588,8 @@
             dailyFlow: null,
             weeklyFlow: null,
             monthlyVolume: null,
-            trend: null
+            trend: null,
+            entradaAgua: null
         };
 
         const vibrantColors = [
@@ -567,11 +647,12 @@
                 document.getElementById('dropdownMonthTab2')?.classList.add('hidden');
                 document.getElementById('dropdownTab3')?.classList.add('hidden');
                 document.getElementById('dropdownMonthTab3')?.classList.add('hidden');
+                document.getElementById('dropdownTab4')?.classList.add('hidden');
             }
         });
 
         function switchTab(tab) {
-            const tabs = ['diario', 'mensal', 'comparacao'];
+            const tabs = ['diario', 'mensal', 'comparacao', 'entrada'];
             tabs.forEach(t => {
                 const btn = document.getElementById(`tab-${t}`);
                 const content = document.getElementById(`content-${t}`);
@@ -593,6 +674,21 @@
                 charts[chartKey].destroy();
             }
             charts[chartKey] = new Chart(ctx, { type, data, options });
+        }
+
+        function parseHours(val) {
+            if (val === null || val === undefined || val === '') return 0;
+            let str = String(val).trim();
+            
+            // Verifica se está no formato de horário HH:MM:SS ou HH:MM (ex: 09:00:00 ou 09:30)
+            let timeMatch = str.match(/(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+            if (timeMatch) {
+                let h = parseInt(timeMatch[1], 10) || 0;
+                let m = parseInt(timeMatch[2], 10) || 0;
+                let s = timeMatch[3] ? (parseInt(timeMatch[3], 10) || 0) : 0;
+                return h + (m / 60) + (s / 3600); // Retorna horas decimais para cálculo
+            }
+            return parseBrazilianNumber(val);
         }
 
         function parseBrazilianNumber(val) {
@@ -642,7 +738,6 @@
 
         function loadGoogleSheetsData() {
             const loadingIcon = document.getElementById('loadingIcon');
-            
             loadingIcon.className = "fa-solid fa-spinner fa-spin text-blue-400";
 
             Promise.all(GOOGLE_SHEETS_URLS.map(url => fetchSingleSheet(url)))
@@ -657,8 +752,6 @@
                     if (combinedRows.length > 0) {
                         try {
                             globalRawData = cleanAndNormalizeData(combinedRows);
-                            
-                            // Ícone de sucesso discreto sem rótulos chamativos
                             loadingIcon.className = "fa-solid fa-circle-check text-emerald-400";
                             
                             populateWellSelectors();
@@ -667,6 +760,7 @@
                             applyFiltersTab1();
                             applyFiltersTab2();
                             applyFiltersTab3();
+                            applyFiltersTab4();
                         } catch (e) {
                             console.error("Erro ao processar dados:", e);
                             loadingIcon.className = "fa-solid fa-triangle-exclamation text-rose-400";
@@ -691,12 +785,17 @@
                 const wellKey = findKey(['poço', 'poco', 'well', 'nome', 'estacao', 'estação']);
                 const flowKey = findKey(['vazao media', 'vazão média', 'vazao', 'vazão', 'flow', 'media', 'média', 'l/h', 'litros/h']);
                 const volKey = findKey(['volume total', 'volume', 'vol', 'm3', 'total', 'litros']);
+                const hourKey = findKey(['periodo', 'período', 'hora', 'ligad', 'tempo', 'funcionamento', 'hr']);
 
                 const wellFormatted = formatWellName(row[wellKey]);
                 const vazaoVal = parseBrazilianNumber(row[flowKey]);
                 const volumeVal = parseBrazilianNumber(row[volKey]);
+                const horasVal = parseHours(row[hourKey]); // Lê 09:00:00 como 9.0 horas
 
-                if (wellFormatted && (vazaoVal > 0 || volumeVal > 0)) {
+                // Volume Calculado = Vazão Média L/h * Período (Horas)
+                let volCalculado = (vazaoVal > 0 && horasVal > 0) ? (vazaoVal * horasVal) : volumeVal;
+
+                if (wellFormatted && (vazaoVal > 0 || volumeVal > 0 || horasVal > 0)) {
                     let rawDateStr = row[dateKey] || '';
                     let parsedDate = parsePortugueseDate(rawDateStr);
                     if (parsedDate) {
@@ -710,7 +809,10 @@
                             Ano: parsedDate.getFullYear(),
                             Poco: wellFormatted,
                             Vazao: vazaoVal,
-                            Volume: volumeVal
+                            Volume: volumeVal > 0 ? volumeVal : volCalculado,
+                            Horas: horasVal,
+                            VolumeCalculado: volCalculado,
+                            RawPeriodo: row[hourKey] || ''
                         });
                     }
                 }
@@ -757,13 +859,14 @@
             if (tab === 1) applyFiltersTab1();
             if (tab === 2) applyFiltersTab2();
             if (tab === 3) applyFiltersTab3();
+            if (tab === 4) applyFiltersTab4();
         }
 
         function populateWellSelectors() {
             const wellsSet = new Set(globalRawData.map(d => d.Poco));
             const wellsArray = Array.from(wellsSet).sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
 
-            [1, 2, 3].forEach(tab => {
+            [1, 2, 3, 4].forEach(tab => {
                 const cont = document.getElementById(`wellCheckboxesTab${tab}`);
                 if(cont) {
                     cont.innerHTML = '';
@@ -848,6 +951,12 @@
             document.querySelectorAll('.month-chk-3').forEach(c => c.checked = true); updateMonthLabel(3);
             applyFiltersTab3();
         }
+        function resetFiltersTab4() {
+            document.querySelectorAll('.well-chk-4').forEach(c => c.checked = true); updateWellLabel(4);
+            document.getElementById('filterStartDateTab4').value = '';
+            document.getElementById('filterEndDateTab4').value = '';
+            applyFiltersTab4();
+        }
 
         function applyFiltersTab1() {
             if (!globalRawData.length) return;
@@ -882,7 +991,20 @@
             renderTab3Table(filtered);
         }
 
-        // Atualização dos 3 KPIs da Aba 01
+        function applyFiltersTab4() {
+            if (!globalRawData.length) return;
+            const wells = getSelectedWells(4);
+            const start = document.getElementById('filterStartDateTab4').value;
+            const end = document.getElementById('filterEndDateTab4').value;
+
+            let filtered = globalRawData.filter(d => wells.includes(d.Poco));
+            if (start) { const s = new Date(start+'T00:00:00'); filtered = filtered.filter(d => d.DataObj >= s); }
+            if (end) { const e = new Date(end+'T23:59:59'); filtered = filtered.filter(d => d.DataObj <= e); }
+
+            updateTab4KPIs(filtered);
+            renderTab4(filtered);
+        }
+
         function updateTab1KPIs(data) {
             if (!data.length) {
                 document.getElementById('kpi1_totalWells').textContent = "0";
@@ -894,17 +1016,16 @@
             let sumVazao = 0; let countVazao = 0;
 
             data.forEach(d => {
-                totalVolume += d.Volume; wellsSet.add(d.Poco);
+                totalVolume += d.VolumeCalculado; wellsSet.add(d.Poco);
                 if (d.Vazao > 0) { sumVazao += d.Vazao; countVazao++; }
             });
 
             let generalAvgFlow = countVazao > 0 ? (sumVazao / countVazao) : 0;
             document.getElementById('kpi1_totalWells').textContent = wellsSet.size;
-            document.getElementById('kpi1_totalVolume').textContent = totalVolume.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' L';
+            document.getElementById('kpi1_totalVolume').textContent = totalVolume.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 2 }) + ' L';
             document.getElementById('kpi1_avgFlow').textContent = generalAvgFlow.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' L/h';
         }
 
-        // Atualização dos 3 KPIs da Aba 02
         function updateTab2KPIs(data) {
             if (!data.length) {
                 document.getElementById('kpi2_avgMonthlyVol').textContent = "0 L";
@@ -913,7 +1034,6 @@
                 return;
             }
 
-            // Agrupar por Mês para extrair médias e picos
             const monthMap = {};
             let sumVazao = 0; let countVazao = 0;
             let maxVol = 0; let maxVolLabel = "N/A";
@@ -921,7 +1041,7 @@
             data.forEach(d => {
                 let mKey = `${d.Ano}-${String(d.MesNumero + 1).padStart(2, '0')}`;
                 if (!monthMap[mKey]) monthMap[mKey] = 0;
-                monthMap[mKey] += d.Volume;
+                monthMap[mKey] += d.VolumeCalculado;
 
                 if (d.Vazao > 0) {
                     sumVazao += d.Vazao;
@@ -949,7 +1069,6 @@
             document.getElementById('kpi2_avgMonthlyFlow').textContent = avgMonthlyFlow.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' L/h';
         }
 
-        // Atualização dos 3 KPIs da Aba 03
         function updateTab3KPIs(data) {
             if (!data.length) {
                 document.getElementById('kpi3_totalRecords').textContent = "0";
@@ -962,7 +1081,7 @@
             let totalVolume = 0;
 
             data.forEach(d => {
-                totalVolume += d.Volume;
+                totalVolume += d.VolumeCalculado;
                 if (d.Vazao > 0) {
                     sumVazao += d.Vazao;
                     countVazao++;
@@ -977,48 +1096,37 @@
             document.getElementById('kpi3_avgVolPerRecord').textContent = avgVolPerRec.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' L';
         }
 
-        function renderTab1(data) {
-            const wellsArray = Array.from(new Set(data.map(d => d.Poco))).sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
+        function updateTab4KPIs(data) {
+            if (!data.length) {
+                document.getElementById('kpi4_totalVol').textContent = "0 L";
+                document.getElementById('kpi4_avgHours').textContent = "0 h/dia";
+                document.getElementById('kpi4_maxPeak').textContent = "N/A";
+                return;
+            }
 
-            // Gráfico 1: Semanal
-            const weeklyMap = {};
-            data.forEach(d => {
-                let w = `S. ${String(d.SemanaNum).padStart(2, '0')}`;
-                if (!weeklyMap[w]) weeklyMap[w] = {};
-                if (!weeklyMap[w][d.Poco]) weeklyMap[w][d.Poco] = { sum: 0, count: 0 };
-                if (d.Vazao > 0) { weeklyMap[w][d.Poco].sum += d.Vazao; weeklyMap[w][d.Poco].count++; }
-            });
-            const weeksArray = Object.keys(weeklyMap).sort();
-            const wDatasets = wellsArray.map((well, idx) => ({
-                type: 'bar', label: well,
-                data: weeksArray.map(w => (weeklyMap[w][well] && weeklyMap[w][well].count > 0) ? (weeklyMap[w][well].sum / weeklyMap[w][well].count) : null),
-                backgroundColor: vibrantColors[idx % vibrantColors.length], borderRadius: 6
-            }));
-            renderChart('weeklyFlowChart', 'weeklyFlow', 'bar', { labels: weeksArray, datasets: wDatasets }, getStandardChartOptions('Vazão Média Semanal (L/h)'));
+            let totalVol = 0;
+            let totalHoras = 0;
+            let countHoras = 0;
+            let maxPeak = 0;
+            let maxPeakLabel = "N/A";
 
-            // Gráfico 2: Diário
-            const datesArray = Array.from(new Set(data.map(d => d.DataFormatted)));
-            const dMap = {};
             data.forEach(d => {
-                if (!dMap[d.DataFormatted]) dMap[d.DataFormatted] = { geral: {sum: 0, count: 0}, wells: {} };
-                if (!dMap[d.DataFormatted].wells[d.Poco]) dMap[d.DataFormatted].wells[d.Poco] = { sum: 0, count: 0 };
-                if (d.Vazao > 0) {
-                    dMap[d.DataFormatted].wells[d.Poco].sum += d.Vazao; dMap[d.DataFormatted].wells[d.Poco].count++;
-                    dMap[d.DataFormatted].geral.sum += d.Vazao; dMap[d.DataFormatted].geral.count++;
+                totalVol += d.VolumeCalculado;
+                if (d.Horas > 0) {
+                    totalHoras += d.Horas;
+                    countHoras++;
+                }
+                if (d.VolumeCalculado > maxPeak) {
+                    maxPeak = d.VolumeCalculado;
+                    maxPeakLabel = `${d.Poco} (${d.DataFormatted})`;
                 }
             });
-            const dDatasets = wellsArray.map((well, idx) => ({
-                type: 'bar', label: well,
-                data: datesArray.map(dt => (dMap[dt].wells[well] && dMap[dt].wells[well].count > 0) ? (dMap[dt].wells[well].sum / dMap[dt].wells[well].count) : null),
-                backgroundColor: vibrantColors[idx % vibrantColors.length], borderRadius: 4
-            }));
-            dDatasets.push({
-                type: 'line', label: 'Média Geral do Dia',
-                data: datesArray.map(dt => (dMap[dt].geral.count > 0) ? (dMap[dt].geral.sum / dMap[dt].geral.count) : null),
-                borderColor: '#ef4444', backgroundColor: '#ef4444', borderWidth: 2, tension: 0.2,
-                datalabels: { display: false }
-            });
-            renderChart('dailyFlowChart', 'dailyFlow', 'bar', { labels: datesArray, datasets: dDatasets }, getStandardChartOptions('Vazão Média Diária (L/h)'));
+
+            let avgHours = countHoras > 0 ? (totalHoras / countHoras) : 0;
+
+            document.getElementById('kpi4_totalVol').textContent = totalVol.toLocaleString('pt-BR', { maximumFractionDigits: 0 }) + ' L';
+            document.getElementById('kpi4_avgHours').textContent = avgHours.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' h/dia';
+            document.getElementById('kpi4_maxPeak').textContent = maxPeak > 0 ? `${maxPeak.toLocaleString('pt-BR', { maximumFractionDigits: 0 })} L (${maxPeakLabel})` : 'N/A';
         }
 
         function getStandardChartOptions(yTitle) {
@@ -1045,6 +1153,48 @@
             };
         }
 
+        function renderTab1(data) {
+            const wellsArray = Array.from(new Set(data.map(d => d.Poco))).sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
+
+            const weeklyMap = {};
+            data.forEach(d => {
+                let w = `S. ${String(d.SemanaNum).padStart(2, '0')}`;
+                if (!weeklyMap[w]) weeklyMap[w] = {};
+                if (!weeklyMap[w][d.Poco]) weeklyMap[w][d.Poco] = { sum: 0, count: 0 };
+                if (d.Vazao > 0) { weeklyMap[w][d.Poco].sum += d.Vazao; weeklyMap[w][d.Poco].count++; }
+            });
+            const weeksArray = Object.keys(weeklyMap).sort();
+            const wDatasets = wellsArray.map((well, idx) => ({
+                type: 'bar', label: well,
+                data: weeksArray.map(w => (weeklyMap[w][well] && weeklyMap[w][well].count > 0) ? (weeklyMap[w][well].sum / weeklyMap[w][well].count) : null),
+                backgroundColor: vibrantColors[idx % vibrantColors.length], borderRadius: 6
+            }));
+            renderChart('weeklyFlowChart', 'weeklyFlow', 'bar', { labels: weeksArray, datasets: wDatasets }, getStandardChartOptions('Vazão Média Semanal (L/h)'));
+
+            const datesArray = Array.from(new Set(data.map(d => d.DataFormatted)));
+            const dMap = {};
+            data.forEach(d => {
+                if (!dMap[d.DataFormatted]) dMap[d.DataFormatted] = { geral: {sum: 0, count: 0}, wells: {} };
+                if (!dMap[d.DataFormatted].wells[d.Poco]) dMap[d.DataFormatted].wells[d.Poco] = { sum: 0, count: 0 };
+                if (d.Vazao > 0) {
+                    dMap[d.DataFormatted].wells[d.Poco].sum += d.Vazao; dMap[d.DataFormatted].wells[d.Poco].count++;
+                    dMap[d.DataFormatted].geral.sum += d.Vazao; dMap[d.DataFormatted].geral.count++;
+                }
+            });
+            const dDatasets = wellsArray.map((well, idx) => ({
+                type: 'bar', label: well,
+                data: datesArray.map(dt => (dMap[dt].wells[well] && dMap[dt].wells[well].count > 0) ? (dMap[dt].wells[well].sum / dMap[dt].wells[well].count) : null),
+                backgroundColor: vibrantColors[idx % vibrantColors.length], borderRadius: 4
+            }));
+            dDatasets.push({
+                type: 'line', label: 'Média Geral do Dia',
+                data: datesArray.map(dt => (dMap[dt].geral.count > 0) ? (dMap[dt].geral.sum / dMap[dt].geral.count) : null),
+                borderColor: '#ef4444', backgroundColor: '#ef4444', borderWidth: 2, tension: 0.2,
+                datalabels: { display: false }
+            });
+            renderChart('dailyFlowChart', 'dailyFlow', 'bar', { labels: datesArray, datasets: dDatasets }, getStandardChartOptions('Vazão Média Diária (L/h)'));
+        }
+
         function renderTab2(data) {
             const wellsArray = Array.from(new Set(data.map(d => d.Poco))).sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
             const monthlyData = {};
@@ -1060,20 +1210,18 @@
                     monthlyData[mKey].geral.sum += d.Vazao;
                     monthlyData[mKey].geral.count += 1;
                 }
-                monthlyData[mKey].wells[d.Poco].volumeSum += d.Volume;
+                monthlyData[mKey].wells[d.Poco].volumeSum += d.VolumeCalculado;
             });
 
             const mKeys = Object.keys(monthlyData).sort();
             const mLabels = mKeys.map(k => monthlyData[k].label);
 
-            // 2.1 Volume Total Mensal por Poço
             const volDatasets = wellsArray.map((well, idx) => ({
                 label: well, backgroundColor: vibrantColors[idx % vibrantColors.length], borderRadius: 6,
                 data: mKeys.map(k => monthlyData[k].wells[well] ? monthlyData[k].wells[well].volumeSum : 0)
             }));
             renderChart('monthlyVolumeChart', 'monthlyVolume', 'bar', { labels: mLabels, datasets: volDatasets }, getStandardChartOptions('Volume Total (L)'));
 
-            // 2.2 Gráfico de Tendência da Vazão Média
             const trendDatasets = wellsArray.map((well, idx) => ({
                 type: 'line', label: well,
                 data: mKeys.map(k => {
@@ -1082,11 +1230,7 @@
                 }),
                 borderColor: vibrantColors[idx % vibrantColors.length], 
                 backgroundColor: vibrantColors[idx % vibrantColors.length],
-                borderWidth: 3.5, 
-                tension: 0.25, 
-                pointRadius: 6, 
-                pointHoverRadius: 8,
-                pointBackgroundColor: '#fff'
+                borderWidth: 3.5, tension: 0.25, pointRadius: 6, pointHoverRadius: 8, pointBackgroundColor: '#fff'
             }));
 
             trendDatasets.push({
@@ -1096,9 +1240,7 @@
             });
 
             renderChart('trendChart', 'trend', 'line', { labels: mLabels, datasets: trendDatasets }, {
-                responsive: true, 
-                maintainAspectRatio: false, 
-                layout: { padding: { top: 75, bottom: 40 } },
+                responsive: true, maintainAspectRatio: false, layout: { padding: { top: 75, bottom: 40 } },
                 plugins: {
                     legend: { position: 'top' },
                     datalabels: {
@@ -1108,53 +1250,34 @@
                         offset: 6,
                         formatter: (val, ctx) => {
                             if (val === null) return '';
-                            const ds = ctx.dataset.data;
-                            let prev = null;
+                            const ds = ctx.dataset.data; let prev = null;
                             for (let i = ctx.dataIndex - 1; i >= 0; i--) { if (ds[i] !== null) { prev = ds[i]; break; } }
-                            
                             let vStr = val.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 2 }); 
                             if (prev === null) return vStr;
-                            
                             let diff = val - prev;
                             let dStr = Math.abs(diff).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
-                            
                             if (diff > 0) return [vStr, `↑ +${dStr}`];
                             if (diff < 0) return [vStr, `↓ -${dStr}`];
                             return [vStr, `= ${dStr}`];
                         },
-                        color: '#ffffff',
-                        font: { weight: 'bold', size: 10 },
+                        color: '#ffffff', font: { weight: 'bold', size: 10 },
                         backgroundColor: (ctx) => {
                             if (ctx.dataset.label.includes('Geral')) return 'rgba(15, 23, 42, 0.95)';
-                            const ds = ctx.dataset.data;
-                            const val = ds[ctx.dataIndex];
-                            let prev = null;
+                            const ds = ctx.dataset.data; const val = ds[ctx.dataIndex]; let prev = null;
                             for (let i = ctx.dataIndex - 1; i >= 0; i--) { if (ds[i] !== null) { prev = ds[i]; break; } }
                             if (prev === null) return 'rgba(51, 65, 85, 0.9)';
-                            
                             let diff = val - prev;
                             if (diff > 0) return 'rgba(16, 185, 129, 0.95)';
                             if (diff < 0) return 'rgba(239, 68, 68, 0.95)';
                             return 'rgba(100, 116, 139, 0.9)';
                         },
-                        borderRadius: 6, 
-                        padding: { top: 3, bottom: 3, left: 6, right: 6 }
+                        borderRadius: 6, padding: { top: 3, bottom: 3, left: 6, right: 6 }
                     }
                 },
                 scales: { 
-                    y: { 
-                        title: { display: true, text: 'Média de Vazão (L/h) e Tendência', font: { weight: 'bold' } }, 
-                        grid: { color: '#f1f5f9' },
-                        suggestedMax: (ctx) => { 
-                            let m = 0; 
-                            ctx.chart.data.datasets.forEach(d => { 
-                                let max = Math.max(...d.data.filter(n => n !== null)); 
-                                if(max > m) m = max; 
-                            }); 
-                            return m * 1.35; 
-                        }
-                    }, 
-                    x: { grid: { display: false } } 
+                    y: { title: { display: true, text: 'Média de Vazão (L/h) e Tendência', font: { weight: 'bold' } }, grid: { color: '#f1f5f9' },
+                         suggestedMax: (ctx) => { let m = 0; ctx.chart.data.datasets.forEach(d => { let max = Math.max(...d.data.filter(n => n !== null)); if(max > m) m = max; }); return m * 1.35; }
+                    }, x: { grid: { display: false } } 
                 }
             });
         }
@@ -1162,13 +1285,11 @@
         function renderTab3Table(data) {
             const tbody = document.getElementById('tab3TableBody');
             if (!tbody) return;
-
             if (!data.length) {
                 tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-400">Nenhum registro encontrado para os filtros selecionados.</td></tr>`;
                 return;
             }
 
-            // Agrupamento detalhado por Poço e Mês com precisão e sem truncamentos
             const aggregated = {};
             data.forEach(d => {
                 let key = `${d.Poco}__${d.Ano}-${String(d.MesNumero + 1).padStart(2, '0')}`;
@@ -1178,36 +1299,113 @@
                         mesLabel: `${monthNames[d.MesNumero]} ${d.Ano}`,
                         vazaoSum: 0,
                         vazaoCount: 0,
-                        volumeTotal: 0,
-                        registros: 0
+                        volumeSum: 0,
+                        records: 0
                     };
                 }
                 if (d.Vazao > 0) {
                     aggregated[key].vazaoSum += d.Vazao;
-                    aggregated[key].vazaoCount++;
+                    aggregated[key].vazaoCount += 1;
                 }
-                aggregated[key].volumeTotal += d.Volume;
-                aggregated[key].registros++;
+                aggregated[key].volumeSum += d.VolumeCalculado;
+                aggregated[key].records += 1;
             });
 
-            const rows = Object.values(aggregated).sort((a, b) => {
-                let cmp = a.poco.localeCompare(b.poco, undefined, { numeric: true });
-                return cmp !== 0 ? cmp : a.mesLabel.localeCompare(b.mesLabel);
+            let html = '';
+            Object.values(aggregated).sort((a, b) => a.poco.localeCompare(b.poco, undefined, { numeric: true }) || a.mesLabel.localeCompare(b.mesLabel)).forEach(item => {
+                let avgFlow = item.vazaoCount > 0 ? (item.vazaoSum / item.vazaoCount) : 0;
+                html += `
+                <tr class="hover:bg-slate-50 transition border-b border-slate-100">
+                    <td class="py-3 px-4 font-semibold text-slate-800">${item.poco}</td>
+                    <td class="py-3 px-4 text-slate-600">${item.mesLabel}</td>
+                    <td class="py-3 px-4 text-right font-medium text-blue-600">${avgFlow > 0 ? avgFlow.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' L/h' : '-'}</td>
+                    <td class="py-3 px-4 text-right font-semibold text-emerald-600">${item.volumeSum.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} L</td>
+                    <td class="py-3 px-4 text-center"><span class="bg-slate-100 text-slate-700 px-2.5 py-1 rounded-full text-xs font-bold">${item.records}</span></td>
+                </tr>`;
+            });
+            tbody.innerHTML = html;
+        }
+
+        function renderTab4(data) {
+            const wellsArray = Array.from(new Set(data.map(d => d.Poco))).sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
+            
+            // Agrupa dados por Data e por Poço
+            const dMap = {};
+            data.forEach(d => {
+                if (!dMap[d.DataFormatted]) dMap[d.DataFormatted] = {};
+                if (!dMap[d.DataFormatted][d.Poco]) {
+                    dMap[d.DataFormatted][d.Poco] = {
+                        vazao: d.Vazao,
+                        horas: d.Horas,
+                        volCalculado: d.VolumeCalculado,
+                        periodo: d.RawPeriodo
+                    };
+                } else {
+                    dMap[d.DataFormatted][d.Poco].horas += d.Horas;
+                    dMap[d.DataFormatted][d.Poco].volCalculado += d.VolumeCalculado;
+                    if (d.Vazao > 0) dMap[d.DataFormatted][d.Poco].vazao = d.Vazao;
+                }
             });
 
-            // Exibição completa de todos os dígitos sem ocultar nada nem quebrar linhas incorretamente
-            tbody.innerHTML = rows.map(r => {
-                let avg = r.vazaoCount > 0 ? (r.vazaoSum / r.vazaoCount) : 0;
-                return `
-                    <tr class="hover:bg-slate-50 transition">
-                        <td class="py-3 px-4 font-semibold text-slate-800 whitespace-nowrap">${r.poco}</td>
-                        <td class="py-3 px-4 whitespace-nowrap">${r.mesLabel}</td>
-                        <td class="py-3 px-4 text-right font-medium text-blue-600 whitespace-nowrap tabular-nums">${avg.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} L/h</td>
-                        <td class="py-3 px-4 text-right font-medium text-emerald-600 whitespace-nowrap tabular-nums">${r.volumeTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} L</td>
-                        <td class="py-3 px-4 text-center font-medium text-slate-700 whitespace-nowrap tabular-nums">${r.registros}</td>
-                    </tr>
-                `;
-            }).join('');
+            const datesArray = Array.from(new Set(data.map(d => d.DataFormatted)));
+            
+            const datasets = wellsArray.map((well, idx) => ({
+                type: 'bar',
+                label: well,
+                data: datesArray.map(dt => (dMap[dt] && dMap[dt][well]) ? dMap[dt][well].volCalculado : null),
+                backgroundColor: vibrantColors[idx % vibrantColors.length],
+                borderRadius: 5
+            }));
+
+            renderChart('entradaAguaChart', 'entradaAgua', 'bar', { labels: datesArray, datasets }, {
+                responsive: true,
+                maintainAspectRatio: false,
+                layout: { padding: { top: 40 } },
+                plugins: {
+                    legend: { position: 'top' },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const dt = context.label;
+                                const well = context.dataset.label;
+                                const val = context.raw;
+                                if (val === null) return '';
+                                const info = dMap[dt] ? dMap[dt][well] : null;
+                                let lines = [`Volume Jorado: ${val.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} L`];
+                                if (info) {
+                                    if (info.vazao > 0) lines.push(`Vazão Média: ${info.vazao.toLocaleString('pt-BR')} L/h`);
+                                    if (info.horas > 0) lines.push(`Período Trabalhado: ${info.horas.toFixed(2).replace('.', ',')}h (${info.periodo || 'Ate 24h'})`);
+                                }
+                                return lines;
+                            }
+                        }
+                    },
+                    datalabels: {
+                        display: (ctx) => ctx.dataset.data[ctx.dataIndex] > 0,
+                        anchor: 'end',
+                        align: 'top',
+                        formatter: (val) => val ? `${val.toLocaleString('pt-BR', { maximumFractionDigits: 0 })} L` : '',
+                        font: { weight: 'bold', size: 10 },
+                        color: '#334155'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: { display: true, text: 'Volume Total Jorado no Dia (L) [Média L/h × Período h]', font: { weight: 'bold' } },
+                        grid: { color: '#f1f5f9' },
+                        suggestedMax: (ctx) => {
+                            let m = 0;
+                            ctx.chart.data.datasets.forEach(d => {
+                                let max = Math.max(...d.data.filter(n => n !== null));
+                                if (max > m) m = max;
+                            });
+                            return m * 1.25;
+                        }
+                    },
+                    x: { grid: { display: false } }
+                }
+            });
         }
     </script>
 </body>
