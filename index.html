@@ -557,8 +557,8 @@
                 <div class="glass-card p-5">
                     <div class="flex justify-between items-center mb-1 flex-wrap gap-2">
                         <div>
-                            <h3 class="text-base font-bold text-slate-800">Volume Diário Jorado por Poço (Vazão Média L/h × Período em Horas)</h3>
-                            <p class="text-xs text-slate-500">Calcula e exibe em tempo real o volume total (L) de cada poço com base na multiplicação da Média L/h pelas horas trabalhadas no dia (até 24h).</p>
+                            <h3 class="text-base font-bold text-slate-800">Volume Total e Horas Trabalhadas por Poço (Período Selecionado)</h3>
+                            <p class="text-xs text-slate-500">Exibe o volume total jorado (em barras) e as horas trabalhadas (no topo) de cada poço no período filtrado.</p>
                         </div>
                     </div>
                     <div class="chart-scroll-wrapper mt-3"><div class="chart-container"><canvas id="entradaAguaChart"></canvas></div></div>
@@ -1327,56 +1327,43 @@
         }
 
         function renderTab4(data) {
-            const wellsArray = Array.from(new Set(data.map(d => d.Poco))).sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
-            
-            // Agrupa dados por Data e por Poço
-            const dMap = {};
+            // Agrupa os totais de volume e horas por poço
+            const wellsMap = {};
             data.forEach(d => {
-                if (!dMap[d.DataFormatted]) dMap[d.DataFormatted] = {};
-                if (!dMap[d.DataFormatted][d.Poco]) {
-                    dMap[d.DataFormatted][d.Poco] = {
-                        vazao: d.Vazao,
-                        horas: d.Horas,
-                        volCalculado: d.VolumeCalculado,
-                        periodo: d.RawPeriodo
-                    };
-                } else {
-                    dMap[d.DataFormatted][d.Poco].horas += d.Horas;
-                    dMap[d.DataFormatted][d.Poco].volCalculado += d.VolumeCalculado;
-                    if (d.Vazao > 0) dMap[d.DataFormatted][d.Poco].vazao = d.Vazao;
+                if (!wellsMap[d.Poco]) {
+                    wellsMap[d.Poco] = { volCalculado: 0, horas: 0 };
                 }
+                wellsMap[d.Poco].volCalculado += d.VolumeCalculado;
+                wellsMap[d.Poco].horas += d.Horas;
             });
 
-            const datesArray = Array.from(new Set(data.map(d => d.DataFormatted)));
+            // Ordena os poços alfabeticamente
+            const wellsArray = Object.keys(wellsMap).sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
             
-            const datasets = wellsArray.map((well, idx) => ({
+            const datasets = [{
                 type: 'bar',
-                label: well,
-                data: datesArray.map(dt => (dMap[dt] && dMap[dt][well]) ? dMap[dt][well].volCalculado : null),
-                backgroundColor: vibrantColors[idx % vibrantColors.length],
-                borderRadius: 5
-            }));
+                label: 'Volume Total (L)',
+                data: wellsArray.map(w => wellsMap[w].volCalculado),
+                backgroundColor: '#0ea5e9',
+                borderRadius: 6
+            }];
 
-            renderChart('entradaAguaChart', 'entradaAgua', 'bar', { labels: datesArray, datasets }, {
+            renderChart('entradaAguaChart', 'entradaAgua', 'bar', { labels: wellsArray, datasets }, {
                 responsive: true,
                 maintainAspectRatio: false,
                 layout: { padding: { top: 40 } },
                 plugins: {
-                    legend: { position: 'top' },
+                    legend: { display: false },
                     tooltip: {
                         callbacks: {
                             label: function(context) {
-                                const dt = context.label;
-                                const well = context.dataset.label;
-                                const val = context.raw;
-                                if (val === null) return '';
-                                const info = dMap[dt] ? dMap[dt][well] : null;
-                                let lines = [`Volume Jorado: ${val.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} L`];
-                                if (info) {
-                                    if (info.vazao > 0) lines.push(`Vazão Média: ${info.vazao.toLocaleString('pt-BR')} L/h`);
-                                    if (info.horas > 0) lines.push(`Período Trabalhado: ${info.horas.toFixed(2).replace('.', ',')}h (${info.periodo || 'Ate 24h'})`);
-                                }
-                                return lines;
+                                const well = context.label;
+                                const vol = context.raw;
+                                const horas = wellsMap[well].horas;
+                                return [
+                                    `Volume Total: ${vol.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} L`,
+                                    `Total de Horas: ${horas.toFixed(2).replace('.', ',')}h`
+                                ];
                             }
                         }
                     },
@@ -1385,14 +1372,14 @@
                         anchor: 'end',
                         align: 'top',
                         formatter: (val) => val ? `${val.toLocaleString('pt-BR', { maximumFractionDigits: 0 })} L` : '',
-                        font: { weight: 'bold', size: 10 },
+                        font: { weight: 'bold', size: 11 },
                         color: '#334155'
                     }
                 },
                 scales: {
                     y: {
                         beginAtZero: true,
-                        title: { display: true, text: 'Volume Total Jorado no Dia (L) [Média L/h × Período h]', font: { weight: 'bold' } },
+                        title: { display: true, text: 'Volume Total Jorado (L)', font: { weight: 'bold' } },
                         grid: { color: '#f1f5f9' },
                         suggestedMax: (ctx) => {
                             let m = 0;
@@ -1403,7 +1390,27 @@
                             return m * 1.25;
                         }
                     },
-                    x: { grid: { display: false } }
+                    x: {
+                        position: 'bottom',
+                        grid: { display: false },
+                        ticks: { font: { weight: 'bold', size: 11 } }
+                    },
+                    xTop: {
+                        position: 'top',
+                        type: 'category',
+                        grid: { display: false },
+                        ticks: {
+                            callback: function(val, index) {
+                                const well = wellsArray[index];
+                                if(!wellsMap[well]) return '';
+                                const hrs = wellsMap[well].horas;
+                                return hrs > 0 ? hrs.toFixed(1).replace('.', ',') + 'h' : '0h';
+                            },
+                            font: { weight: 'bold', size: 12 },
+                            color: '#0284c7'
+                        },
+                        title: { display: true, text: 'Horas Trabalhadas no Período', font: { weight: 'bold', size: 11 }, color: '#64748b' }
+                    }
                 }
             });
         }
