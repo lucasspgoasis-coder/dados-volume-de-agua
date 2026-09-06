@@ -42,9 +42,16 @@
             width: 100%; 
         }
 
+        .chart-container-large {
+            position: relative;
+            height: 580px;
+            width: 100%;
+            min-width: 1200px;
+        }
+
         .chart-container-no-scroll {
             position: relative; 
-            height: 420px; 
+            height: 440px; 
             width: 100%;
         }
         
@@ -57,7 +64,7 @@
             position: relative;
             padding: 0.875rem 1.25rem;
             font-weight: 600;
-            font-size: 0.9rem;
+            font-size: 0.875rem;
             transition: all 0.2s ease;
             border-bottom: 3px solid transparent;
         }
@@ -65,7 +72,7 @@
         .tab-active { 
             border-bottom-color: #2563eb; 
             color: #1d4ed8; 
-            background-color: rgba(239, 246, 255, 0.7);
+            background-color: rgba(239, 246, 255, 0.75);
             border-top-left-radius: 0.5rem;
             border-top-right-radius: 0.5rem;
         }
@@ -86,7 +93,7 @@
 
         .kpi-compact-card {
             background: #ffffff;
-            border: 1px solid rgba(226, 232, 240, 0.8);
+            border: 1px solid rgba(226, 232, 240, 0.9);
             border-radius: 0.75rem;
             padding: 1rem 1.25rem;
             transition: all 0.2s ease-in-out;
@@ -103,11 +110,12 @@
 </head>
 <body class="text-slate-800 min-h-screen flex flex-col antialiased">
 
+    <!-- LOGIN SCREEN -->
     <div id="login-screen" class="fixed inset-0 z-50 flex items-center justify-center transition-opacity duration-300">
         <div class="glass-card p-8 max-w-md w-full mx-4 shadow-2xl border-slate-700 bg-white">
             <div class="text-center mb-6">
-                <div class="bg-blue-50 p-3 rounded-xl inline-block mb-3">
-                    <i class="fa-solid fa-water text-3xl text-blue-600"></i>
+                <div class="inline-block mb-3 p-2">
+                    <img src="https://imgur.com/wEozr34.png" alt="Logo" class="h-16 w-auto mx-auto border-0 outline-none object-contain">
                 </div>
                 <h2 class="text-2xl font-extrabold text-slate-800">Acesso Restrito</h2>
                 <p class="text-sm text-slate-500 mt-1">Insira suas credenciais para acessar o painel</p>
@@ -134,18 +142,17 @@
         </div>
     </div>
 
+    <!-- MAIN APP CONTENT -->
     <div id="app-content" class="hidden flex-col flex-1">
         <header class="bg-gradient-to-r from-slate-900 via-blue-950 to-indigo-950 text-white shadow-md border-b border-slate-800">
-            <div class="max-w-[1700px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-wrap justify-between items-center gap-4">
+            <div class="max-w-[1700px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap justify-between items-center gap-4">
                 <div class="flex items-center gap-3">
-                    <div class="bg-blue-600/20 p-2 rounded-lg text-blue-400">
-                        <i class="fa-solid fa-water text-xl"></i>
-                    </div>
+                    <img src="https://imgur.com/wEozr34.png" alt="Logo Header" class="h-10 w-auto border-0 outline-none object-contain">
                     <div>
                         <h1 class="text-xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-100 to-blue-200">
                             Monitoramento Hidrográfico Pro
                         </h1>
-                        <p class="text-xs text-slate-400 font-medium">Análise de Desempenho, Vazão e Volume de Poços Artesianos</p>
+                        <p class="text-xs text-slate-400 font-medium">Análise de Desempenho, Vazão, Irrigação e Volumes</p>
                     </div>
                 </div>
                 
@@ -166,8 +173,9 @@
 
         <main class="max-w-[1700px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1">
             
+            <!-- NAUGAÇÃO DE ABAS -->
             <div class="border-b border-slate-200 mb-6 flex flex-wrap justify-between items-end gap-4">
-                <nav class="flex gap-2" aria-label="Tabs">
+                <nav class="flex gap-1 sm:gap-2 flex-wrap" aria-label="Tabs">
                     <button onclick="switchTab('diario')" id="tab-diario" class="tab-btn tab-active flex items-center gap-2">
                         <i class="fa-solid fa-chart-bar text-sm"></i> 1. Análise Diária/Geral
                     </button>
@@ -179,6 +187,9 @@
                     </button>
                     <button onclick="switchTab('entrada')" id="tab-entrada" class="tab-btn tab-inactive flex items-center gap-2">
                         <i class="fa-solid fa-faucet text-sm"></i> 4. Entrada e Saída
+                    </button>
+                    <button onclick="switchTab('bloco')" id="tab-bloco" class="tab-btn tab-inactive flex items-center gap-2">
+                        <i class="fa-solid fa-chart-area text-sm"></i> 5. Resumo Geral por Bloco
                     </button>
                 </nav>
             </div>
@@ -376,7 +387,7 @@
                         <div class="flex justify-between items-center mb-1 flex-wrap gap-2">
                             <div>
                                 <h3 class="text-base font-bold text-slate-800">Regressão e Tendência da Média de Vazão por Poço (Mês a Mês)</h3>
-                                <p class="text-xs text-slate-500">Exibe a variação mês a mês com balões alternados (alto/baixo) e indicadores direcionais <b class="text-emerald-600">↑ Aumento</b> e <b class="text-rose-600">↓ Queda</b>.</p>
+                                <p class="text-xs text-slate-500">Exibe a variação mês a mês com percentual <b class="text-emerald-600">↑ Aumento (%)</b> ou <b class="text-rose-600">↓ Queda (%)</b>.</p>
                             </div>
                         </div>
                         <div class="chart-scroll-wrapper mt-3"><div class="chart-container"><canvas id="trendChart"></canvas></div></div>
@@ -623,34 +634,179 @@
                     </div>
                 </div>
 
-                <!-- Saída Chart -->
-                <div class="glass-card p-5 mb-8">
+                <!-- Saída Chart (Com blocos horizontais) -->
+                <div class="glass-card p-5 mb-4">
                     <div class="flex justify-between items-center mb-1 flex-wrap gap-2">
                         <div>
                             <h3 class="text-base font-bold text-slate-800">Saída de Água - Irrigação por Bloco (Cálculo Detalhado)</h3>
                             <p class="text-xs text-slate-500">
                                 Cálculo: <b class="text-emerald-700">Se 1 Válvula: Qtd × Vazão × (Tempo/60) | Se ≥ 2 Válvulas: (Qtd ÷ Válvulas) × Vazão × (Tempo/60)</b>. 
-                                Blocos no eixo inferior ordenados alfabeticamente. Cultura na legenda no topo definida pelas cores.
+                                Nomes dos blocos exibidos na horizontal.
                             </p>
                         </div>
                     </div>
                     <div class="chart-container-no-scroll mt-3"><canvas id="saidaAguaChart"></canvas></div>
                 </div>
+            </div>
 
-                <!-- PAINEL VOLUME TOTAL DESTACADO -->
-                <div class="glass-card bg-gradient-to-br from-blue-700 to-indigo-900 p-8 text-center rounded-2xl shadow-2xl mb-8 border-0 relative overflow-hidden">
-                    <div class="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
-                        <i class="fa-solid fa-water absolute -left-10 -bottom-10 text-9xl"></i>
-                        <i class="fa-solid fa-droplet absolute -right-4 top-4 text-8xl"></i>
+            <!-- TAB 5: RESUMO GERAL POR BLOCO -->
+            <div id="content-bloco" class="hidden space-y-6">
+                
+                <!-- CARDS DE RESUMO/GERAIS NO TOPO DA ABA 5 -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    
+                    <div class="kpi-compact-card border-l-4 border-blue-600 flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-shower text-lg"></i>
+                        </div>
+                        <div>
+                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Volume Total Irrigado</p>
+                            <h3 id="kpi5_volIrrigado" class="text-xl font-extrabold text-slate-800">-- L</h3>
+                        </div>
                     </div>
-                    <div class="relative z-10">
-                        <h2 class="text-xl md:text-2xl font-black text-blue-200 uppercase tracking-widest mb-3 text-shadow-sm">Volume Total de Água</h2>
-                        <div id="panel_volumeTotalSaida" class="text-5xl md:text-7xl font-black text-white drop-shadow-lg">0 L</div>
-                        <p class="text-blue-300 text-sm mt-4 font-medium uppercase tracking-wider">Soma exata de todos os registros de saída adicionados na planilha</p>
+
+                    <div class="kpi-compact-card border-l-4 border-cyan-500 flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg bg-cyan-50 text-cyan-600 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-faucet text-lg"></i>
+                        </div>
+                        <div>
+                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Total Água que Entrou</p>
+                            <h3 id="kpi5_aguaEntrou" class="text-xl font-extrabold text-slate-800">-- L</h3>
+                        </div>
+                    </div>
+
+                    <div class="kpi-compact-card border-l-4 border-indigo-500 flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-boxes-stacked text-lg"></i>
+                        </div>
+                        <div>
+                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Total Acumulado</p>
+                            <h3 id="kpi5_acumulado" class="text-xl font-extrabold text-slate-800">-- L</h3>
+                        </div>
+                    </div>
+
+                    <div class="kpi-compact-card border-l-4 border-emerald-500 flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-seedling text-lg"></i>
+                        </div>
+                        <div>
+                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Total Transplantado</p>
+                            <h3 id="kpi5_transplantado" class="text-xl font-extrabold text-slate-800">-- plantas</h3>
+                        </div>
+                    </div>
+
+                    <div class="kpi-compact-card border-l-4 border-amber-500 flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-glass-water-droplet text-lg"></i>
+                        </div>
+                        <div>
+                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Volume Ltrs / Planta</p>
+                            <h3 id="kpi5_ltrsPlanta" class="text-xl font-extrabold text-slate-800">-- L/planta</h3>
+                        </div>
+                    </div>
+
+                    <div class="kpi-compact-card border-l-4 border-teal-500 flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg bg-teal-50 text-teal-600 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-calendar-check text-lg"></i>
+                        </div>
+                        <div>
+                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Total Dias Irrigados</p>
+                            <h3 id="kpi5_diasIrrigados" class="text-xl font-extrabold text-slate-800">-- dias</h3>
+                        </div>
+                    </div>
+
+                    <div class="kpi-compact-card border-l-4 border-purple-500 flex items-center gap-3 sm:col-span-2">
+                        <div class="w-10 h-10 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-gauge-high text-lg"></i>
+                        </div>
+                        <div>
+                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Média Ltrs / Dia por Planta</p>
+                            <h3 id="kpi5_ltrsDiaPlanta" class="text-xl font-extrabold text-slate-800">-- L/dia/planta</h3>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- FILTROS DA ABA 5 -->
+                <div class="glass-card p-4 bg-slate-50/80 border-slate-200">
+                    <div class="flex flex-wrap items-center justify-between gap-4">
+                        <div class="flex items-center gap-2 text-slate-700 font-bold text-xs uppercase tracking-wide">
+                            <i class="fa-solid fa-filter text-blue-600"></i> Filtros de Bloco, Ciclo e Período:
+                        </div>
+                        <div class="flex flex-wrap items-center gap-3">
+                            <!-- Filtro Bloco -->
+                            <div class="relative">
+                                <label class="block text-[11px] font-semibold text-slate-500 mb-0.5">Bloco</label>
+                                <button type="button" onclick="toggleDropdown('dropdownTab5Bloco')" class="bg-white border border-slate-300 rounded-lg text-xs px-3 py-1.5 shadow-sm w-48 flex justify-between items-center font-medium">
+                                    <span id="labelTab5Bloco">Todos os Blocos</span>
+                                    <i class="fa-solid fa-chevron-down text-slate-400 text-xs"></i>
+                                </button>
+                                <div id="dropdownTab5Bloco" class="hidden absolute z-50 mt-1 w-60 bg-white border border-slate-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+                                    <div class="p-2 border-b border-slate-200 bg-slate-50 sticky top-0 z-10">
+                                        <label class="flex items-center gap-2 px-1 py-1 hover:bg-slate-100 rounded cursor-pointer text-xs font-bold text-blue-600 transition">
+                                            <input type="checkbox" id="selectAllBlocosTab5" checked onchange="toggleSelectAllBlocosTab5(this)" class="w-3.5 h-3.5 text-blue-600 rounded">
+                                            Selecionar Todos
+                                        </label>
+                                    </div>
+                                    <div class="p-2 flex flex-col gap-1" id="blocoCheckboxesTab5"></div>
+                                </div>
+                            </div>
+
+                            <!-- Filtro Ciclo -->
+                            <div class="relative">
+                                <label class="block text-[11px] font-semibold text-slate-500 mb-0.5">Ciclo</label>
+                                <button type="button" onclick="toggleDropdown('dropdownTab5Ciclo')" class="bg-white border border-slate-300 rounded-lg text-xs px-3 py-1.5 shadow-sm w-44 flex justify-between items-center font-medium">
+                                    <span id="labelTab5Ciclo">Todos os Ciclos</span>
+                                    <i class="fa-solid fa-chevron-down text-slate-400 text-xs"></i>
+                                </button>
+                                <div id="dropdownTab5Ciclo" class="hidden absolute z-50 mt-1 w-56 bg-white border border-slate-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+                                    <div class="p-2 border-b border-slate-200 bg-slate-50 sticky top-0 z-10">
+                                        <label class="flex items-center gap-2 px-1 py-1 hover:bg-slate-100 rounded cursor-pointer text-xs font-bold text-indigo-600 transition">
+                                            <input type="checkbox" id="selectAllCiclosTab5" checked onchange="toggleSelectAllCiclosTab5(this)" class="w-3.5 h-3.5 text-indigo-600 rounded">
+                                            Selecionar Todos
+                                        </label>
+                                    </div>
+                                    <div class="p-2 flex flex-col gap-1" id="cicloCheckboxesTab5"></div>
+                                </div>
+                            </div>
+
+                            <!-- Datas -->
+                            <div>
+                                <label class="block text-[11px] font-semibold text-slate-500 mb-0.5">Data Inicial</label>
+                                <input type="date" id="filterStartDateTab5" onchange="applyFiltersTab5()" class="bg-white border border-slate-300 rounded-lg text-xs px-2.5 py-1.5 shadow-sm">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-semibold text-slate-500 mb-0.5">Data Final</label>
+                                <input type="date" id="filterEndDateTab5" onchange="applyFiltersTab5()" class="bg-white border border-slate-300 rounded-lg text-xs px-2.5 py-1.5 shadow-sm">
+                            </div>
+                            <div class="flex items-end">
+                                <button onclick="resetFiltersTab5()" class="mt-4 bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1">
+                                    <i class="fa-solid fa-xmark"></i> Limpar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GRÁFICO PRINCIPAL EXPANDIDO DA ABA 5 (OCUPA BOA PARTE DA PÁGINA) -->
+                <div class="glass-card p-6 shadow-sm">
+                    <div class="flex justify-between items-center mb-2 flex-wrap gap-2 border-b border-slate-100 pb-3">
+                        <div>
+                            <h3 class="text-lg font-extrabold text-slate-800 flex items-center gap-2">
+                                <i class="fa-solid fa-chart-column text-blue-600"></i> Volume Total Irrigado por Dia (Por Bloco)
+                            </h3>
+                            <p class="text-xs text-slate-500 mt-0.5">Eixo horizontal exibe as datas organizadas cronologicamente/alfabeticamente com o volume diário exato irrigado no bloco.</p>
+                        </div>
+                    </div>
+                    <div class="chart-scroll-wrapper mt-4">
+                        <div class="chart-container-large">
+                            <canvas id="resumoBlocoChart"></canvas>
+                        </div>
                     </div>
                 </div>
 
             </div>
+
         </main>
 
         <footer class="bg-white border-t border-slate-200 py-3 text-center text-xs text-slate-500 mt-auto">
@@ -667,7 +823,6 @@
             "https://docs.google.com/spreadsheets/d/e/2PACX-1vQAcr8_XCwnJWwn5DMCKsb3-03ZogzTgiJ9qtCtnEp9fnLMtEuTcCXpxeslsvQGzJ81nDkLy7DYBX8d/pub?output=csv"
         ];
         
-        // Link atualizado para a aba de Saída
         const SAIDA_SHEET = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSLCR4Ft4rx-g3QUa7onNWhiwHBHXbf07wLAkY3dmYxoYFHdz3meI5yBPXOeaLoIELTylglqAklMDKb/pub?output=csv";
 
         let globalRawData = [];
@@ -680,7 +835,8 @@
             monthlyVolume: null,
             trend: null,
             entradaAgua: null,
-            saidaAgua: null
+            saidaAgua: null,
+            resumoBloco: null
         };
 
         const vibrantColors = [
@@ -741,11 +897,13 @@
                 document.getElementById('dropdownMonthTab3')?.classList.add('hidden');
                 document.getElementById('dropdownTab4')?.classList.add('hidden');
                 document.getElementById('dropdownTab4Locais')?.classList.add('hidden');
+                document.getElementById('dropdownTab5Bloco')?.classList.add('hidden');
+                document.getElementById('dropdownTab5Ciclo')?.classList.add('hidden');
             }
         });
 
         function switchTab(tab) {
-            const tabs = ['diario', 'mensal', 'comparacao', 'entrada'];
+            const tabs = ['diario', 'mensal', 'comparacao', 'entrada', 'bloco'];
             tabs.forEach(t => {
                 const btn = document.getElementById(`tab-${t}`);
                 const content = document.getElementById(`content-${t}`);
@@ -854,11 +1012,14 @@
                         populateWellSelectors();
                         populateMonthSelectors();
                         populateLocalSelectors();
+                        populateBlocoSelectorsTab5();
+                        populateCicloSelectorsTab5();
 
                         applyFiltersTab1();
                         applyFiltersTab2();
                         applyFiltersTab3();
                         applyFiltersTab4();
+                        applyFiltersTab5();
                     } catch (e) {
                         console.error("Erro ao processar dados:", e);
                         loadingIcon.className = "fa-solid fa-triangle-exclamation text-rose-400";
@@ -916,14 +1077,17 @@
             let normalized = [];
             data.forEach(row => {
                 const keys = Object.keys(row);
-                // Regex case-insensitive exact matching logic based on your specs
                 const findKey = (searchStrings) => keys.find(k => searchStrings.some(s => k.toLowerCase().trim().includes(s.toLowerCase())));
                 
                 const dateKey = findKey(['data', 'date']);
                 const localKey = findKey(['local', 'bloco']);
                 const culturaKey = findKey(['cultura']);
+                const cicloKey = findKey(['ciclo']);
                 
-                // Mapeia colunas específicas pedidas
+                const dtTransplantioKey = findKey(['data - transplantio', 'data transplantio', 'dt transplantio']);
+                const dtColheitaKey = findKey(['data - final colheita', 'data colheita', 'final colheita', 'dt colheita']);
+                const totalTransplantioKey = findKey(['total - transplantio', 'total transplantio', 'transplantio total', 'total plantas', 'plantas']);
+
                 const qtdeKey = findKey(['qtde. aspersor ativos', 'qtde', 'quantidade', 'aspersor']);
                 const valvulaKey = findKey(['tipo vávlula', 'tipo valvula', 'valvula', 'válvula']);
                 const tempoKey = findKey(['tempo (min)', 'tempo', 'minutos', 'min']);
@@ -934,26 +1098,26 @@
                 
                 if (local) {
                     let parsedDate = parsePortugueseDate(row[dateKey] || '');
-                    
-                    // 1. Quantidade de Equipamentos
+                    let parsedDtTransplantio = dtTransplantioKey ? parsePortugueseDate(row[dtTransplantioKey] || '') : null;
+                    let parsedDtColheita = dtColheitaKey ? parsePortugueseDate(row[dtColheitaKey] || '') : null;
+
+                    let cicloVal = cicloKey && row[cicloKey] ? String(row[cicloKey]).trim() : 'Ciclo 1';
+                    let totalTransplantio = totalTransplantioKey ? parseBrazilianNumber(row[totalTransplantioKey]) : 0;
+
                     let qtde = 0;
                     if (qtdeKey && row[qtdeKey]) qtde = parseBrazilianNumber(row[qtdeKey]);
 
-                    // 2. Quantidade de Válvulas
                     let valvulas = 1;
                     if (valvulaKey && row[valvulaKey]) valvulas = parseBrazilianNumber(row[valvulaKey]);
                     if (valvulas < 1 || isNaN(valvulas)) valvulas = 1;
 
-                    // 3. Tempo em minutos
                     let tempoMin = 0;
                     if (tempoKey && row[tempoKey]) tempoMin = parseBrazilianNumber(row[tempoKey]);
 
-                    // 4. Vazão (L/h)
                     let vazao = 0;
                     if (flowKey && row[flowKey]) {
                         vazao = parseBrazilianNumber(row[flowKey]);
                     } else {
-                        // Fallback de string no tipo
                         let tipoStr = (row[tipoKey] || '').toLowerCase();
                         let matchFlow = tipoStr.match(/(\d+(?:\.\d+)?)\s*(?:l\/h|lh|l\\h|litros\/h)/i);
                         if (matchFlow) {
@@ -965,7 +1129,6 @@
                         }
                     }
 
-                    // APLICANDO REGRA DAS VÁLVULAS EXATAMENTE COMO PEDIDO:
                     let quantidadeCalculada = qtde;
                     if (valvulas >= 2) {
                         quantidadeCalculada = qtde / valvulas;
@@ -973,10 +1136,8 @@
 
                     let volume = 0;
                     if (quantidadeCalculada > 0 && vazao > 0 && tempoMin > 0) {
-                        // Formula: volume = quantidadeCalculada × vazao × (tempo / 60)
                         volume = quantidadeCalculada * vazao * (tempoMin / 60);
                     } else {
-                        // Fallback de segurança se ele tiver inserido direto uma coluna de volume
                         const volKey = findKey(['volume', 'vol', 'litros', 'litro']);
                         if (volKey && row[volKey] && parseBrazilianNumber(row[volKey]) > 0) {
                             volume = parseBrazilianNumber(row[volKey]);
@@ -989,8 +1150,13 @@
                         normalized.push({
                             DataObj: parsedDate,
                             DataFormatted: parsedDate.toLocaleDateString('pt-BR'),
+                            IsoDate: parsedDate.toISOString().split('T')[0],
                             Local: local,
                             Cultura: row[culturaKey] ? String(row[culturaKey]).trim() : 'Sem Cultura',
+                            Ciclo: cicloVal,
+                            DataTransplantio: parsedDtTransplantio,
+                            DataColheita: parsedDtColheita,
+                            TotalTransplantio: totalTransplantio,
                             Qtde: qtde,
                             Valvulas: valvulas,
                             FlowRate: vazao,
@@ -1012,7 +1178,7 @@
 
         function parsePortugueseDate(dateStr) {
             if (!dateStr) return new Date();
-            let cleaned = dateStr.trim();
+            let cleaned = String(dateStr).trim();
             if (cleaned.includes('/')) {
                 let parts = cleaned.split('/');
                 if (parts.length === 3) {
@@ -1050,6 +1216,20 @@
             document.querySelectorAll('.local-chk-4').forEach(c => c.checked = isChecked);
             updateLocalLabel();
             applyFiltersTab4();
+        }
+
+        function toggleSelectAllBlocosTab5(masterCheckbox) {
+            const isChecked = masterCheckbox.checked;
+            document.querySelectorAll('.bloco-chk-5').forEach(c => c.checked = isChecked);
+            updateBlocoLabelTab5();
+            applyFiltersTab5();
+        }
+
+        function toggleSelectAllCiclosTab5(masterCheckbox) {
+            const isChecked = masterCheckbox.checked;
+            document.querySelectorAll('.ciclo-chk-5').forEach(c => c.checked = isChecked);
+            updateCicloLabelTab5();
+            applyFiltersTab5();
         }
 
         function populateWellSelectors() {
@@ -1090,6 +1270,42 @@
             }
         }
 
+        function populateBlocoSelectorsTab5() {
+            const blocosSet = new Set(globalSaidaData.map(d => d.Local));
+            const blocosArray = Array.from(blocosSet).sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
+
+            const cont = document.getElementById('blocoCheckboxesTab5');
+            if (cont) {
+                cont.innerHTML = '';
+                blocosArray.forEach(bloco => {
+                    cont.innerHTML += `
+                    <label class="flex items-center gap-2 px-2 py-1 hover:bg-slate-50 rounded cursor-pointer text-xs font-medium text-slate-700 transition">
+                        <input type="checkbox" value="${bloco}" checked onchange="updateBlocoLabelTab5(); applyFiltersTab5()" class="bloco-chk-5 w-3.5 h-3.5 text-blue-600 bg-slate-100 border-slate-300 rounded focus:ring-blue-500 cursor-pointer">
+                        ${bloco}
+                    </label>`;
+                });
+                updateBlocoLabelTab5();
+            }
+        }
+
+        function populateCicloSelectorsTab5() {
+            const ciclosSet = new Set(globalSaidaData.map(d => d.Ciclo));
+            const ciclosArray = Array.from(ciclosSet).sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
+
+            const cont = document.getElementById('cicloCheckboxesTab5');
+            if (cont) {
+                cont.innerHTML = '';
+                ciclosArray.forEach(ciclo => {
+                    cont.innerHTML += `
+                    <label class="flex items-center gap-2 px-2 py-1 hover:bg-slate-50 rounded cursor-pointer text-xs font-medium text-slate-700 transition">
+                        <input type="checkbox" value="${ciclo}" checked onchange="updateCicloLabelTab5(); applyFiltersTab5()" class="ciclo-chk-5 w-3.5 h-3.5 text-indigo-600 bg-slate-100 border-slate-300 rounded focus:ring-indigo-500 cursor-pointer">
+                        ${ciclo}
+                    </label>`;
+                });
+                updateCicloLabelTab5();
+            }
+        }
+
         function populateMonthSelectors() {
             [1, 2, 3].forEach(tab => {
                 const cont = document.getElementById(`monthCheckboxesTab${tab}`);
@@ -1121,6 +1337,34 @@
             else label.textContent = `${checked.length} Locais`;
         }
 
+        function updateBlocoLabelTab5() {
+            const checks = document.querySelectorAll('.bloco-chk-5');
+            const checked = Array.from(checks).filter(c => c.checked);
+            const label = document.getElementById('labelTab5Bloco');
+            const masterBtn = document.getElementById('selectAllBlocosTab5');
+            if (masterBtn) masterBtn.checked = (checked.length === checks.length && checks.length > 0);
+            if (!label) return;
+            
+            if (checked.length === checks.length && checks.length > 0) label.textContent = "Todos os Blocos";
+            else if (checked.length === 1) label.textContent = "1 Bloco";
+            else if (checked.length === 0) label.textContent = "Nenhum";
+            else label.textContent = `${checked.length} Blocos`;
+        }
+
+        function updateCicloLabelTab5() {
+            const checks = document.querySelectorAll('.ciclo-chk-5');
+            const checked = Array.from(checks).filter(c => c.checked);
+            const label = document.getElementById('labelTab5Ciclo');
+            const masterBtn = document.getElementById('selectAllCiclosTab5');
+            if (masterBtn) masterBtn.checked = (checked.length === checks.length && checks.length > 0);
+            if (!label) return;
+            
+            if (checked.length === checks.length && checks.length > 0) label.textContent = "Todos os Ciclos";
+            else if (checked.length === 1) label.textContent = "1 Ciclo";
+            else if (checked.length === 0) label.textContent = "Nenhum";
+            else label.textContent = `${checked.length} Ciclos`;
+        }
+
         function updateMonthLabel(tab) {
             const checks = document.querySelectorAll(`.month-chk-${tab}`);
             const checked = Array.from(checks).filter(c => c.checked);
@@ -1150,6 +1394,8 @@
         function getSelectedWells(tab) { return Array.from(document.querySelectorAll(`.well-chk-${tab}`)).filter(c => c.checked).map(c => c.value); }
         function getSelectedMonths(tab) { return Array.from(document.querySelectorAll(`.month-chk-${tab}`)).filter(c => c.checked).map(c => parseInt(c.value, 10)); }
         function getSelectedLocaisTab4() { return Array.from(document.querySelectorAll('.local-chk-4')).filter(c => c.checked).map(c => c.value); }
+        function getSelectedBlocosTab5() { return Array.from(document.querySelectorAll('.bloco-chk-5')).filter(c => c.checked).map(c => c.value); }
+        function getSelectedCiclosTab5() { return Array.from(document.querySelectorAll('.ciclo-chk-5')).filter(c => c.checked).map(c => c.value); }
 
         function resetFiltersTab1() { document.querySelectorAll('.well-chk-1').forEach(c => c.checked = true); updateWellLabel(1); document.querySelectorAll('.month-chk-1').forEach(c => c.checked = true); updateMonthLabel(1); document.getElementById('filterStartDateTab1').value = ''; document.getElementById('filterEndDateTab1').value = ''; applyFiltersTab1(); }
         function resetFiltersTab2() { document.querySelectorAll('.well-chk-2').forEach(c => c.checked = true); updateWellLabel(2); document.querySelectorAll('.month-chk-2').forEach(c => c.checked = true); updateMonthLabel(2); applyFiltersTab2(); }
@@ -1161,6 +1407,14 @@
             if(document.getElementById('filterStartDateTab4')) document.getElementById('filterStartDateTab4').value = '';
             if(document.getElementById('filterEndDateTab4')) document.getElementById('filterEndDateTab4').value = '';
             applyFiltersTab4();
+        }
+
+        function resetFiltersTab5() {
+            document.querySelectorAll('.bloco-chk-5').forEach(c => c.checked = true); updateBlocoLabelTab5();
+            document.querySelectorAll('.ciclo-chk-5').forEach(c => c.checked = true); updateCicloLabelTab5();
+            if(document.getElementById('filterStartDateTab5')) document.getElementById('filterStartDateTab5').value = '';
+            if(document.getElementById('filterEndDateTab5')) document.getElementById('filterEndDateTab5').value = '';
+            applyFiltersTab5();
         }
 
         function applyFiltersTab1() {
@@ -1193,7 +1447,6 @@
             const start = startEl ? startEl.value : '';
             const end = endEl ? endEl.value : '';
 
-            // Filtrar Entrada
             if (globalRawData.length) {
                 const wells = getSelectedWells(4);
                 let filteredIn = globalRawData.filter(d => wells.includes(d.Poco));
@@ -1203,7 +1456,6 @@
                 renderTab4(filteredIn);
             }
 
-            // Filtrar Saída
             const locais = getSelectedLocaisTab4();
             let filteredOut = globalSaidaData.filter(d => locais.includes(d.Local));
             if (start) { const s = new Date(start+'T00:00:00'); filteredOut = filteredOut.filter(d => d.DataObj >= s); }
@@ -1213,21 +1465,52 @@
             renderSaidaChart(filteredOut);
         }
 
+        function applyFiltersTab5() {
+            if (!globalSaidaData.length) return;
+
+            const selectedBlocos = getSelectedBlocosTab5();
+            const selectedCiclos = getSelectedCiclosTab5();
+            const start = document.getElementById('filterStartDateTab5')?.value;
+            const end = document.getElementById('filterEndDateTab5')?.value;
+
+            let filtered = globalSaidaData.filter(d => 
+                selectedBlocos.includes(d.Local) && selectedCiclos.includes(d.Ciclo)
+            );
+
+            if (start) {
+                const s = new Date(start + 'T00:00:00');
+                filtered = filtered.filter(d => d.DataObj >= s);
+            }
+            if (end) {
+                const e = new Date(end + 'T23:59:59');
+                filtered = filtered.filter(d => d.DataObj <= e);
+            }
+
+            updateTab5KPIs(filtered);
+            renderTab5Chart(filtered);
+        }
+
         function updateTab1KPIs(data) {
             if (!data.length) {
-                document.getElementById('kpi1_totalWells').textContent = "0"; document.getElementById('kpi1_totalVolume').textContent = "0 L"; document.getElementById('kpi1_avgFlow').textContent = "0 L/h"; return;
+                document.getElementById('kpi1_totalWells').textContent = "0"; 
+                document.getElementById('kpi1_totalVolume').textContent = "0 L"; 
+                document.getElementById('kpi1_avgFlow').textContent = "0 L/h"; 
+                return;
             }
             let totalVolume = 0; let wellsSet = new Set(); let sumVazao = 0; let countVazao = 0;
             data.forEach(d => { totalVolume += d.VolumeCalculado; wellsSet.add(d.Poco); if (d.Vazao > 0) { sumVazao += d.Vazao; countVazao++; } });
             let generalAvgFlow = countVazao > 0 ? (sumVazao / countVazao) : 0;
-            document.getElementById('kpi1_totalWells').textContent = wellsSet.size;
+            document.getElementById('kpi1_totalWells').textContent = wellsSet.size.toLocaleString('pt-BR');
             document.getElementById('kpi1_totalVolume').textContent = totalVolume.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + ' L';
             document.getElementById('kpi1_avgFlow').textContent = generalAvgFlow.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' L/h';
         }
 
         function updateTab2KPIs(data) {
             if (!data.length) {
-                document.getElementById('kpi2_avgMonthlyVol').textContent = "0 L"; document.getElementById('kpi2_maxVolumeWell').textContent = "N/A"; document.getElementById('kpi2_avgMonthlyFlow').textContent = "0 L/h"; return;
+                document.getElementById('kpi2_avgMonthlyVol').textContent = "0 L"; 
+                document.getElementById('kpi2_maxVolumeWell').textContent = "N/A"; 
+                document.getElementById('kpi2_avgMonthlyFlow').textContent = "0 L/h"; 
+                return;
             }
             const monthMap = {}; let sumVazao = 0; let countVazao = 0; let maxVol = 0; let maxVolLabel = "N/A";
             data.forEach(d => {
@@ -1249,7 +1532,10 @@
 
         function updateTab3KPIs(data) {
             if (!data.length) {
-                document.getElementById('kpi3_totalRecords').textContent = "0"; document.getElementById('kpi3_avgFlow').textContent = "0 L/h"; document.getElementById('kpi3_avgVolPerRecord').textContent = "0 L"; return;
+                document.getElementById('kpi3_totalRecords').textContent = "0"; 
+                document.getElementById('kpi3_avgFlow').textContent = "0 L/h"; 
+                document.getElementById('kpi3_avgVolPerRecord').textContent = "0 L"; 
+                return;
             }
             let sumVazao = 0; let countVazao = 0; let totalVolume = 0;
             data.forEach(d => { totalVolume += d.VolumeCalculado; if (d.Vazao > 0) { sumVazao += d.Vazao; countVazao++; } });
@@ -1262,7 +1548,10 @@
 
         function updateTab4KPIs(data) {
             if (!data.length) {
-                document.getElementById('kpi4_totalVol').textContent = "0 L"; document.getElementById('kpi4_avgHours').textContent = "0 h/dia"; document.getElementById('kpi4_maxPeak').textContent = "N/A"; return;
+                document.getElementById('kpi4_totalVol').textContent = "0 L"; 
+                document.getElementById('kpi4_avgHours').textContent = "0 h/dia"; 
+                document.getElementById('kpi4_maxPeak').textContent = "N/A"; 
+                return;
             }
             let totalVol = 0; let totalHoras = 0; let countHoras = 0; let maxPeak = 0; let maxPeakLabel = "N/A";
             data.forEach(d => {
@@ -1281,7 +1570,6 @@
                 document.getElementById('kpi4_saidaVol').textContent = "0 L";
                 document.getElementById('kpi4_saidaLocais').textContent = "0";
                 document.getElementById('kpi4_saidaTempo').textContent = "0 h";
-                document.getElementById('panel_volumeTotalSaida').textContent = "0 L";
                 return;
             }
             let totalVol = 0; let totalTempo = 0; let locaisSet = new Set();
@@ -1291,15 +1579,92 @@
                 locaisSet.add(d.Local);
             });
             
-            // Formatando valor estritamente sem casas decimais e com separador de milhar
             const volFormatado = totalVol.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + ' L';
             
             document.getElementById('kpi4_saidaVol').textContent = volFormatado;
-            document.getElementById('kpi4_saidaLocais').textContent = locaisSet.size;
+            document.getElementById('kpi4_saidaLocais').textContent = locaisSet.size.toLocaleString('pt-BR');
             document.getElementById('kpi4_saidaTempo').textContent = totalTempo.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' h';
+        }
+
+        function updateTab5KPIs(data) {
+            if (!data.length) {
+                document.getElementById('kpi5_volIrrigado').textContent = "0 L";
+                document.getElementById('kpi5_aguaEntrou').textContent = "0 L";
+                document.getElementById('kpi5_acumulado').textContent = "0 L";
+                document.getElementById('kpi5_transplantado').textContent = "0 plantas";
+                document.getElementById('kpi5_ltrsPlanta').textContent = "0 L/planta";
+                document.getElementById('kpi5_ltrsDiaPlanta').textContent = "0 L/dia/planta";
+                document.getElementById('kpi5_diasIrrigados').textContent = "0 dias";
+                return;
+            }
+
+            // 1. Volume Total Irrigado
+            const totalVolIrrigado = data.reduce((acc, d) => acc + d.VolumeCalculado, 0);
+
+            // 2. Dias Irrigados (com base na data que aparece uma vez no dia que foi irrigado)
+            const uniqueIrrigationDates = Array.from(new Set(data.map(d => d.IsoDate))).sort();
+            const totalDiasIrrigados = uniqueIrrigationDates.length;
+
+            const minIrrigationDate = uniqueIrrigationDates[0];
+            const maxIrrigationDate = uniqueIrrigationDates[uniqueIrrigationDates.length - 1];
+
+            // 3. Total Água que Entrou (com base na janela de irrigação dos blocos selecionados)
+            let entradaFiltered = globalRawData;
+            if (minIrrigationDate && maxIrrigationDate) {
+                entradaFiltered = entradaFiltered.filter(d => d.IsoDate >= minIrrigationDate && d.IsoDate <= maxIrrigationDate);
+            }
+            const totalAguaEntrou = entradaFiltered.reduce((acc, d) => acc + d.VolumeCalculado, 0);
+
+            // 4. Total Acumulado (Entrada - Irrigado)
+            const totalAcumulado = totalAguaEntrou - totalVolIrrigado;
+
+            // 5. Total Transplantado (da coluna Total - Transplantio)
+            const blockCicloTransplantMap = {};
+            data.forEach(d => {
+                const key = `${d.Local}_${d.Ciclo}`;
+                if (!blockCicloTransplantMap[key] || d.TotalTransplantio > blockCicloTransplantMap[key]) {
+                    blockCicloTransplantMap[key] = d.TotalTransplantio;
+                }
+            });
+            const totalTransplantado = Object.values(blockCicloTransplantMap).reduce((a, b) => a + b, 0);
+
+            // 6. Volume Ltrs / Planta
+            const ltrsPorPlanta = totalTransplantado > 0 ? (totalVolIrrigado / totalTransplantado) : 0;
+
+            // 7. Período e Ltrs / Dia por Planta
+            let minTransplantio = null;
+            let maxColheita = null;
+            data.forEach(d => {
+                if (d.DataTransplantio && (!minTransplantio || d.DataTransplantio < minTransplantio)) {
+                    minTransplantio = d.DataTransplantio;
+                }
+                if (d.DataColheita && (!maxColheita || d.DataColheita > maxColheita)) {
+                    maxColheita = d.DataColheita;
+                }
+            });
+
+            let periodDays = totalDiasIrrigados > 0 ? totalDiasIrrigados : 1;
+            if (minTransplantio && maxColheita) {
+                const diffTime = Math.abs(maxColheita - minTransplantio);
+                const calcDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                if (calcDays > 0) periodDays = calcDays;
+            }
+
+            const ltrsDiaPorPlanta = (totalTransplantado > 0 && periodDays > 0) ? (totalVolIrrigado / periodDays / totalTransplantado) : 0;
+
+            // Exibir números com formatação completa (todos os dígitos)
+            document.getElementById('kpi5_volIrrigado').textContent = totalVolIrrigado.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + ' L';
+            document.getElementById('kpi5_aguaEntrou').textContent = totalAguaEntrou.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + ' L';
             
-            // Atualiza painel gigante
-            document.getElementById('panel_volumeTotalSaida').textContent = volFormatado;
+            const acumEl = document.getElementById('kpi5_acumulado');
+            acumEl.textContent = totalAcumulado.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + ' L';
+            if (totalAcumulado < 0) acumEl.className = "text-xl font-extrabold text-rose-600";
+            else acumEl.className = "text-xl font-extrabold text-emerald-600";
+
+            document.getElementById('kpi5_transplantado').textContent = totalTransplantado.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + ' plantas';
+            document.getElementById('kpi5_ltrsPlanta').textContent = ltrsPorPlanta.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' L/planta';
+            document.getElementById('kpi5_ltrsDiaPlanta').textContent = ltrsDiaPorPlanta.toLocaleString('pt-BR', { minimumFractionDigits: 3, maximumFractionDigits: 3 }) + ' L/dia/planta';
+            document.getElementById('kpi5_diasIrrigados').textContent = totalDiasIrrigados.toLocaleString('pt-BR') + ' dias';
         }
 
         function getStandardChartOptions(yTitle) {
@@ -1391,8 +1756,9 @@
                 borderColor: '#0f172a', backgroundColor: '#0f172a', borderWidth: 4, borderDash: [6, 6], tension: 0.25, pointRadius: 7, pointBackgroundColor: '#fff'
             });
 
+            // GRÁFICO COM EXIBIÇÃO DE VALOR E PERCENTUAL DE AUMENTO/QUEDA (%) NO TOPO
             renderChart('trendChart', 'trend', 'line', { labels: mLabels, datasets: trendDatasets }, {
-                responsive: true, maintainAspectRatio: false, layout: { padding: { top: 75, bottom: 40 } },
+                responsive: true, maintainAspectRatio: false, layout: { padding: { top: 85, bottom: 40 } },
                 plugins: {
                     legend: { position: 'top' },
                     datalabels: {
@@ -1404,15 +1770,19 @@
                             if (val === null) return '';
                             const ds = ctx.dataset.data; let prev = null;
                             for (let i = ctx.dataIndex - 1; i >= 0; i--) { if (ds[i] !== null) { prev = ds[i]; break; } }
-                            let vStr = val.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 2 }); 
-                            if (prev === null) return vStr;
+                            let vStr = val.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 2 }) + ' L/h'; 
+                            if (prev === null || prev === 0) return vStr;
+                            
                             let diff = val - prev;
+                            let pct = (diff / prev) * 100;
                             let dStr = Math.abs(diff).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
-                            if (diff > 0) return [vStr, `↑ +${dStr}`];
-                            if (diff < 0) return [vStr, `↓ -${dStr}`];
-                            return [vStr, `= ${dStr}`];
+                            let pctStr = Math.abs(pct).toFixed(1).replace('.', ',') + '%';
+                            
+                            if (diff > 0) return [vStr, `↑ +${dStr} (+${pctStr})`];
+                            if (diff < 0) return [vStr, `↓ -${dStr} (-${pctStr})`];
+                            return [vStr, `= ${dStr} (0%)`];
                         },
-                        color: '#ffffff', font: { weight: 'bold', size: 10 },
+                        color: '#ffffff', font: { weight: 'bold', size: 9.5 },
                         backgroundColor: (ctx) => {
                             if (ctx.dataset.label.includes('Geral')) return 'rgba(15, 23, 42, 0.95)';
                             const ds = ctx.dataset.data; const val = ds[ctx.dataIndex]; let prev = null;
@@ -1427,8 +1797,8 @@
                     }
                 },
                 scales: { 
-                    y: { title: { display: true, text: 'Média de Vazão (L/h) e Tendência', font: { weight: 'bold' } }, grid: { color: '#f1f5f9' },
-                         suggestedMax: (ctx) => { let m = 0; ctx.chart.data.datasets.forEach(d => { let max = Math.max(...d.data.filter(n => n !== null)); if(max > m) m = max; }); return m * 1.35; }
+                    y: { title: { display: true, text: 'Média de Vazão (L/h) e Tendência (%)', font: { weight: 'bold' } }, grid: { color: '#f1f5f9' },
+                         suggestedMax: (ctx) => { let m = 0; ctx.chart.data.datasets.forEach(d => { let max = Math.max(...d.data.filter(n => n !== null)); if(max > m) m = max; }); return m * 1.45; }
                     }, x: { grid: { display: false } } 
                 }
             });
@@ -1456,7 +1826,7 @@
                     <td class="py-3 px-4 text-slate-600">${item.mesLabel}</td>
                     <td class="py-3 px-4 text-right font-medium text-blue-600">${avgFlow > 0 ? avgFlow.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' L/h' : '-'}</td>
                     <td class="py-3 px-4 text-right font-semibold text-emerald-600">${item.volumeSum.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} L</td>
-                    <td class="py-3 px-4 text-center"><span class="bg-slate-100 text-slate-700 px-2.5 py-1 rounded-full text-xs font-bold">${item.records}</span></td>
+                    <td class="py-3 px-4 text-center"><span class="bg-slate-100 text-slate-700 px-2.5 py-1 rounded-full text-xs font-bold">${item.records.toLocaleString('pt-BR')}</span></td>
                 </tr>`;
             });
             tbody.innerHTML = html;
@@ -1529,27 +1899,23 @@
             const blocksSet = new Set(data.map(d => d.Local));
             const blocksArray = Array.from(blocksSet).sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
 
-            // Legenda: Culturas
             const culturesSet = new Set(data.map(d => d.Cultura));
             const culturesArray = Array.from(culturesSet);
 
-            // Cores específicas por Cultura
             const cultureColors = {
-                'brócolis': '#10b981', // Verde
+                'brócolis': '#10b981',
                 'brocolis': '#10b981', 
-                'tâmaras': '#3b82f6',  // Azul
+                'tâmaras': '#3b82f6',
                 'tamaras': '#3b82f6',
-                'gotejo': '#ef4444'    // Vermelho
+                'gotejo': '#ef4444'
             };
             const fallbackColors = ['#f59e0b', '#8b5cf6', '#06b6d4', '#ec4899', '#f97316', '#14b8a6', '#6366f1'];
 
-            // Criar datasets: um por cultura
             const datasets = culturesArray.map((cult, i) => {
                 let colorKey = cult.toLowerCase().trim();
                 let color = cultureColors[colorKey] || fallbackColors[i % fallbackColors.length];
                 
                 let dataForCult = blocksArray.map(b => {
-                    // Soma de volume apenas deste bloco com esta cultura
                     return data.filter(d => d.Local === b && d.Cultura === cult).reduce((s, d) => s + d.VolumeCalculado, 0);
                 });
 
@@ -1593,7 +1959,11 @@
                 scales: {
                     x: {
                         grid: { display: false },
-                        ticks: { font: { weight: 'bold', size: 11 } }
+                        ticks: { 
+                            font: { weight: 'bold', size: 11 },
+                            maxRotation: 0, // MANTÉM OS BLOCOS NA HORIZONTAL (SEM ROTACIONAR A 90 GRAUS)
+                            minRotation: 0 
+                        }
                     },
                     y: {
                         beginAtZero: true,
@@ -1606,6 +1976,78 @@
                                 if(max > m) m = max; 
                             });
                             return m * 1.25;
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderTab5Chart(data) {
+            // Agrupar volume total irrigado por dia
+            const dailyMap = {};
+            data.forEach(d => {
+                const key = d.IsoDate;
+                if (!dailyMap[key]) {
+                    dailyMap[key] = {
+                        dateObj: d.DataObj,
+                        formatted: d.DataFormatted,
+                        volume: 0
+                    };
+                }
+                dailyMap[key].volume += d.VolumeCalculado;
+            });
+
+            // Ordenar datas cronologicamente / alfabeticamente no eixo horizontal
+            const sortedKeys = Object.keys(dailyMap).sort();
+            const labels = sortedKeys.map(k => dailyMap[k].formatted);
+            const volumes = sortedKeys.map(k => dailyMap[k].volume);
+
+            const dataset = {
+                type: 'bar',
+                label: 'Volume Total Irrigado por Dia (L)',
+                data: volumes,
+                backgroundColor: '#2563eb',
+                hoverBackgroundColor: '#1d4ed8',
+                borderRadius: 4,
+                maxBarThickness: 50
+            };
+
+            renderChart('resumoBlocoChart', 'resumoBloco', 'bar', { labels, datasets: [dataset] }, {
+                responsive: true,
+                maintainAspectRatio: false,
+                layout: { padding: { top: 45, bottom: 20 } },
+                plugins: {
+                    legend: { display: true, position: 'top' },
+                    tooltip: {
+                        callbacks: {
+                            label: (ctx) => `Volume Irrigado: ${ctx.raw.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} L`
+                        }
+                    },
+                    datalabels: {
+                        display: (ctx) => ctx.dataset.data[ctx.dataIndex] > 0,
+                        anchor: 'end',
+                        align: 'top',
+                        formatter: (val) => val ? val.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + ' L' : '',
+                        font: { weight: 'bold', size: 10 },
+                        color: '#1e293b'
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: {
+                            font: { weight: 'bold', size: 10 },
+                            maxRotation: 45,
+                            minRotation: 0
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        title: { display: true, text: 'Volume Irrigado (Litros)', font: { weight: 'bold' } },
+                        grid: { color: '#f1f5f9' },
+                        suggestedMax: (ctx) => {
+                            let max = Math.max(...volumes, 0);
+                            return max * 1.25;
                         }
                     }
                 }
