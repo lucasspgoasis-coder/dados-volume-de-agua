@@ -16,8 +16,8 @@
     <!-- PapaParse para ler CSV do Google Sheets -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 
-    <!-- html-to-image para captura de tela (Substituindo html2canvas) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js"></script>
+    <!-- html2canvas para captura de tela por aba -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
     <!-- FontAwesome para Ícones -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -41,7 +41,7 @@
         .chart-container { 
             position: relative; 
             height: 520px; 
-            min-width: 2200px;
+            min-width: 100%;
             width: 100%; 
         }
 
@@ -174,489 +174,6 @@
             </div>
         </header>
 
-        <main id="main-container" class="max-w-[1700px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1">
-            
-            <!-- NAVEGAÇÃO DE ABAS -->
-            <div class="border-b border-slate-200 mb-6 flex flex-wrap justify-between items-end gap-4">
-                <nav class="flex gap-1 sm:gap-2 flex-wrap" aria-label="Tabs">
-                    <button onclick="switchTab('diario')" id="tab-diario" class="tab-btn tab-active flex items-center gap-2">
-                        <i class="fa-solid fa-chart-bar text-sm"></i> 1. Análise Diária/Geral
-                    </button>
-                    <button onclick="switchTab('mensal')" id="tab-mensal" class="tab-btn tab-inactive flex items-center gap-2">
-                        <i class="fa-solid fa-chart-line text-sm"></i> 2. Volumes e Tendência
-                    </button>
-                    <button onclick="switchTab('comparacao')" id="tab-comparacao" class="tab-btn tab-inactive flex items-center gap-2">
-                        <i class="fa-solid fa-table text-sm"></i> 3. Dados Tabulares
-                    </button>
-                    <button onclick="switchTab('entrada')" id="tab-entrada" class="tab-btn tab-inactive flex items-center gap-2">
-                        <i class="fa-solid fa-faucet text-sm"></i> 4. Entrada e Saída
-                    </button>
-                    <button onclick="switchTab('bloco')" id="tab-bloco" class="tab-btn tab-inactive flex items-center gap-2">
-                        <i class="fa-solid fa-chart-area text-sm"></i> 5. Resumo Geral por Bloco
-                    </button>
-                </nav>
-            </div>
-
-            <!-- TAB 1: DIÁRIO -->
-            <div id="content-diario" class="space-y-6">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="kpi-compact-card bg-cyan-50 border-cyan-200 flex items-center gap-3.5">
-                        <div class="w-10 h-10 rounded-lg bg-cyan-100 text-cyan-600 flex items-center justify-center shrink-0">
-                            <i class="fa-solid fa-faucet-drip text-lg"></i>
-                        </div>
-                        <div>
-                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Vazão Média Geral</p>
-                            <h3 id="kpi1_avgFlow" class="text-xl font-bold text-cyan-900">-- L/h</h3>
-                        </div>
-                    </div>
-                    
-                    <div class="kpi-compact-card bg-emerald-50 border-emerald-200 flex items-center gap-3.5">
-                        <div class="w-10 h-10 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
-                            <i class="fa-solid fa-droplet text-lg"></i>
-                        </div>
-                        <div>
-                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Volume Total Extraído</p>
-                            <h3 id="kpi1_totalVolume" class="text-xl font-bold text-emerald-900">-- L</h3>
-                        </div>
-                    </div>
-
-                    <div class="kpi-compact-card bg-indigo-50 border-indigo-200 flex items-center gap-3.5">
-                        <div class="w-10 h-10 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0">
-                            <i class="fa-solid fa-layer-group text-lg"></i>
-                        </div>
-                        <div>
-                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Total de Poços</p>
-                            <h3 id="kpi1_totalWells" class="text-xl font-bold text-indigo-900">--</h3>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="glass-card p-4 bg-slate-50/80 border-slate-200">
-                    <div class="flex flex-wrap items-center justify-between gap-4">
-                        <div class="flex items-center gap-3">
-                            <span class="text-slate-700 font-bold text-xs uppercase tracking-wide flex items-center gap-1.5">
-                                <i class="fa-solid fa-filter text-blue-600"></i> Filtros da Aba 1:
-                            </span>
-                            <button onclick="captureTab('content-diario', 'aba_1_diario')" title="Capturar imagem da aba" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
-                                <i class="fa-solid fa-camera text-blue-600"></i> Capturar Aba
-                            </button>
-                        </div>
-                        <div class="flex flex-wrap items-center gap-3">
-                            <div class="relative">
-                                <label class="block text-[11px] font-semibold text-slate-500 mb-0.5">Poços</label>
-                                <button type="button" onclick="toggleDropdown('dropdownTab1')" class="bg-white border border-slate-300 rounded-lg text-xs px-3 py-1.5 font-medium focus:ring-2 focus:ring-blue-500 shadow-sm w-44 flex justify-between items-center">
-                                    <span id="labelTab1">Todos os Poços</span>
-                                    <i class="fa-solid fa-chevron-down text-slate-400 text-xs"></i>
-                                </button>
-                                <div id="dropdownTab1" class="hidden absolute z-50 mt-1 w-56 bg-white border border-slate-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
-                                    <div class="p-2 border-b border-slate-200 bg-slate-50 sticky top-0 z-10">
-                                        <label class="flex items-center gap-2 px-1 py-1 hover:bg-slate-100 rounded cursor-pointer text-xs font-bold text-blue-600 transition">
-                                            <input type="checkbox" id="selectAllWellsTab1" checked onchange="toggleSelectAll(1, 'well', this)" class="w-3.5 h-3.5 text-blue-600 rounded">
-                                            Selecionar Todos
-                                        </label>
-                                    </div>
-                                    <div class="p-2 flex flex-col gap-1" id="wellCheckboxesTab1"></div>
-                                </div>
-                            </div>
-
-                            <div class="relative">
-                                <label class="block text-[11px] font-semibold text-slate-500 mb-0.5">Meses</label>
-                                <button type="button" onclick="toggleDropdown('dropdownMonthTab1')" class="bg-white border border-slate-300 rounded-lg text-xs px-3 py-1.5 shadow-sm w-44 flex justify-between items-center">
-                                    <span id="labelMonthTab1">Todos os Meses</span>
-                                    <i class="fa-solid fa-chevron-down text-slate-400 text-xs"></i>
-                                </button>
-                                <div id="dropdownMonthTab1" class="hidden absolute z-50 mt-1 w-56 bg-white border border-slate-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
-                                    <div class="p-2 border-b border-slate-200 bg-slate-50 sticky top-0 z-10">
-                                        <label class="flex items-center gap-2 px-1 py-1 hover:bg-slate-100 rounded cursor-pointer text-xs font-bold text-blue-600 transition">
-                                            <input type="checkbox" id="selectAllMonthsTab1" checked onchange="toggleSelectAll(1, 'month', this)" class="w-3.5 h-3.5 text-blue-600 rounded">
-                                            Selecionar Todos
-                                        </label>
-                                    </div>
-                                    <div class="p-2 flex flex-col gap-1" id="monthCheckboxesTab1"></div>
-                                </div>
-                            </div>
-
-                            <div>
-                                <label class="block text-[11px] font-semibold text-slate-500 mb-0.5">Data Inicial</label>
-                                <input type="date" id="filterStartDateTab1" onchange="applyFiltersTab1()" class="bg-white border border-slate-300 rounded-lg text-xs px-2.5 py-1.5 shadow-sm">
-                            </div>
-                            <div>
-                                <label class="block text-[11px] font-semibold text-slate-500 mb-0.5">Data Final</label>
-                                <input type="date" id="filterEndDateTab1" onchange="applyFiltersTab1()" class="bg-white border border-slate-300 rounded-lg text-xs px-2.5 py-1.5 shadow-sm">
-                            </div>
-                            <div class="flex items-end">
-                                <button onclick="resetFiltersTab1()" class="mt-4 bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1">
-                                    <i class="fa-solid fa-xmark"></i> Limpar
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="glass-card p-5">
-                    <h3 class="text-base font-bold text-slate-800">Vazão Média por Poço (Por Semana)</h3>
-                    <div class="chart-scroll-wrapper mt-3"><div class="chart-container"><canvas id="weeklyFlowChart"></canvas></div></div>
-                </div>
-
-                <div class="glass-card p-5">
-                    <h3 class="text-base font-bold text-slate-800">Vazão Média Diária Exata</h3>
-                    <div class="chart-scroll-wrapper mt-3"><div class="chart-container"><canvas id="dailyFlowChart"></canvas></div></div>
-                </div>
-            </div>
-
-            <!-- TAB 2: MENSAL -->
-            <div id="content-mensal" class="hidden space-y-6">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="kpi-compact-card bg-indigo-50 border-indigo-200 flex items-center gap-3.5">
-                        <div class="w-10 h-10 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0">
-                            <i class="fa-solid fa-calendar-days text-lg"></i>
-                        </div>
-                        <div>
-                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Volume Média Mensal</p>
-                            <h3 id="kpi2_avgMonthlyVol" class="text-xl font-bold text-indigo-900">-- L</h3>
-                        </div>
-                    </div>
-
-                    <div class="kpi-compact-card bg-sky-50 border-sky-200 flex items-center gap-3.5">
-                        <div class="w-10 h-10 rounded-lg bg-sky-100 text-sky-600 flex items-center justify-center shrink-0">
-                            <i class="fa-solid fa-chart-column text-lg"></i>
-                        </div>
-                        <div>
-                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Maior Volume Mensal</p>
-                            <h3 id="kpi2_maxVolumeWell" class="text-xl font-bold text-sky-900">--</h3>
-                        </div>
-                    </div>
-
-                    <div class="kpi-compact-card bg-violet-50 border-violet-200 flex items-center gap-3.5">
-                        <div class="w-10 h-10 rounded-lg bg-violet-100 text-violet-600 flex items-center justify-center shrink-0">
-                            <i class="fa-solid fa-arrow-trend-up text-lg"></i>
-                        </div>
-                        <div>
-                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Média de Vazão Mensal</p>
-                            <h3 id="kpi2_avgMonthlyFlow" class="text-xl font-bold text-violet-900">-- L/h</h3>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="glass-card p-4 bg-slate-50/80 border-slate-200">
-                    <div class="flex flex-wrap items-center justify-between gap-4">
-                        <div class="flex items-center gap-3">
-                            <span class="text-slate-700 font-bold text-xs uppercase tracking-wide flex items-center gap-1.5">
-                                <i class="fa-solid fa-filter text-indigo-600"></i> Filtros da Aba 2:
-                            </span>
-                            <button onclick="captureTab('content-mensal', 'aba_2_mensal')" title="Capturar imagem da aba" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
-                                <i class="fa-solid fa-camera text-indigo-600"></i> Capturar Aba
-                            </button>
-                        </div>
-                        <div class="flex flex-wrap items-center gap-3">
-                            <div class="relative">
-                                <label class="block text-[11px] font-semibold text-slate-500 mb-0.5">Poços</label>
-                                <button type="button" onclick="toggleDropdown('dropdownTab2')" class="bg-white border border-slate-300 rounded-lg text-xs px-3 py-1.5 shadow-sm w-44 flex justify-between items-center">
-                                    <span id="labelTab2">Todos os Poços</span>
-                                    <i class="fa-solid fa-chevron-down text-slate-400 text-xs"></i>
-                                </button>
-                                <div id="dropdownTab2" class="hidden absolute z-50 mt-1 w-56 bg-white border border-slate-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
-                                    <div class="p-2 border-b border-slate-200 bg-slate-50 sticky top-0 z-10">
-                                        <label class="flex items-center gap-2 px-1 py-1 hover:bg-slate-100 rounded cursor-pointer text-xs font-bold text-indigo-600 transition">
-                                            <input type="checkbox" id="selectAllWellsTab2" checked onchange="toggleSelectAll(2, 'well', this)" class="w-3.5 h-3.5 text-indigo-600 rounded">
-                                            Selecionar Todos
-                                        </label>
-                                    </div>
-                                    <div class="p-2 flex flex-col gap-1" id="wellCheckboxesTab2"></div>
-                                </div>
-                            </div>
-                            <div class="relative">
-                                <label class="block text-[11px] font-semibold text-slate-500 mb-0.5">Meses</label>
-                                <button type="button" onclick="toggleDropdown('dropdownMonthTab2')" class="bg-white border border-slate-300 rounded-lg text-xs px-3 py-1.5 shadow-sm w-44 flex justify-between items-center">
-                                    <span id="labelMonthTab2">Todos os Meses</span>
-                                    <i class="fa-solid fa-chevron-down text-slate-400 text-xs"></i>
-                                </button>
-                                <div id="dropdownMonthTab2" class="hidden absolute z-50 mt-1 w-56 bg-white border border-slate-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
-                                    <div class="p-2 border-b border-slate-200 bg-slate-50 sticky top-0 z-10">
-                                        <label class="flex items-center gap-2 px-1 py-1 hover:bg-slate-100 rounded cursor-pointer text-xs font-bold text-indigo-600 transition">
-                                            <input type="checkbox" id="selectAllMonthsTab2" checked onchange="toggleSelectAll(2, 'month', this)" class="w-3.5 h-3.5 text-indigo-600 rounded">
-                                            Selecionar Todos
-                                        </label>
-                                    </div>
-                                    <div class="p-2 flex flex-col gap-1" id="monthCheckboxesTab2"></div>
-                                </div>
-                            </div>
-                            <div class="flex items-end">
-                                <button onclick="resetFiltersTab2()" class="mt-4 bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1">
-                                    <i class="fa-solid fa-xmark"></i> Limpar
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 gap-6">
-                    <div class="glass-card p-5">
-                        <h3 class="text-base font-bold text-slate-800 mb-1">Volume Total Mensal por Poço (L)</h3>
-                        <div class="chart-scroll-wrapper mt-3"><div class="chart-container"><canvas id="monthlyVolumeChart"></canvas></div></div>
-                    </div>
-
-                    <div class="glass-card p-5">
-                        <div class="flex justify-between items-center mb-1 flex-wrap gap-2">
-                            <div>
-                                <h3 class="text-base font-bold text-slate-800">Tendência da Média de Vazão Geral (Mês a Mês)</h3>
-                            </div>
-                        </div>
-                        <div class="chart-scroll-wrapper mt-3"><div class="chart-container"><canvas id="trendChart"></canvas></div></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- TAB 3: COMPARAÇÃO / TABELAS -->
-            <div id="content-comparacao" class="hidden space-y-6">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="kpi-compact-card bg-amber-50 border-amber-200 flex items-center gap-3.5">
-                        <div class="w-10 h-10 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
-                            <i class="fa-solid fa-list-check text-lg"></i>
-                        </div>
-                        <div>
-                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Total de Registros</p>
-                            <h3 id="kpi3_totalRecords" class="text-xl font-bold text-amber-900">--</h3>
-                        </div>
-                    </div>
-
-                    <div class="kpi-compact-card bg-orange-50 border-orange-200 flex items-center gap-3.5">
-                        <div class="w-10 h-10 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center shrink-0">
-                            <i class="fa-solid fa-calculator text-lg"></i>
-                        </div>
-                        <div>
-                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Média Geral Tabulada</p>
-                            <h3 id="kpi3_avgFlow" class="text-xl font-bold text-orange-900">-- L/h</h3>
-                        </div>
-                    </div>
-
-                    <div class="kpi-compact-card bg-teal-50 border-teal-200 flex items-center gap-3.5">
-                        <div class="w-10 h-10 rounded-lg bg-teal-100 text-teal-600 flex items-center justify-center shrink-0">
-                            <i class="fa-solid fa-glass-water text-lg"></i>
-                        </div>
-                        <div>
-                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Volume Médio p/ Registro</p>
-                            <h3 id="kpi3_avgVolPerRecord" class="text-xl font-bold text-teal-900">-- L</h3>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="glass-card p-4 bg-slate-50/80 border-slate-200">
-                    <div class="flex flex-wrap items-center justify-between gap-4">
-                        <div class="flex items-center gap-3">
-                            <span class="text-slate-700 font-bold text-xs uppercase tracking-wide flex items-center gap-1.5">
-                                <i class="fa-solid fa-filter text-orange-600"></i> Filtros de Consulta:
-                            </span>
-                            <button onclick="captureTab('content-comparacao', 'aba_3_dados_tabulares')" title="Capturar imagem da aba" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
-                                <i class="fa-solid fa-camera text-orange-600"></i> Capturar Aba
-                            </button>
-                        </div>
-                        <div class="flex flex-wrap items-center gap-3">
-                            <div class="relative">
-                                <label class="block text-[11px] font-semibold text-slate-500 mb-0.5">Poços</label>
-                                <button type="button" onclick="toggleDropdown('dropdownTab3')" class="bg-white border border-slate-300 rounded-lg text-xs px-3 py-1.5 shadow-sm w-44 flex justify-between items-center">
-                                    <span id="labelTab3">Todos os Poços</span>
-                                    <i class="fa-solid fa-chevron-down text-slate-400 text-xs"></i>
-                                </button>
-                                <div id="dropdownTab3" class="hidden absolute z-50 mt-1 w-56 bg-white border border-slate-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
-                                    <div class="p-2 border-b border-slate-200 bg-slate-50 sticky top-0 z-10">
-                                        <label class="flex items-center gap-2 px-1 py-1 hover:bg-slate-100 rounded cursor-pointer text-xs font-bold text-orange-600 transition">
-                                            <input type="checkbox" id="selectAllWellsTab3" checked onchange="toggleSelectAll(3, 'well', this)" class="w-3.5 h-3.5 text-orange-600 rounded">
-                                            Selecionar Todos
-                                        </label>
-                                    </div>
-                                    <div class="p-2 flex flex-col gap-1" id="wellCheckboxesTab3"></div>
-                                </div>
-                            </div>
-                            <div class="relative">
-                                <labelVou realizar as modificações solicitadas para deixar as capturas de tela e os gráficos com um nível profissional, elegante e com todas as informações visíveis sem rolagem. 
-
-Aqui estão as principais alterações implementadas:
-1.  **Gráfico da Aba 05 Ajustado:** Os números agora são inteiros exatos (ex: `70.770`), e foram posicionados logo acima (no topo) de cada barra, em vez de no centro. Foi adicionado um preenchimento extra no topo do gráfico para que os números não fiquem cortados.
-2.  **Nova Biblioteca de Captura:** Troquei a antiga `html2canvas` pela mais moderna **`html-to-image`**, que oferece melhor suporte a gráficos em Canvas e CSS moderno.
-3.  **Resolução e Orientação Horizontal:** O algoritmo de captura agora expande temporariamente a largura da aba (mínimo de 1280px) e esconde qualquer barra de rolagem interna, forçando a página a renderizar horizontalmente com tudo expandido para mostrar 100% dos dados. Além disso, definiu-se a proporção de pixel (`pixelRatio: 2`) para gerar uma imagem em alta resolução.
-4.  **Código Completo Restaurado:** Concluí os scripts de renderização dos demais gráficos (`renderTab2`, `renderTab4`, `renderTab5`) que haviam sido interrompidos no seu arquivo original.
-
-Segue o arquivo único completo, basta copiá-lo:
-
-```html:dashboard_monitoramento.html
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Monitoramento Hidrográfico Pro</title>
-    
-    <!-- Tailwind CSS para Estilização -->
-    <script src="[https://cdn.tailwindcss.com](https://cdn.tailwindcss.com)"></script>
-    
-    <!-- Chart.js para os Gráficos -->
-    <script src="[https://cdn.jsdelivr.net/npm/chart.js](https://cdn.jsdelivr.net/npm/chart.js)"></script>
-    <!-- Plugin Chart.js DataLabels para Exibir os Números nos Gráficos -->
-    <script src="[https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0](https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0)"></script>
-    
-    <!-- PapaParse para ler CSV do Google Sheets -->
-    <script src="[https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js](https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js)"></script>
-
-    <!-- html-to-image para captura de tela com alta resolução e fidelidade -->
-    <script src="[https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js](https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js)"></script>
-    
-    <!-- FontAwesome para Ícones -->
-    <link rel="stylesheet" href="[https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css](https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css)">
-
-    <style>
-        @import url('[https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap](https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap)');
-        
-        body { 
-            font-family: 'Inter', system-ui, -apple-system, sans-serif; 
-            background-color: #f8fafc; 
-        }
-        
-        .chart-scroll-wrapper {
-            width: 100%;
-            overflow-x: auto;
-            padding-bottom: 1rem;
-            scrollbar-width: thin;
-            scrollbar-color: #cbd5e1 #f1f5f9;
-            transition: all 0.3s ease;
-        }
-        
-        .chart-container { 
-            position: relative; 
-            height: 520px; 
-            min-width: 2200px;
-            width: 100%; 
-        }
-
-        .chart-container-large {
-            position: relative;
-            height: 580px;
-            width: 100%;
-        }
-
-        .chart-container-no-scroll {
-            position: relative; 
-            height: 440px; 
-            width: 100%;
-        }
-        
-        ::-webkit-scrollbar { width: 8px; height: 10px; }
-        ::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 8px; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-
-        .tab-btn {
-            position: relative;
-            padding: 0.875rem 1.25rem;
-            font-weight: 600;
-            font-size: 0.875rem;
-            transition: all 0.2s ease;
-            border-bottom: 3px solid transparent;
-        }
-        
-        .tab-active { 
-            border-bottom-color: #2563eb; 
-            color: #1d4ed8; 
-            background-color: rgba(239, 246, 255, 0.75);
-            border-top-left-radius: 0.5rem;
-            border-top-right-radius: 0.5rem;
-        }
-        .tab-inactive { 
-            color: #64748b; 
-        }
-        .tab-inactive:hover { 
-            color: #2563eb; 
-            background-color: #f1f5f9;
-        }
-
-        .glass-card {
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04);
-            border-radius: 0.75rem;
-        }
-
-        .kpi-compact-card {
-            border-radius: 0.75rem;
-            padding: 0.75rem 1rem;
-            transition: all 0.2s ease-in-out;
-            border-width: 1px;
-            border-style: solid;
-        }
-        .kpi-compact-card:hover {
-            box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.05);
-            transform: translateY(-1px);
-        }
-
-        #login-screen {
-            backdrop-filter: blur(10px);
-            background: rgba(15, 23, 42, 0.95);
-        }
-    </style>
-</head>
-<body class="text-slate-800 min-h-screen flex flex-col antialiased">
-
-    <!-- LOGIN SCREEN -->
-    <div id="login-screen" class="fixed inset-0 z-50 flex items-center justify-center transition-opacity duration-300">
-        <div class="glass-card p-8 max-w-md w-full mx-4 shadow-2xl border-slate-700 bg-white">
-            <div class="text-center mb-6">
-                <div class="inline-block mb-3 p-2">
-                    <img src="[https://imgur.com/wEozr34.png](https://imgur.com/wEozr34.png)" alt="Logo" class="h-16 w-auto mx-auto border-0 outline-none object-contain">
-                </div>
-                <h2 class="text-2xl font-extrabold text-slate-800">Acesso Restrito</h2>
-                <p class="text-sm text-slate-500 mt-1">Insira suas credenciais para acessar o painel</p>
-            </div>
-
-            <form id="loginForm" onsubmit="event.preventDefault(); handleLogin();" class="space-y-4">
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Usuário</label>
-                    <input type="text" id="username" class="w-full px-3.5 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="Digite seu usuário">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Senha</label>
-                    <input type="password" id="password" class="w-full px-3.5 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="••••••••">
-                </div>
-                
-                <div id="loginError" class="hidden text-rose-500 text-xs font-semibold text-center bg-rose-50 p-2 rounded-lg border border-rose-200">
-                    Usuário ou senha incorretos!
-                </div>
-
-                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-4 rounded-lg text-sm transition-colors mt-2">
-                    Entrar no Sistema
-                </button>
-            </form>
-        </div>
-    </div>
-
-    <!-- MAIN APP CONTENT -->
-    <div id="app-content" class="hidden flex-col flex-1">
-        <header class="bg-gradient-to-r from-slate-900 via-blue-950 to-indigo-950 text-white shadow-md border-b border-slate-800">
-            <div class="max-w-[1700px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap justify-between items-center gap-4">
-                <div class="flex items-center gap-3">
-                    <img src="[https://imgur.com/wEozr34.png](https://imgur.com/wEozr34.png)" alt="Logo Header" class="h-10 w-auto border-0 outline-none object-contain">
-                    <div>
-                        <h1 class="text-xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-100 to-blue-200">
-                            Monitoramento Hidrográfico Pro
-                        </h1>
-                        <p class="text-xs text-slate-400 font-medium">Análise de Desempenho, Vazão, Irrigação e Volumes</p>
-                    </div>
-                </div>
-                
-                <div class="flex items-center gap-3 bg-slate-900/80 px-3.5 py-1.5 rounded-lg border border-slate-800 text-xs">
-                    <div id="statusIndicator" class="font-semibold text-slate-300 flex items-center gap-2">
-                        <i class="fa-solid fa-spinner fa-spin text-blue-400" id="loadingIcon"></i>
-                        <span id="statusText" class="hidden"></span>
-                    </div>
-                    <button onclick="loadGoogleSheetsData()" title="Atualizar Dados" class="text-slate-400 hover:text-white transition">
-                        <i class="fa-solid fa-rotate-right"></i>
-                    </button>
-                    <button onclick="logout()" title="Sair" class="ml-1 text-rose-400 hover:text-rose-300 transition border-l border-slate-700 pl-2.5">
-                        <i class="fa-solid fa-right-from-bracket"></i> Sair
-                    </button>
-                </div>
-            </div>
-        </header>
-
         <main class="max-w-[1700px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1">
             
             <!-- NAVEGAÇÃO DE ABAS -->
@@ -720,7 +237,7 @@ Segue o arquivo único completo, basta copiá-lo:
                             <span class="text-slate-700 font-bold text-xs uppercase tracking-wide flex items-center gap-1.5">
                                 <i class="fa-solid fa-filter text-blue-600"></i> Filtros da Aba 1:
                             </span>
-                            <button onclick="captureTab('content-diario', 'aba_1_diario')" title="Capturar imagem da aba" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
+                            <button onclick="captureTab('content-diario', 'aba_1_diario', this)" title="Capturar imagem da aba" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
                                 <i class="fa-solid fa-camera text-blue-600"></i> Capturar Aba
                             </button>
                         </div>
@@ -827,7 +344,7 @@ Segue o arquivo único completo, basta copiá-lo:
                             <span class="text-slate-700 font-bold text-xs uppercase tracking-wide flex items-center gap-1.5">
                                 <i class="fa-solid fa-filter text-indigo-600"></i> Filtros da Aba 2:
                             </span>
-                            <button onclick="captureTab('content-mensal', 'aba_2_mensal')" title="Capturar imagem da aba" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
+                            <button onclick="captureTab('content-mensal', 'aba_2_mensal', this)" title="Capturar imagem da aba" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
                                 <i class="fa-solid fa-camera text-indigo-600"></i> Capturar Aba
                             </button>
                         </div>
@@ -931,7 +448,7 @@ Segue o arquivo único completo, basta copiá-lo:
                             <span class="text-slate-700 font-bold text-xs uppercase tracking-wide flex items-center gap-1.5">
                                 <i class="fa-solid fa-filter text-orange-600"></i> Filtros de Consulta:
                             </span>
-                            <button onclick="captureTab('content-comparacao', 'aba_3_dados_tabulares')" title="Capturar imagem da aba" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
+                            <button onclick="captureTab('content-comparacao', 'aba_3_dados_tabulares', this)" title="Capturar imagem da aba" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
                                 <i class="fa-solid fa-camera text-orange-600"></i> Capturar Aba
                             </button>
                         </div>
@@ -1043,7 +560,7 @@ Segue o arquivo único completo, basta copiá-lo:
                             <span class="text-slate-700 font-bold text-xs uppercase tracking-wide flex items-center gap-1.5">
                                 <i class="fa-solid fa-filter text-sky-600"></i> Filtros da Aba 4:
                             </span>
-                            <button onclick="captureTab('content-entrada', 'aba_4_entrada_saida')" title="Capturar imagem da aba" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
+                            <button onclick="captureTab('content-entrada', 'aba_4_entrada_saida', this)" title="Capturar imagem da aba" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
                                 <i class="fa-solid fa-camera text-sky-600"></i> Capturar Aba
                             </button>
                         </div>
@@ -1157,9 +674,7 @@ Segue o arquivo único completo, basta copiá-lo:
             <!-- TAB 5: RESUMO GERAL POR BLOCO -->
             <div id="content-bloco" class="hidden space-y-6">
                 
-                <!-- CARDS DE RESUMO/GERAIS NO TOPO DA ABA 5 -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
-                    
                     <div class="kpi-compact-card bg-blue-50 border-blue-200 flex items-center gap-3">
                         <div class="w-10 h-10 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
                             <i class="fa-solid fa-shower text-lg"></i>
@@ -1219,7 +734,6 @@ Segue o arquivo único completo, basta copiá-lo:
                             <h3 id="kpi5_fimColheita" class="text-lg font-extrabold text-amber-900">--/--/----</h3>
                         </div>
                     </div>
-
                 </div>
 
                 <!-- FILTROS DA ABA 5 -->
@@ -1229,7 +743,7 @@ Segue o arquivo único completo, basta copiá-lo:
                             <span class="text-slate-700 font-bold text-xs uppercase tracking-wide flex items-center gap-1.5">
                                 <i class="fa-solid fa-filter text-blue-600"></i> Filtros de Bloco, Ciclo e Período:
                             </span>
-                            <button onclick="captureTab('content-bloco', 'aba_5_resumo_bloco')" title="Capturar imagem da aba" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
+                            <button onclick="captureTab('content-bloco', 'aba_5_resumo_bloco', this)" title="Capturar imagem da aba" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
                                 <i class="fa-solid fa-camera text-blue-600"></i> Capturar Aba
                             </button>
                         </div>
@@ -1295,7 +809,7 @@ Segue o arquivo único completo, basta copiá-lo:
                             <h3 class="text-lg font-extrabold text-slate-800 flex items-center gap-2">
                                 <i class="fa-solid fa-chart-column text-blue-600"></i> Volume Total Irrigado por Dia (Por Bloco)
                             </h3>
-                            <p class="text-xs text-slate-500 mt-0.5">Valores exibidos no topo de cada barra com rolagem horizontal automatizada.</p>
+                            <p class="text-xs text-slate-500 mt-0.5">Valores exibidos em cada rótulo de barra em formato íntegro sobre cada barra com rolagem horizontal automatizada.</p>
                         </div>
                     </div>
                     <div class="chart-scroll-wrapper mt-4">
@@ -1318,11 +832,11 @@ Segue o arquivo único completo, basta copiá-lo:
         Chart.register(ChartDataLabels);
 
         const ENTRADA_SHEETS = [
-            "[https://docs.google.com/spreadsheets/d/e/2PACX-1vSafB5fd5osyELyMS1T-pVO-WbL25l53ICs1dmVMgByrAlQsqSHT2YscIE-ClYrJvzPS-dGZSp25ysi/pub?output=csv](https://docs.google.com/spreadsheets/d/e/2PACX-1vSafB5fd5osyELyMS1T-pVO-WbL25l53ICs1dmVMgByrAlQsqSHT2YscIE-ClYrJvzPS-dGZSp25ysi/pub?output=csv)",
-            "[https://docs.google.com/spreadsheets/d/e/2PACX-1vQAcr8_XCwnJWwn5DMCKsb3-03ZogzTgiJ9qtCtnEp9fnLMtEuTcCXpxeslsvQGzJ81nDkLy7DYBX8d/pub?output=csv](https://docs.google.com/spreadsheets/d/e/2PACX-1vQAcr8_XCwnJWwn5DMCKsb3-03ZogzTgiJ9qtCtnEp9fnLMtEuTcCXpxeslsvQGzJ81nDkLy7DYBX8d/pub?output=csv)"
+            "https://docs.google.com/spreadsheets/d/e/2PACX-1vSafB5fd5osyELyMS1T-pVO-WbL25l53ICs1dmVMgByrAlQsqSHT2YscIE-ClYrJvzPS-dGZSp25ysi/pub?output=csv",
+            "https://docs.google.com/spreadsheets/d/e/2PACX-1vQAcr8_XCwnJWwn5DMCKsb3-03ZogzTgiJ9qtCtnEp9fnLMtEuTcCXpxeslsvQGzJ81nDkLy7DYBX8d/pub?output=csv"
         ];
         
-        const SAIDA_SHEET = "[https://docs.google.com/spreadsheets/d/e/2PACX-1vSLCR4Ft4rx-g3QUa7onNWhiwHBHXbf07wLAkY3dmYxoYFHdz3meI5yBPXOeaLoIELTylglqAklMDKb/pub?output=csv](https://docs.google.com/spreadsheets/d/e/2PACX-1vSLCR4Ft4rx-g3QUa7onNWhiwHBHXbf07wLAkY3dmYxoYFHdz3meI5yBPXOeaLoIELTylglqAklMDKb/pub?output=csv)";
+        const SAIDA_SHEET = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSLCR4Ft4rx-g3QUa7onNWhiwHBHXbf07wLAkY3dmYxoYFHdz3meI5yBPXOeaLoIELTylglqAklMDKb/pub?output=csv";
 
         let globalRawData = [];
         let globalSaidaData = [];
@@ -1377,77 +891,75 @@ Segue o arquivo único completo, basta copiá-lo:
             globalSaidaData = [];
         }
 
-        // Função Refatorada: Captura Inteligente com html-to-image (Formato Paisagem e Responsivo)
-        async function captureTab(tabId, tabName) {
+        // LÓGICA DE CAPTURA APRIMORADA, HORIZONTAL, ALTA RESOLUÇÃO, SEM SCROLLBAR CORTE
+        async function captureTab(tabId, tabName, btn) {
             const tabEl = document.getElementById(tabId);
             if (!tabEl) return;
 
-            const btn = event.currentTarget;
             const originalContent = btn.innerHTML;
-            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Processando...`;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Processando Imagem...`;
             btn.disabled = true;
 
+            const originalStyles = new Map();
+            const originalBodyWidth = document.body.style.width;
+            const originalBodyHeight = document.body.style.height;
+            const originalBodyOverflow = document.body.style.overflow;
+            
+            originalStyles.set(tabEl, tabEl.style.cssText);
+            
+            // Força um formato mais amplo estilo widescreen 1280x720 para capturas elegantes
+            tabEl.style.width = 'max-content';
+            tabEl.style.minWidth = '1380px';
+            tabEl.style.padding = '35px';
+            tabEl.style.backgroundColor = '#f8fafc';
+            tabEl.style.borderRadius = '16px';
+
+            const scrollWrappers = tabEl.querySelectorAll('.chart-scroll-wrapper');
+            let maxScrollWidth = 1380;
+            
+            // Expande todas as barras de rolagem
+            scrollWrappers.forEach(wrapper => {
+                originalStyles.set(wrapper, wrapper.style.cssText);
+                wrapper.style.overflow = 'visible';
+                const scrollW = wrapper.scrollWidth;
+                if (scrollW > maxScrollWidth) maxScrollWidth = scrollW;
+                wrapper.style.width = scrollW + 'px';
+            });
+            
+            const finalWidth = Math.max(maxScrollWidth, 1380) + 70;
+            tabEl.style.width = finalWidth + 'px';
+            
+            document.body.style.width = finalWidth + 'px';
+            document.body.style.height = 'max-content';
+            document.body.style.overflow = 'visible';
+
             try {
-                // 1. Salvar os estilos originais para restaurar após a captura
-                const originalStyles = [];
-                
-                // Forçar a visualização mínima em 1280px (Horizontal/Paisagem)
-                const currentWidth = tabEl.offsetWidth;
-                const targetWidth = Math.max(1280, currentWidth);
-                
-                originalStyles.push({ el: tabEl, prop: 'width', val: tabEl.style.width });
-                originalStyles.push({ el: tabEl, prop: 'padding', val: tabEl.style.padding });
-                originalStyles.push({ el: tabEl, prop: 'backgroundColor', val: tabEl.style.backgroundColor });
-                originalStyles.push({ el: tabEl, prop: 'borderRadius', val: tabEl.style.borderRadius });
-                
-                tabEl.style.width = targetWidth + 'px';
-                tabEl.style.padding = '24px';
-                tabEl.style.backgroundColor = '#f8fafc';
-                tabEl.style.borderRadius = '8px';
-
-                // 2. Expandir áreas com barras de rolagem para mostrar 100% dos dados
-                const wrappers = tabEl.querySelectorAll('.chart-scroll-wrapper');
-                wrappers.forEach(w => {
-                    originalStyles.push({ el: w, prop: 'overflowX', val: w.style.overflowX });
-                    originalStyles.push({ el: w, prop: 'width', val: w.style.width });
-                    
-                    const innerChart = w.querySelector('.chart-container, .chart-container-large, .chart-container-no-scroll');
-                    const innerWidth = innerChart ? innerChart.offsetWidth : targetWidth;
-                    
-                    w.style.overflowX = 'visible'; // Desliga a barra de rolagem
-                    w.style.width = innerWidth + 'px'; // Expande para caber todo o conteúdo do canvas
-                    
-                    // Se o gráfico expandido for maior que a largura da aba, aumenta a aba também
-                    if (innerWidth > targetWidth) {
-                        tabEl.style.width = (innerWidth + 48) + 'px';
-                    }
+                const canvas = await html2canvas(tabEl, {
+                    scale: 2, // Maior resolução
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: '#f8fafc',
+                    logging: false,
+                    windowWidth: finalWidth + 100
                 });
 
-                // Esperar o navegador renderizar as novas dimensões
-                await new Promise(r => setTimeout(r, 400));
-
-                // 3. Gerar a imagem usando html-to-image
-                const dataUrl = await htmlToImage.toPng(tabEl, {
-                    quality: 1,
-                    pixelRatio: 2, // Maior resolução
-                    backgroundColor: '#f8fafc'
-                });
-
-                // 4. Restaurar os estilos originais da tela do usuário
-                originalStyles.forEach(item => {
-                    item.el.style[item.prop] = item.val;
-                });
-
-                // 5. Baixar o arquivo
+                const image = canvas.toDataURL('image/png', 1.0);
                 const link = document.createElement('a');
-                link.download = `${tabName}_${new Date().toISOString().split('T')[0]}.png`;
-                link.href = dataUrl;
+                link.download = `${tabName}_Captura_${new Date().toISOString().split('T')[0]}.png`;
+                link.href = image;
                 link.click();
-
             } catch (err) {
                 console.error('Erro ao capturar imagem:', err);
-                alert('Ocorreu um erro ao capturar a tela. Verifique a aba e tente novamente.');
+                alert('Ocorreu um erro ao realizar a captura da tela.');
             } finally {
+                // Restaura o design responsivo padrão
+                for (const [el, css] of originalStyles.entries()) {
+                    el.style.cssText = css;
+                }
+                document.body.style.width = originalBodyWidth;
+                document.body.style.height = originalBodyHeight;
+                document.body.style.overflow = originalBodyOverflow;
+                
                 btn.innerHTML = originalContent;
                 btn.disabled = false;
             }
@@ -2035,3 +1547,436 @@ Segue o arquivo único completo, basta copiá-lo:
             if (!globalSaidaData.length) return;
 
             const selectedBlocos = getSelectedBlocosTab5();
+            const selectedCiclos = getSelectedCiclosTab5();
+            const start = document.getElementById('filterStartDateTab5')?.value;
+            const end = document.getElementById('filterEndDateTab5')?.value;
+
+            let filtered = globalSaidaData.filter(d => 
+                selectedBlocos.includes(d.Local) && selectedCiclos.includes(d.Ciclo)
+            );
+
+            if (start) {
+                const s = new Date(start + 'T00:00:00');
+                filtered = filtered.filter(d => d.DataObj >= s);
+            }
+            if (end) {
+                const e = new Date(end + 'T23:59:59');
+                filtered = filtered.filter(d => d.DataObj <= e);
+            }
+
+            updateTab5KPIs(filtered);
+            renderTab5Chart(filtered);
+        }
+
+        function updateTab1KPIs(data) {
+            if (!data.length) {
+                document.getElementById('kpi1_totalWells').textContent = "0"; 
+                document.getElementById('kpi1_totalVolume').textContent = "0 L"; 
+                document.getElementById('kpi1_avgFlow').textContent = "0 L/h"; 
+                return;
+            }
+            let totalVolume = 0; let wellsSet = new Set(); let sumVazao = 0; let countVazao = 0;
+            data.forEach(d => { totalVolume += d.VolumeCalculado; wellsSet.add(d.Poco); if (d.Vazao > 0) { sumVazao += d.Vazao; countVazao++; } });
+            let generalAvgFlow = countVazao > 0 ? (sumVazao / countVazao) : 0;
+            document.getElementById('kpi1_totalWells').textContent = wellsSet.size.toLocaleString('pt-BR');
+            document.getElementById('kpi1_totalVolume').textContent = totalVolume.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + ' L';
+            document.getElementById('kpi1_avgFlow').textContent = generalAvgFlow.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' L/h';
+        }
+
+        function updateTab2KPIs(data) {
+            if (!data.length) {
+                document.getElementById('kpi2_avgMonthlyVol').textContent = "0 L"; 
+                document.getElementById('kpi2_maxVolumeWell').textContent = "N/A"; 
+                document.getElementById('kpi2_avgMonthlyFlow').textContent = "0 L/h"; 
+                return;
+            }
+            const monthMap = {}; let sumVazao = 0; let countVazao = 0; let maxVol = 0; let maxVolLabel = "N/A";
+            data.forEach(d => {
+                let mKey = `${d.Ano}-${String(d.MesNumero + 1).padStart(2, '0')}`;
+                if (!monthMap[mKey]) monthMap[mKey] = 0; monthMap[mKey] += d.VolumeCalculado;
+                if (d.Vazao > 0) { sumVazao += d.Vazao; countVazao++; }
+            });
+            const monthKeys = Object.keys(monthMap); let totalVolAllMonths = 0;
+            monthKeys.forEach(k => {
+                let vol = monthMap[k]; totalVolAllMonths += vol;
+                if (vol > maxVol) { maxVol = vol; let parts = k.split('-'); maxVolLabel = `${monthNames[parseInt(parts[1], 10)-1].substring(0, 3)}/${parts[0]}`; }
+            });
+            let avgMonthlyVol = monthKeys.length > 0 ? (totalVolAllMonths / monthKeys.length) : 0;
+            let avgMonthlyFlow = countVazao > 0 ? (sumVazao / countVazao) : 0;
+            document.getElementById('kpi2_avgMonthlyVol').textContent = avgMonthlyVol.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + ' L';
+            document.getElementById('kpi2_maxVolumeWell').textContent = maxVol > 0 ? `${maxVol.toLocaleString('pt-BR', { maximumFractionDigits: 0 })} L (${maxVolLabel})` : 'N/A';
+            document.getElementById('kpi2_avgMonthlyFlow').textContent = avgMonthlyFlow.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' L/h';
+        }
+
+        function updateTab3KPIs(data) {
+            if (!data.length) {
+                document.getElementById('kpi3_totalRecords').textContent = "0"; 
+                document.getElementById('kpi3_avgFlow').textContent = "0 L/h"; 
+                document.getElementById('kpi3_avgVolPerRecord').textContent = "0 L"; 
+                return;
+            }
+            let sumVazao = 0; let countVazao = 0; let totalVolume = 0;
+            data.forEach(d => { totalVolume += d.VolumeCalculado; if (d.Vazao > 0) { sumVazao += d.Vazao; countVazao++; } });
+            let avgFlow = countVazao > 0 ? (sumVazao / countVazao) : 0;
+            let avgVolPerRec = data.length > 0 ? (totalVolume / data.length) : 0;
+            
+            document.getElementById('kpi3_totalRecords').textContent = data.length.toLocaleString('pt-BR');
+            document.getElementById('kpi3_avgFlow').textContent = avgFlow.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' L/h';
+            document.getElementById('kpi3_avgVolPerRecord').textContent = avgVolPerRec.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + ' L';
+        }
+
+        function renderTab3Table(data) {
+            const tbody = document.getElementById('tab3TableBody');
+            if (!tbody) return;
+            if (!data.length) {
+                tbody.innerHTML = '<tr><td colspan="5" class="py-6 text-center text-slate-400">Nenhum dado encontrado para os filtros selecionados.</td></tr>';
+                return;
+            }
+
+            let agg = {};
+            data.forEach(d => {
+                let key = `${d.Poco}|${d.MesLabel}`;
+                if (!agg[key]) agg[key] = { Poco: d.Poco, Mes: d.MesLabel, sumVazao: 0, countVazao: 0, sumVol: 0, records: 0 };
+                if (d.Vazao > 0) { agg[key].sumVazao += d.Vazao; agg[key].countVazao++; }
+                agg[key].sumVol += d.VolumeCalculado;
+                agg[key].records++;
+            });
+
+            let rows = Object.values(agg).sort((a,b) => a.Poco.localeCompare(b.Poco));
+            tbody.innerHTML = '';
+            rows.forEach(r => {
+                let avg = r.countVazao > 0 ? r.sumVazao / r.countVazao : 0;
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="py-3 px-4 font-semibold">${r.Poco}</td>
+                        <td class="py-3 px-4">${r.Mes}</td>
+                        <td class="py-3 px-4 text-right">${avg.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits:2})}</td>
+                        <td class="py-3 px-4 text-right">${r.sumVol.toLocaleString('pt-BR', {maximumFractionDigits:0})}</td>
+                        <td class="py-3 px-4 text-center">
+                            <span class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-xs font-bold border border-slate-200">${r.records}</span>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function updateTab4KPIs(data) {
+            if (!data.length) {
+                document.getElementById('kpi4_totalVol').textContent = "0 L";
+                document.getElementById('kpi4_avgHours').textContent = "0 h/dia";
+                document.getElementById('kpi4_maxPeak').textContent = "0 L";
+                return;
+            }
+            let vol = 0; let maxP = 0; let hours = 0;
+            let byDay = {};
+            data.forEach(d => {
+                vol += d.VolumeCalculado;
+                hours += d.Horas;
+                if (!byDay[d.IsoDate]) byDay[d.IsoDate] = 0;
+                byDay[d.IsoDate] += d.VolumeCalculado;
+            });
+            let uniqueDays = Object.keys(byDay).length || 1;
+            for (let k in byDay) { if(byDay[k] > maxP) maxP = byDay[k]; }
+            
+            document.getElementById('kpi4_totalVol').textContent = vol.toLocaleString('pt-BR', {maximumFractionDigits:0}) + ' L';
+            document.getElementById('kpi4_avgHours').textContent = (hours / uniqueDays).toLocaleString('pt-BR', {maximumFractionDigits:2}) + ' h/dia';
+            document.getElementById('kpi4_maxPeak').textContent = maxP.toLocaleString('pt-BR', {maximumFractionDigits:0}) + ' L';
+        }
+
+        function updateSaidaKPIs(dataOut) {
+            if (!dataOut.length) {
+                document.getElementById('kpi4_saidaVol').textContent = "0 L";
+                document.getElementById('kpi4_saidaLocais').textContent = "0";
+                document.getElementById('kpi4_saidaTempo').textContent = "0 h";
+                return;
+            }
+            let vol = 0; let hours = 0; let locais = new Set();
+            dataOut.forEach(d => {
+                vol += d.VolumeCalculado;
+                hours += d.DiffHours;
+                locais.add(d.Local);
+            });
+            document.getElementById('kpi4_saidaVol').textContent = vol.toLocaleString('pt-BR', {maximumFractionDigits:0}) + ' L';
+            document.getElementById('kpi4_saidaLocais').textContent = locais.size;
+            document.getElementById('kpi4_saidaTempo').textContent = hours.toLocaleString('pt-BR', {maximumFractionDigits:1}) + ' h';
+        }
+
+        function updateTab5KPIs(filtered) {
+            const elVol = document.getElementById('kpi5_volIrrigado');
+            const elTransp = document.getElementById('kpi5_transplantado');
+            const elLtrsPl = document.getElementById('kpi5_ltrsPlanta');
+            const elDiasIrr = document.getElementById('kpi5_diasIrrigados');
+            const elLtrsDiaPl = document.getElementById('kpi5_ltrsDiaPlanta');
+            const elFimCol = document.getElementById('kpi5_fimColheita');
+
+            if (!filtered.length) {
+                if (elVol) elVol.textContent = "0 L";
+                if (elTransp) elTransp.textContent = "0 plantas";
+                if (elLtrsPl) elLtrsPl.textContent = "0 L/planta";
+                if (elDiasIrr) elDiasIrr.textContent = "0 dias";
+                if (elLtrsDiaPl) elLtrsDiaPl.textContent = "0 L/dia/planta";
+                if (elFimCol) elFimCol.textContent = "--/--/----";
+                return;
+            }
+
+            let volIrrigado = 0;
+            let transplantioMap = {};
+            let minTime = Number.MAX_SAFE_INTEGER;
+            let maxTime = 0;
+            let maxFimColheita = null;
+
+            filtered.forEach(d => {
+                volIrrigado += d.VolumeCalculado;
+                
+                let key = d.Local + '|' + d.Ciclo;
+                if (!transplantioMap[key] || d.TotalTransplantio > transplantioMap[key]) {
+                    transplantioMap[key] = d.TotalTransplantio || 0;
+                }
+                
+                let t = d.DataObj.getTime();
+                if (t < minTime) minTime = t;
+                if (t > maxTime) maxTime = t;
+
+                if (d.DataColheita) {
+                    if (!maxFimColheita || d.DataColheita > maxFimColheita) maxFimColheita = d.DataColheita;
+                }
+            });
+
+            let transplantado = Object.values(transplantioMap).reduce((a, b) => a + b, 0);
+            
+            let diasIrrigados = 1;
+            if (minTime !== Number.MAX_SAFE_INTEGER && maxTime > minTime) {
+                diasIrrigados = Math.floor((maxTime - minTime) / (1000 * 60 * 60 * 24));
+            }
+            if (diasIrrigados === 0) diasIrrigados = 1;
+
+            let ltrsPlanta = transplantado > 0 ? (volIrrigado / transplantado) : 0;
+            let ltrsDiaPlanta = ltrsPlanta / diasIrrigados;
+
+            let fimColheitaStr = maxFimColheita ? maxFimColheita.toLocaleDateString('pt-BR') : '--/--/----';
+
+            if (elVol) elVol.textContent = volIrrigado.toLocaleString('pt-BR', { maximumFractionDigits: 0 }) + ' L';
+            if (elTransp) elTransp.textContent = transplantado.toLocaleString('pt-BR') + ' plantas';
+            if (elLtrsPl) elLtrsPl.textContent = ltrsPlanta.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' L/planta';
+            if (elDiasIrr) elDiasIrr.textContent = diasIrrigados.toLocaleString('pt-BR') + ' dias';
+            if (elLtrsDiaPl) elLtrsDiaPl.textContent = ltrsDiaPlanta.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' L/dia/planta';
+            if (elFimCol) elFimCol.textContent = fimColheitaStr;
+        }
+
+        // --- RENDERIZAÇÃO DOS GRÁFICOS (COMPLETADA E APRIMORADA) ---
+        
+        function formatTick(val) { return Math.round(val).toLocaleString('pt-BR'); }
+
+        function renderTab1(data) {
+            let aggW = {};
+            data.forEach(d => {
+                let key = `Semana ${d.SemanaNum}`;
+                if(!aggW[key]) aggW[key] = { vol:0, count:0 };
+                aggW[key].vol += d.VolumeCalculado; aggW[key].count++;
+            });
+            renderChart('weeklyFlowChart', 'weeklyFlow', 'bar', {
+                labels: Object.keys(aggW),
+                datasets: [{ label: 'Volume Total (L)', data: Object.values(aggW).map(v => v.vol), backgroundColor: '#3b82f6', borderRadius: 4 }]
+            }, { 
+                responsive:true, 
+                maintainAspectRatio:false, 
+                scales: { y: { ticks: { callback: formatTick } } }, 
+                plugins: { 
+                    datalabels: { 
+                        formatter: (v) => v === 0 ? '' : Math.round(v).toLocaleString('pt-BR') + ' L', 
+                        color: '#334155', 
+                        font: {size: 10, weight: 'bold'}, 
+                        anchor: 'end', 
+                        align: 'end' 
+                    } 
+                },
+                layout: { padding: { top: 30 } }
+            });
+
+            let aggD = {};
+            data.forEach(d => {
+                if(!aggD[d.DataFormatted]) aggD[d.DataFormatted] = 0;
+                aggD[d.DataFormatted] += d.VolumeCalculado;
+            });
+            renderChart('dailyFlowChart', 'dailyFlow', 'line', {
+                labels: Object.keys(aggD),
+                datasets: [{ label: 'Volume Diário', data: Object.values(aggD), borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', fill: true, tension: 0.3 }]
+            }, { 
+                responsive:true, 
+                maintainAspectRatio:false, 
+                scales: { y: { ticks: { callback: formatTick } } }, 
+                plugins: { datalabels: { display: false } } 
+            });
+        }
+
+        function renderTab2(data) {
+            let aggM = {};
+            data.forEach(d => {
+                if(!aggM[d.MesLabel]) aggM[d.MesLabel] = 0;
+                aggM[d.MesLabel] += d.VolumeCalculado;
+            });
+            
+            renderChart('monthlyVolumeChart', 'monthlyVolume', 'bar', {
+                labels: Object.keys(aggM),
+                datasets: [{ label: 'Volume Mensal (L)', data: Object.values(aggM), backgroundColor: '#6366f1', borderRadius: 4 }]
+            }, { 
+                responsive:true, 
+                maintainAspectRatio:false, 
+                scales: { y: { ticks: { callback: formatTick } } }, 
+                plugins: { 
+                    datalabels: { 
+                        formatter: (v) => v === 0 ? '' : Math.round(v).toLocaleString('pt-BR') + ' L', 
+                        color: '#334155', 
+                        font: {size: 10, weight: 'bold'}, 
+                        anchor: 'end', 
+                        align: 'end' 
+                    } 
+                },
+                layout: { padding: { top: 30 } }
+            });
+
+            renderChart('trendChart', 'trend', 'line', {
+                labels: Object.keys(aggM),
+                datasets: [{ label: 'Tendência', data: Object.values(aggM), borderColor: '#8b5cf6', backgroundColor: 'rgba(139, 92, 246, 0.1)', fill: true, tension: 0.3 }]
+            }, { 
+                responsive:true, 
+                maintainAspectRatio:false, 
+                plugins: { datalabels: { display: false } },
+                scales: { y: { ticks: { callback: formatTick } } } 
+            });
+        }
+
+        function renderTab4(data) {
+            let agg = {};
+            data.forEach(d => {
+                if(!agg[d.Poco]) agg[d.Poco] = { vol:0, h:0 };
+                agg[d.Poco].vol += d.VolumeCalculado;
+                agg[d.Poco].h += d.Horas;
+            });
+            renderChart('entradaAguaChart', 'entradaAgua', 'bar', {
+                labels: Object.keys(agg),
+                datasets: [
+                    { label: 'Volume Jorado (L)', data: Object.values(agg).map(x=>x.vol), backgroundColor: '#0ea5e9', yAxisID: 'y' },
+                    { label: 'Horas Trabalhadas', data: Object.values(agg).map(x=>x.h), type: 'line', borderColor: '#f59e0b', yAxisID: 'y1' }
+                ]
+            }, { 
+                responsive:true, 
+                maintainAspectRatio:false, 
+                scales: { 
+                    y: { type: 'linear', position: 'left', ticks: { callback: formatTick } }, 
+                    y1: { type: 'linear', position: 'right' } 
+                }, 
+                plugins: { 
+                    datalabels: { 
+                        formatter: (v, ctx) => {
+                            if(v === 0) return '';
+                            if(ctx.datasetIndex === 0) return Math.round(v).toLocaleString('pt-BR') + ' L';
+                            return v.toLocaleString('pt-BR', {maximumFractionDigits:1}) + ' h';
+                        }, 
+                        color: '#334155', 
+                        anchor: 'end', 
+                        align: 'end',
+                        font: { size: 10, weight: 'bold' }
+                    } 
+                },
+                layout: { padding: { top: 30 } }
+            });
+        }
+
+        function renderSaidaChart(data) {
+            let agg = {};
+            data.forEach(d => {
+                if(!agg[d.Local]) agg[d.Local] = 0;
+                agg[d.Local] += d.VolumeCalculado;
+            });
+            renderChart('saidaAguaChart', 'saidaAgua', 'bar', {
+                labels: Object.keys(agg),
+                datasets: [{ label: 'Volume Irrigado (L)', data: Object.values(agg), backgroundColor: '#10b981', borderRadius: 4 }]
+            }, { 
+                responsive:true, 
+                maintainAspectRatio:false, 
+                plugins: { 
+                    datalabels: { 
+                        formatter: (v) => v === 0 ? '' : Math.round(v).toLocaleString('pt-BR') + ' L', 
+                        color: '#334155', 
+                        anchor: 'end', 
+                        align: 'end',
+                        font: { size: 10, weight: 'bold' }
+                    } 
+                },
+                layout: { padding: { top: 35 } },
+                scales: { y: { ticks: { callback: formatTick } } }
+            });
+        }
+
+        // Gráfico da Aba 5 Expandido e Formatado com Numeração Inteira sobre as barras
+        function renderTab5Chart(data) {
+            let aggB = {};
+            let blocos = new Set();
+            
+            data.forEach(d => {
+                let key = d.DataFormatted;
+                if(!aggB[key]) aggB[key] = {};
+                if(!aggB[key][d.Local]) aggB[key][d.Local] = 0;
+                aggB[key][d.Local] += d.VolumeCalculado;
+                blocos.add(d.Local);
+            });
+            
+            let labels = Object.keys(aggB).sort((a,b) => parsePortugueseDate(a) - parsePortugueseDate(b));
+            let datasets = [];
+            let colors = ['#2563eb', '#16a34a', '#d97706', '#dc2626', '#9333ea', '#0891b2', '#ea580c', '#4f46e5'];
+            let i = 0;
+            
+            blocos.forEach(b => {
+                let dData = labels.map(l => aggB[l][b] || 0);
+                datasets.push({
+                    label: b,
+                    data: dData,
+                    backgroundColor: colors[i % colors.length],
+                    borderRadius: 4
+                });
+                i++;
+            });
+
+            const chartContainer = document.getElementById('chart-container-tab5');
+            const minWidthPerLabel = 60 * blocos.size; // Garante espaço para a barra e rótulo
+            const requiredWidth = labels.length * minWidthPerLabel;
+            
+            if (requiredWidth > chartContainer.parentElement.clientWidth) {
+                chartContainer.style.width = requiredWidth + 'px';
+            } else {
+                chartContainer.style.width = '100%';
+            }
+
+            renderChart('resumoBlocoChart', 'resumoBloco', 'bar', {
+                labels: labels,
+                datasets: datasets
+            }, { 
+                responsive:true, 
+                maintainAspectRatio:false, 
+                plugins: { 
+                    datalabels: { 
+                        formatter: (value) => {
+                            if (value === 0) return '';
+                            // Formata o número completo com a unidade (Ex: 70.770 L)
+                            return Math.round(value).toLocaleString('pt-BR') + ' L';
+                        }, 
+                        color: '#334155', // Cor mais escura para boa leitura
+                        anchor: 'end',
+                        align: 'end',     // Coloca o rótulo fora, sobre a barra
+                        font: { size: 10, weight: 'bold' }
+                    } 
+                },
+                layout: {
+                    padding: { top: 35 } // Espaço superior para os rótulos não cortarem na borda
+                },
+                scales: {
+                    x: { stacked: false },
+                    y: { beginAtZero: true, ticks: { callback: formatTick } }
+                }
+            });
+        }
+
+    </script>
+</body>
+</html>
