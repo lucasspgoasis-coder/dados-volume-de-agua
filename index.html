@@ -19,6 +19,9 @@
     <!-- html2canvas para captura de tela por aba -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
+    <!-- jsPDF para exportação direta em PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
     <!-- FontAwesome para Ícones -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
@@ -33,7 +36,7 @@
         .chart-scroll-wrapper {
             width: 100%;
             overflow-x: auto;
-            padding-bottom: 1rem;
+            padding-bottom: 0.5rem;
             scrollbar-width: thin;
             scrollbar-color: #cbd5e1 #f1f5f9;
         }
@@ -56,6 +59,12 @@
             height: 440px; 
             width: 100%;
         }
+
+        .chart-container-manutencao {
+            position: relative;
+            height: 480px;
+            width: 100%;
+        }
         
         ::-webkit-scrollbar { width: 8px; height: 10px; }
         ::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 8px; }
@@ -64,17 +73,18 @@
 
         .tab-btn {
             position: relative;
-            padding: 0.875rem 1.25rem;
+            padding: 0.875rem 1.15rem;
             font-weight: 600;
-            font-size: 0.875rem;
+            font-size: 0.85rem;
             transition: all 0.2s ease;
             border-bottom: 3px solid transparent;
+            white-space: nowrap;
         }
         
         .tab-active { 
             border-bottom-color: #2563eb; 
             color: #1d4ed8; 
-            background-color: rgba(239, 246, 255, 0.75);
+            background-color: rgba(239, 246, 255, 0.85);
             border-top-left-radius: 0.5rem;
             border-top-right-radius: 0.5rem;
         }
@@ -148,14 +158,14 @@
     <!-- MAIN APP CONTENT -->
     <div id="app-content" class="hidden flex-col flex-1">
         <header class="bg-gradient-to-r from-slate-900 via-blue-950 to-indigo-950 text-white shadow-md border-b border-slate-800">
-            <div class="max-w-[1700px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap justify-between items-center gap-4">
+            <div class="max-w-[1920px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap justify-between items-center gap-4">
                 <div class="flex items-center gap-3">
                     <img src="https://imgur.com/wEozr34.png" alt="Logo Header" class="h-10 w-auto border-0 outline-none object-contain">
                     <div>
                         <h1 class="text-xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-100 to-blue-200">
                             Monitoramento Hidrográfico Pro
                         </h1>
-                        <p class="text-xs text-slate-400 font-medium">Análise de Desempenho, Vazão, Irrigação e Volumes</p>
+                        <p class="text-xs text-slate-400 font-medium">Análise de Desempenho, Vazão, Irrigação, Volumes e Manutenção</p>
                     </div>
                 </div>
                 
@@ -174,11 +184,11 @@
             </div>
         </header>
 
-        <main class="max-w-[1700px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1">
+        <main class="max-w-[1920px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1">
             
             <!-- NAVEGAÇÃO DE ABAS -->
-            <div class="border-b border-slate-200 mb-6 flex flex-wrap justify-between items-end gap-4">
-                <nav class="flex gap-1 sm:gap-2 flex-wrap" aria-label="Tabs">
+            <div class="border-b border-slate-200 mb-6 flex flex-wrap justify-between items-end gap-2 overflow-x-auto">
+                <nav class="flex gap-1 sm:gap-2 flex-nowrap md:flex-wrap" aria-label="Tabs">
                     <button onclick="switchTab('diario')" id="tab-diario" class="tab-btn tab-active flex items-center gap-2">
                         <i class="fa-solid fa-chart-bar text-sm"></i> 1. Análise Diária/Geral
                     </button>
@@ -193,6 +203,9 @@
                     </button>
                     <button onclick="switchTab('bloco')" id="tab-bloco" class="tab-btn tab-inactive flex items-center gap-2">
                         <i class="fa-solid fa-chart-area text-sm"></i> 5. Resumo Geral por Bloco
+                    </button>
+                    <button onclick="switchTab('manutencao')" id="tab-manutencao" class="tab-btn tab-inactive flex items-center gap-2">
+                        <i class="fa-solid fa-screwdriver-wrench text-sm text-indigo-600"></i> 6. Manutenção das Bombas
                     </button>
                 </nav>
             </div>
@@ -233,12 +246,15 @@
 
                 <div class="glass-card p-4 bg-slate-50/80 border-slate-200">
                     <div class="flex flex-wrap items-center justify-between gap-4">
-                        <div class="flex items-center gap-3">
+                        <div class="flex items-center gap-2">
                             <span class="text-slate-700 font-bold text-xs uppercase tracking-wide flex items-center gap-1.5">
                                 <i class="fa-solid fa-filter text-blue-600"></i> Filtros da Aba 1:
                             </span>
                             <button onclick="captureTab('content-diario', 'aba_1_diario', this)" title="Capturar imagem da aba" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
                                 <i class="fa-solid fa-camera text-blue-600"></i> Capturar Aba
+                            </button>
+                            <button onclick="downloadPDF('content-diario', 'aba_1_diario', this)" title="Baixar aba em PDF" class="bg-rose-600 hover:bg-rose-700 text-white px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
+                                <i class="fa-solid fa-file-pdf"></i> Baixar em PDF
                             </button>
                         </div>
                         <div class="flex flex-wrap items-center gap-3">
@@ -340,12 +356,15 @@
 
                 <div class="glass-card p-4 bg-slate-50/80 border-slate-200">
                     <div class="flex flex-wrap items-center justify-between gap-4">
-                        <div class="flex items-center gap-3">
+                        <div class="flex items-center gap-2">
                             <span class="text-slate-700 font-bold text-xs uppercase tracking-wide flex items-center gap-1.5">
                                 <i class="fa-solid fa-filter text-indigo-600"></i> Filtros da Aba 2:
                             </span>
                             <button onclick="captureTab('content-mensal', 'aba_2_mensal', this)" title="Capturar imagem da aba" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
                                 <i class="fa-solid fa-camera text-indigo-600"></i> Capturar Aba
+                            </button>
+                            <button onclick="downloadPDF('content-mensal', 'aba_2_volumes_tendencia', this)" title="Baixar aba em PDF" class="bg-rose-600 hover:bg-rose-700 text-white px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
+                                <i class="fa-solid fa-file-pdf"></i> Baixar em PDF
                             </button>
                         </div>
                         <div class="flex flex-wrap items-center gap-3">
@@ -400,10 +419,12 @@
                         <div class="flex justify-between items-center mb-1 flex-wrap gap-2">
                             <div>
                                 <h3 class="text-base font-bold text-slate-800">Regressão e Tendência da Média de Vazão por Poço (Mês a Mês)</h3>
-                                <p class="text-xs text-slate-500">Exibe a variação mês a mês com percentual <b class="text-emerald-600">↑ Aumento (%)</b> ou <b class="text-rose-600">↓ Queda (%)</b>.</p>
+                                <p class="text-xs text-slate-500">
+                                    Exibe a média de vazão por poço em cada mês e a variação exata em valor <b class="text-emerald-600">(▲ +X L/h)</b> ou <b class="text-rose-600">(▼ -X L/h)</b> e percentual <b class="text-emerald-600">(+%)</b> ou <b class="text-rose-600">(-%)</b> visíveis no gráfico.
+                                </p>
                             </div>
                         </div>
-                        <div class="chart-scroll-wrapper mt-3"><div class="chart-container"><canvas id="trendChart"></canvas></div></div>
+                        <div class="chart-scroll-wrapper mt-3"><div class="chart-container-large"><canvas id="trendChart"></canvas></div></div>
                     </div>
                 </div>
             </div>
@@ -444,12 +465,15 @@
 
                 <div class="glass-card p-4 bg-slate-50/80 border-slate-200">
                     <div class="flex flex-wrap items-center justify-between gap-4">
-                        <div class="flex items-center gap-3">
+                        <div class="flex items-center gap-2">
                             <span class="text-slate-700 font-bold text-xs uppercase tracking-wide flex items-center gap-1.5">
                                 <i class="fa-solid fa-filter text-orange-600"></i> Filtros de Consulta:
                             </span>
                             <button onclick="captureTab('content-comparacao', 'aba_3_dados_tabulares', this)" title="Capturar imagem da aba" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
                                 <i class="fa-solid fa-camera text-orange-600"></i> Capturar Aba
+                            </button>
+                            <button onclick="downloadPDF('content-comparacao', 'aba_3_dados_tabulares', this)" title="Baixar aba em PDF" class="bg-rose-600 hover:bg-rose-700 text-white px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
+                                <i class="fa-solid fa-file-pdf"></i> Baixar em PDF
                             </button>
                         </div>
                         <div class="flex flex-wrap items-center gap-3">
@@ -556,12 +580,15 @@
 
                 <div class="glass-card p-4 bg-slate-50/80 border-slate-200">
                     <div class="flex flex-wrap items-center justify-between gap-4">
-                        <div class="flex items-center gap-3">
+                        <div class="flex items-center gap-2">
                             <span class="text-slate-700 font-bold text-xs uppercase tracking-wide flex items-center gap-1.5">
                                 <i class="fa-solid fa-filter text-sky-600"></i> Filtros da Aba 4:
                             </span>
                             <button onclick="captureTab('content-entrada', 'aba_4_entrada_saida', this)" title="Capturar imagem da aba" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
                                 <i class="fa-solid fa-camera text-sky-600"></i> Capturar Aba
+                            </button>
+                            <button onclick="downloadPDF('content-entrada', 'aba_4_entrada_saida', this)" title="Baixar aba em PDF" class="bg-rose-600 hover:bg-rose-700 text-white px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
+                                <i class="fa-solid fa-file-pdf"></i> Baixar em PDF
                             </button>
                         </div>
                         <div class="flex flex-wrap items-center gap-3">
@@ -739,12 +766,15 @@
                 <!-- FILTROS DA ABA 5 -->
                 <div class="glass-card p-4 bg-slate-50/80 border-slate-200">
                     <div class="flex flex-wrap items-center justify-between gap-4">
-                        <div class="flex items-center gap-3">
+                        <div class="flex items-center gap-2">
                             <span class="text-slate-700 font-bold text-xs uppercase tracking-wide flex items-center gap-1.5">
                                 <i class="fa-solid fa-filter text-blue-600"></i> Filtros de Bloco, Ciclo e Período:
                             </span>
                             <button onclick="captureTab('content-bloco', 'aba_5_resumo_bloco', this)" title="Capturar imagem da aba" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
                                 <i class="fa-solid fa-camera text-blue-600"></i> Capturar Aba
+                            </button>
+                            <button onclick="downloadPDF('content-bloco', 'aba_5_resumo_bloco', this)" title="Baixar aba em PDF" class="bg-rose-600 hover:bg-rose-700 text-white px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
+                                <i class="fa-solid fa-file-pdf"></i> Baixar em PDF
                             </button>
                         </div>
                         <div class="flex flex-wrap items-center gap-3">
@@ -821,6 +851,176 @@
 
             </div>
 
+            <!-- TAB 6: MANUTENÇÃO DAS BOMBAS -->
+            <div id="content-manutencao" class="hidden space-y-6">
+                <!-- KPIs ABA 6 -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="kpi-compact-card bg-indigo-50 border-indigo-200 flex items-center gap-3.5">
+                        <div class="w-11 h-11 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-screwdriver-wrench text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Total de Bombas/Poços</p>
+                            <h3 id="kpi6_totalPocos" class="text-xl font-extrabold text-indigo-900">--</h3>
+                        </div>
+                    </div>
+
+                    <div class="kpi-compact-card bg-emerald-50 border-emerald-200 flex items-center gap-3.5">
+                        <div class="w-11 h-11 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-circle-check text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Manutenções Registradas</p>
+                            <h3 id="kpi6_totalManutencao" class="text-xl font-extrabold text-emerald-900">--</h3>
+                        </div>
+                    </div>
+
+                    <div class="kpi-compact-card bg-amber-50 border-amber-200 flex items-center gap-3.5">
+                        <div class="w-11 h-11 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-calendar-week text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Próximas Manutenções</p>
+                            <h3 id="kpi6_proximas" class="text-xl font-extrabold text-amber-900">--</h3>
+                        </div>
+                    </div>
+
+                    <div class="kpi-compact-card bg-cyan-50 border-cyan-200 flex items-center gap-3.5">
+                        <div class="w-11 h-11 rounded-lg bg-cyan-100 text-cyan-600 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-gauge-high text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Vazão Média Inicial</p>
+                            <h3 id="kpi6_avgVazaoInicial" class="text-xl font-extrabold text-cyan-900">-- L/h</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FILTROS DA ABA 6 -->
+                <div class="glass-card p-4 bg-slate-50/80 border-slate-200">
+                    <div class="flex flex-wrap items-center justify-between gap-4">
+                        <div class="flex items-center gap-2">
+                            <span class="text-slate-700 font-bold text-xs uppercase tracking-wide flex items-center gap-1.5">
+                                <i class="fa-solid fa-filter text-indigo-600"></i> Filtros de Manutenção:
+                            </span>
+                            <button onclick="captureTab('content-manutencao', 'aba_6_manutencao_bombas', this)" title="Capturar imagem da aba" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
+                                <i class="fa-solid fa-camera text-indigo-600"></i> Capturar Aba
+                            </button>
+                            <button onclick="downloadPDF('content-manutencao', 'aba_6_manutencao_bombas', this)" title="Baixar aba em PDF" class="bg-rose-600 hover:bg-rose-700 text-white px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
+                                <i class="fa-solid fa-file-pdf"></i> Baixar em PDF
+                            </button>
+                        </div>
+
+                        <div class="flex flex-wrap items-center gap-3">
+                            <!-- Filtro Poços -->
+                            <div class="relative">
+                                <label class="block text-[11px] font-semibold text-slate-500 mb-0.5">Poços</label>
+                                <button type="button" onclick="toggleDropdown('dropdownTab6Poço')" class="bg-white border border-slate-300 rounded-lg text-xs px-3 py-1.5 shadow-sm w-44 flex justify-between items-center">
+                                    <span id="labelTab6Poco">Todos os Poços</span>
+                                    <i class="fa-solid fa-chevron-down text-slate-400 text-xs"></i>
+                                </button>
+                                <div id="dropdownTab6Poço" class="hidden absolute z-50 mt-1 w-56 bg-white border border-slate-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+                                    <div class="p-2 border-b border-slate-200 bg-slate-50 sticky top-0 z-10">
+                                        <label class="flex items-center gap-2 px-1 py-1 hover:bg-slate-100 rounded cursor-pointer text-xs font-bold text-indigo-600 transition">
+                                            <input type="checkbox" id="selectAllPocosTab6" checked onchange="toggleSelectAllTab6('well', this)" class="w-3.5 h-3.5 text-indigo-600 rounded">
+                                            Selecionar Todos
+                                        </label>
+                                    </div>
+                                    <div class="p-2 flex flex-col gap-1" id="wellCheckboxesTab6"></div>
+                                </div>
+                            </div>
+
+                            <!-- Filtro Responsáveis -->
+                            <div class="relative">
+                                <label class="block text-[11px] font-semibold text-slate-500 mb-0.5">Responsável (Téc.)</label>
+                                <button type="button" onclick="toggleDropdown('dropdownTab6Resp')" class="bg-white border border-slate-300 rounded-lg text-xs px-3 py-1.5 shadow-sm w-48 flex justify-between items-center">
+                                    <span id="labelTab6Resp">Todos Técnicos</span>
+                                    <i class="fa-solid fa-chevron-down text-slate-400 text-xs"></i>
+                                </button>
+                                <div id="dropdownTab6Resp" class="hidden absolute z-50 mt-1 w-60 bg-white border border-slate-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+                                    <div class="p-2 border-b border-slate-200 bg-slate-50 sticky top-0 z-10">
+                                        <label class="flex items-center gap-2 px-1 py-1 hover:bg-slate-100 rounded cursor-pointer text-xs font-bold text-indigo-600 transition">
+                                            <input type="checkbox" id="selectAllRespTab6" checked onchange="toggleSelectAllTab6('resp', this)" class="w-3.5 h-3.5 text-indigo-600 rounded">
+                                            Selecionar Todos
+                                        </label>
+                                    </div>
+                                    <div class="p-2 flex flex-col gap-1" id="respCheckboxesTab6"></div>
+                                </div>
+                            </div>
+
+                            <div class="flex items-end">
+                                <button onclick="resetFiltersTab6()" class="mt-4 bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1">
+                                    <i class="fa-solid fa-xmark"></i> Limpar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GRÁFICOS DA ABA 6 (LARGURA AMPLA, SEM ESPREMER) -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="glass-card p-5">
+                        <div class="mb-3">
+                            <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                                <i class="fa-solid fa-faucet-drip text-blue-600"></i> Vazão Inicial Instalada por Poço (L/h)
+                            </h3>
+                            <p class="text-xs text-slate-500">Comparativo técnico de vazão inicial na instalação das bombas.</p>
+                        </div>
+                        <div class="chart-container-manutencao">
+                            <canvas id="manutencaoVazaoChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="glass-card p-5">
+                        <div class="mb-3">
+                            <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                                <i class="fa-solid fa-arrow-down-short-wide text-indigo-600"></i> Profundidade da Instalação por Poço (Metros)
+                            </h3>
+                            <p class="text-xs text-slate-500">Nível de profundidade em metros de cada bomba instalada.</p>
+                        </div>
+                        <div class="chart-container-manutencao">
+                            <canvas id="manutencaoProfundidadeChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TABELA COMPLETA EM ORDEM ALFABÉTICA SEM CORTES -->
+                <div class="glass-card p-5">
+                    <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+                        <div>
+                            <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                                <i class="fa-solid fa-list-check text-indigo-600"></i> Relatório Geral de Manutenção das Bombas (Ordem Alfabética)
+                            </h3>
+                            <p class="text-xs text-slate-500">Exibição ampla e detalhada de todas as especificações dos equipamentos sem necessidade de barra de rolagem horizontal.</p>
+                        </div>
+                    </div>
+
+                    <div class="w-full overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-xs">
+                            <thead>
+                                <tr class="bg-slate-100/90 text-slate-700 uppercase tracking-wider border-b border-slate-200">
+                                    <th class="py-3 px-3.5 font-bold">Poço</th>
+                                    <th class="py-3 px-3.5 font-bold">Data Manutenção</th>
+                                    <th class="py-3 px-3.5 font-bold">Próxima Manutenção</th>
+                                    <th class="py-3 px-3.5 font-bold">Marca Bomba/Motor</th>
+                                    <th class="py-3 px-3.5 font-bold">Modelo</th>
+                                    <th class="py-3 px-3.5 font-bold text-right">CV</th>
+                                    <th class="py-3 px-3.5 font-bold text-right">Prof. (m)</th>
+                                    <th class="py-3 px-3.5 font-bold text-right">Vazão Inicial (L/h)</th>
+                                    <th class="py-3 px-3.5 font-bold">Quem Instalou</th>
+                                    <th class="py-3 px-3.5 font-bold">Responsável (Téc.)</th>
+                                    <th class="py-3 px-3.5 font-bold text-center">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tab6TableBody" class="divide-y divide-slate-100 text-slate-700 font-medium">
+                                <tr><td colspan="11" class="py-6 text-center text-slate-400">Carregando dados de manutenção...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+
         </main>
 
         <footer class="bg-white border-t border-slate-200 py-3 text-center text-xs text-slate-500 mt-auto">
@@ -838,8 +1038,12 @@
         
         const SAIDA_SHEET = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSLCR4Ft4rx-g3QUa7onNWhiwHBHXbf07wLAkY3dmYxoYFHdz3meI5yBPXOeaLoIELTylglqAklMDKb/pub?output=csv";
 
+        const MANUTENCAO_SHEET = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQzVEGWOj1yLfJ6R5T_c07PxKhoLLinFnLyziQwMYIIXQKUVPL7T1qwhMjkoCKrkBaas8dmw7DUXPeV/pub?output=csv";
+
         let globalRawData = [];
         let globalSaidaData = [];
+        let globalManutencaoData = [];
+
         const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
 
         let charts = {
@@ -849,7 +1053,9 @@
             trend: null,
             entradaAgua: null,
             saidaAgua: null,
-            resumoBloco: null
+            resumoBloco: null,
+            manutencaoVazao: null,
+            manutencaoProf: null
         };
 
         function handleLogin() {
@@ -889,9 +1095,10 @@
             
             globalRawData = [];
             globalSaidaData = [];
+            globalManutencaoData = [];
         }
 
-        // LÓGICA DE CAPTURA APRIMORADA, HORIZONTAL, ALTA RESOLUÇÃO, SEM SCROLLBAR CORTE
+        // CAPTURA DE TELA EM IMAGEM (PNG)
         async function captureTab(tabId, tabName, btn) {
             const tabEl = document.getElementById(tabId);
             if (!tabEl) return;
@@ -907,17 +1114,15 @@
             
             originalStyles.set(tabEl, tabEl.style.cssText);
             
-            // Força um formato mais amplo estilo widescreen 1280x720 para capturas elegantes
             tabEl.style.width = 'max-content';
-            tabEl.style.minWidth = '1380px';
+            tabEl.style.minWidth = '1450px';
             tabEl.style.padding = '35px';
             tabEl.style.backgroundColor = '#f8fafc';
             tabEl.style.borderRadius = '16px';
 
             const scrollWrappers = tabEl.querySelectorAll('.chart-scroll-wrapper');
-            let maxScrollWidth = 1380;
+            let maxScrollWidth = 1450;
             
-            // Expande todas as barras de rolagem
             scrollWrappers.forEach(wrapper => {
                 originalStyles.set(wrapper, wrapper.style.cssText);
                 wrapper.style.overflow = 'visible';
@@ -926,7 +1131,7 @@
                 wrapper.style.width = scrollW + 'px';
             });
             
-            const finalWidth = Math.max(maxScrollWidth, 1380) + 70;
+            const finalWidth = Math.max(maxScrollWidth, 1450) + 70;
             tabEl.style.width = finalWidth + 'px';
             
             document.body.style.width = finalWidth + 'px';
@@ -935,7 +1140,7 @@
 
             try {
                 const canvas = await html2canvas(tabEl, {
-                    scale: 2, // Maior resolução
+                    scale: 2,
                     useCORS: true,
                     allowTaint: true,
                     backgroundColor: '#f8fafc',
@@ -952,7 +1157,6 @@
                 console.error('Erro ao capturar imagem:', err);
                 alert('Ocorreu um erro ao realizar a captura da tela.');
             } finally {
-                // Restaura o design responsivo padrão
                 for (const [el, css] of originalStyles.entries()) {
                     el.style.cssText = css;
                 }
@@ -965,13 +1169,52 @@
             }
         }
 
+        // DOWNLOAD DA ABA EM FORMATO PDF
+        async function downloadPDF(elementId, fileName, btn) {
+            const el = document.getElementById(elementId);
+            if (!el) return;
+
+            const origText = btn.innerHTML;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Gerando PDF...`;
+            btn.disabled = true;
+
+            try {
+                const canvas = await html2canvas(el, {
+                    scale: 2,
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: '#f8fafc',
+                    logging: false
+                });
+
+                const imgData = canvas.toDataURL('image/png');
+                const { jsPDF } = window.jspdf;
+
+                const orientation = canvas.width > canvas.height ? 'l' : 'p';
+                const pdf = new jsPDF({
+                    orientation: orientation,
+                    unit: 'px',
+                    format: [canvas.width, canvas.height]
+                });
+
+                pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+                pdf.save(`${fileName}_${new Date().toISOString().split('T')[0]}.pdf`);
+            } catch (e) {
+                console.error('Erro ao baixar PDF:', e);
+                alert('Não foi possível gerar o arquivo PDF.');
+            } finally {
+                btn.innerHTML = origText;
+                btn.disabled = false;
+            }
+        }
+
         function toggleDropdown(id) {
             document.getElementById(id).classList.toggle('hidden');
         }
 
         document.addEventListener('click', (e) => {
             if (!e.target.closest('.relative')) {
-                const dropdowns = ['dropdownTab1', 'dropdownMonthTab1', 'dropdownTab2', 'dropdownMonthTab2', 'dropdownTab3', 'dropdownMonthTab3', 'dropdownTab4', 'dropdownTab4Locais', 'dropdownTab5Bloco', 'dropdownTab5Ciclo'];
+                const dropdowns = ['dropdownTab1', 'dropdownMonthTab1', 'dropdownTab2', 'dropdownMonthTab2', 'dropdownTab3', 'dropdownMonthTab3', 'dropdownTab4', 'dropdownTab4Locais', 'dropdownTab5Bloco', 'dropdownTab5Ciclo', 'dropdownTab6Poço', 'dropdownTab6Resp'];
                 dropdowns.forEach(id => {
                     const el = document.getElementById(id);
                     if(el) el.classList.add('hidden');
@@ -980,7 +1223,7 @@
         });
 
         function switchTab(tab) {
-            const tabs = ['diario', 'mensal', 'comparacao', 'entrada', 'bloco'];
+            const tabs = ['diario', 'mensal', 'comparacao', 'entrada', 'bloco', 'manutencao'];
             tabs.forEach(t => {
                 const btn = document.getElementById(`tab-${t}`);
                 const content = document.getElementById(`content-${t}`);
@@ -1062,9 +1305,10 @@
 
             const pEntrada = Promise.all(ENTRADA_SHEETS.map(url => fetchSingleSheet(url)));
             const pSaida = fetchSingleSheet(SAIDA_SHEET);
+            const pManutencao = fetchSingleSheet(MANUTENCAO_SHEET);
 
-            Promise.all([pEntrada, pSaida])
-                .then(([resultsEntrada, resultsSaida]) => {
+            Promise.all([pEntrada, pSaida, pManutencao])
+                .then(([resultsEntrada, resultsSaida, resultsManutencao]) => {
                     let combinedEntrada = [];
                     resultsEntrada.forEach(data => {
                         if (Array.isArray(data)) combinedEntrada = combinedEntrada.concat(data);
@@ -1080,6 +1324,12 @@
                             globalSaidaData = [];
                         }
 
+                        if (resultsManutencao.length > 0) {
+                            globalManutencaoData = cleanAndNormalizeManutencaoData(resultsManutencao);
+                        } else {
+                            globalManutencaoData = [];
+                        }
+
                         loadingIcon.className = "fa-solid fa-circle-check text-emerald-400";
                         
                         populateWellSelectors();
@@ -1087,12 +1337,14 @@
                         populateLocalSelectors();
                         populateBlocoSelectorsTab5();
                         populateCicloSelectorsTab5();
+                        populateManutencaoSelectors();
 
                         applyFiltersTab1();
                         applyFiltersTab2();
                         applyFiltersTab3();
                         applyFiltersTab4();
                         applyFiltersTab5();
+                        applyFiltersTab6();
                     } catch (e) {
                         console.error("Erro ao processar dados:", e);
                         loadingIcon.className = "fa-solid fa-triangle-exclamation text-rose-400";
@@ -1245,6 +1497,75 @@
             return normalized.sort((a, b) => a.DataObj - b.DataObj);
         }
 
+        function cleanAndNormalizeManutencaoData(data) {
+            let normalized = [];
+            data.forEach(row => {
+                const keys = Object.keys(row);
+                const findKey = (searchStrings) => keys.find(k => searchStrings.some(s => k.toLowerCase().trim().includes(s.toLowerCase())));
+
+                const wellKey = findKey(['poço', 'poco', 'well', 'estação', 'estacao', 'nome']);
+                const dtManutKey = findKey(['data da manutenção', 'data manutenção', 'dt manutenção', 'data manutençao', 'data_manutencao', 'manutenção data', 'data']);
+                const dtNovaManutKey = findKey(['nova manutenção', 'próxima manutenção', 'proxima manutencao', 'dt nova', 'data nova', 'nova data', 'retorno']);
+                const marcaKey = findKey(['marca da bomba', 'marca/motor', 'marca motor', 'marca', 'fabricante']);
+                const modeloKey = findKey(['modelo', 'model']);
+                const cvKey = findKey(['cv', 'potencia', 'potência', 'hp']);
+                const profKey = findKey(['profundidade', 'prof', 'm']);
+                const vazaoKey = findKey(['vazão inicial instalação', 'vazão inicial', 'vazao inicial', 'vazao instalacao', 'vazão instalação', 'vazao', 'vazão']);
+                const instKey = findKey(['quem intalou', 'quem instalou', 'nome quem intalou', 'instalador', 'instalado por', 'tecnico instalador']);
+                const respKey = findKey(['responsavel (tec.)', 'responsavel tec', 'responsavel', 'responsável', 'tecnico', 'técnico', 'resp']);
+
+                const rawWell = row[wellKey];
+                const wellFormatted = formatWellName(rawWell) || (rawWell ? String(rawWell).trim() : null);
+
+                if (wellFormatted) {
+                    const dtManut = dtManutKey ? parsePortugueseDate(row[dtManutKey]) : null;
+                    const dtNovaManut = dtNovaManutKey ? parsePortugueseDate(row[dtNovaManutKey]) : null;
+
+                    const marca = marcaKey && row[marcaKey] ? String(row[marcaKey]).trim() : 'N/I';
+                    const modelo = modeloKey && row[modeloKey] ? String(row[modeloKey]).trim() : 'N/I';
+                    const cv = cvKey && row[cvKey] ? parseBrazilianNumber(row[cvKey]) : 0;
+                    const profundidade = profKey && row[profKey] ? parseBrazilianNumber(row[profKey]) : 0;
+                    const vazaoInicial = vazaoKey && row[vazaoKey] ? parseBrazilianNumber(row[vazaoKey]) : 0;
+                    const instalador = instKey && row[instKey] ? String(row[instKey]).trim() : 'N/I';
+                    const respTec = respKey && row[respKey] ? String(row[respKey]).trim() : 'N/I';
+
+                    let status = 'Em Dia';
+                    let statusBg = 'bg-emerald-100 text-emerald-800 border-emerald-300';
+                    if (dtNovaManut) {
+                        const today = new Date();
+                        today.setHours(0,0,0,0);
+                        const diffDays = Math.ceil((dtNovaManut - today) / (1000 * 60 * 60 * 24));
+                        if (diffDays < 0) {
+                            status = 'Vencida';
+                            statusBg = 'bg-rose-100 text-rose-800 border-rose-300';
+                        } else if (diffDays <= 30) {
+                            status = 'Próxima';
+                            statusBg = 'bg-amber-100 text-amber-800 border-amber-300';
+                        }
+                    }
+
+                    normalized.push({
+                        Poco: wellFormatted,
+                        DataManut: dtManut,
+                        DataManutStr: dtManut ? dtManut.toLocaleDateString('pt-BR') : (dtManutKey && row[dtManutKey] ? String(row[dtManutKey]).trim() : '-'),
+                        DataNovaManut: dtNovaManut,
+                        DataNovaManutStr: dtNovaManut ? dtNovaManut.toLocaleDateString('pt-BR') : (dtNovaManutKey && row[dtNovaManutKey] ? String(row[dtNovaManutKey]).trim() : '-'),
+                        Marca: marca,
+                        Modelo: modelo,
+                        CV: cv,
+                        Profundidade: profundidade,
+                        VazaoInicial: vazaoInicial,
+                        Instalador: instalador,
+                        ResponsavelTec: respTec,
+                        Status: status,
+                        StatusBg: statusBg
+                    });
+                }
+            });
+
+            return normalized.sort((a, b) => a.Poco.localeCompare(b.Poco, undefined, { numeric: true, sensitivity: 'base' }));
+        }
+
         function getWeekNumber(d) {
             d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
             d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
@@ -1306,6 +1627,17 @@
             document.querySelectorAll('.ciclo-chk-5').forEach(c => c.checked = isChecked);
             updateCicloLabelTab5();
             applyFiltersTab5();
+        }
+
+        function toggleSelectAllTab6(type, masterCheckbox) {
+            const isChecked = masterCheckbox.checked;
+            const chkClass = type === 'well' ? 'well-chk-6' : 'resp-chk-6';
+            document.querySelectorAll(`.${chkClass}`).forEach(c => c.checked = isChecked);
+            
+            if (type === 'well') updateWellLabelTab6();
+            else updateRespLabelTab6();
+
+            applyFiltersTab6();
         }
 
         function populateWellSelectors() {
@@ -1382,6 +1714,40 @@
             }
         }
 
+        function populateManutencaoSelectors() {
+            const pocosSet = new Set(globalManutencaoData.map(d => d.Poco));
+            const pocosArray = Array.from(pocosSet).sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
+
+            const contWell = document.getElementById('wellCheckboxesTab6');
+            if (contWell) {
+                contWell.innerHTML = '';
+                pocosArray.forEach(poco => {
+                    contWell.innerHTML += `
+                    <label class="flex items-center gap-2 px-2 py-1 hover:bg-slate-50 rounded cursor-pointer text-xs font-medium text-slate-700 transition">
+                        <input type="checkbox" value="${poco}" checked onchange="updateWellLabelTab6(); applyFiltersTab6()" class="well-chk-6 w-3.5 h-3.5 text-indigo-600 bg-slate-100 border-slate-300 rounded focus:ring-indigo-500 cursor-pointer">
+                        ${poco}
+                    </label>`;
+                });
+                updateWellLabelTab6();
+            }
+
+            const respSet = new Set(globalManutencaoData.map(d => d.ResponsavelTec).filter(r => r && r !== 'N/I'));
+            const respArray = Array.from(respSet).sort((a, b) => a.localeCompare(b));
+
+            const contResp = document.getElementById('respCheckboxesTab6');
+            if (contResp) {
+                contResp.innerHTML = '';
+                respArray.forEach(resp => {
+                    contResp.innerHTML += `
+                    <label class="flex items-center gap-2 px-2 py-1 hover:bg-slate-50 rounded cursor-pointer text-xs font-medium text-slate-700 transition">
+                        <input type="checkbox" value="${resp}" checked onchange="updateRespLabelTab6(); applyFiltersTab6()" class="resp-chk-6 w-3.5 h-3.5 text-indigo-600 bg-slate-100 border-slate-300 rounded focus:ring-indigo-500 cursor-pointer">
+                        ${resp}
+                    </label>`;
+                });
+                updateRespLabelTab6();
+            }
+        }
+
         function populateMonthSelectors() {
             [1, 2, 3].forEach(tab => {
                 const cont = document.getElementById(`monthCheckboxesTab${tab}`);
@@ -1441,6 +1807,34 @@
             else label.textContent = `${checked.length} Ciclos`;
         }
 
+        function updateWellLabelTab6() {
+            const checks = document.querySelectorAll('.well-chk-6');
+            const checked = Array.from(checks).filter(c => c.checked);
+            const label = document.getElementById('labelTab6Poco');
+            const masterBtn = document.getElementById('selectAllPocosTab6');
+            if (masterBtn) masterBtn.checked = (checked.length === checks.length && checks.length > 0);
+            if (!label) return;
+            
+            if (checked.length === checks.length && checks.length > 0) label.textContent = "Todos os Poços";
+            else if (checked.length === 1) label.textContent = checked[0].value;
+            else if (checked.length === 0) label.textContent = "Nenhum";
+            else label.textContent = `${checked.length} Poços`;
+        }
+
+        function updateRespLabelTab6() {
+            const checks = document.querySelectorAll('.resp-chk-6');
+            const checked = Array.from(checks).filter(c => c.checked);
+            const label = document.getElementById('labelTab6Resp');
+            const masterBtn = document.getElementById('selectAllRespTab6');
+            if (masterBtn) masterBtn.checked = (checked.length === checks.length && checks.length > 0);
+            if (!label) return;
+            
+            if (checked.length === checks.length && checks.length > 0) label.textContent = "Todos Técnicos";
+            else if (checked.length === 1) label.textContent = checked[0].value;
+            else if (checked.length === 0) label.textContent = "Nenhum";
+            else label.textContent = `${checked.length} Técnicos`;
+        }
+
         function updateMonthLabel(tab) {
             const checks = document.querySelectorAll(`.month-chk-${tab}`);
             const checked = Array.from(checks).filter(c => c.checked);
@@ -1474,6 +1868,8 @@
         function getSelectedLocaisTab4() { return Array.from(document.querySelectorAll('.local-chk-4')).filter(c => c.checked).map(c => c.value); }
         function getSelectedBlocosTab5() { return Array.from(document.querySelectorAll('.bloco-chk-5')).filter(c => c.checked).map(c => c.value); }
         function getSelectedCiclosTab5() { return Array.from(document.querySelectorAll('.ciclo-chk-5')).filter(c => c.checked).map(c => c.value); }
+        function getSelectedWellsTab6() { return Array.from(document.querySelectorAll('.well-chk-6')).filter(c => c.checked).map(c => c.value); }
+        function getSelectedRespTab6() { return Array.from(document.querySelectorAll('.resp-chk-6')).filter(c => c.checked).map(c => c.value); }
 
         function resetFiltersTab1() { document.querySelectorAll('.well-chk-1').forEach(c => c.checked = true); updateWellLabel(1); document.querySelectorAll('.month-chk-1').forEach(c => c.checked = true); updateMonthLabel(1); document.getElementById('filterStartDateTab1').value = ''; document.getElementById('filterEndDateTab1').value = ''; applyFiltersTab1(); }
         function resetFiltersTab2() { document.querySelectorAll('.well-chk-2').forEach(c => c.checked = true); updateWellLabel(2); document.querySelectorAll('.month-chk-2').forEach(c => c.checked = true); updateMonthLabel(2); applyFiltersTab2(); }
@@ -1493,6 +1889,12 @@
             if(document.getElementById('filterStartDateTab5')) document.getElementById('filterStartDateTab5').value = '';
             if(document.getElementById('filterEndDateTab5')) document.getElementById('filterEndDateTab5').value = '';
             applyFiltersTab5();
+        }
+
+        function resetFiltersTab6() {
+            document.querySelectorAll('.well-chk-6').forEach(c => c.checked = true); updateWellLabelTab6();
+            document.querySelectorAll('.resp-chk-6').forEach(c => c.checked = true); updateRespLabelTab6();
+            applyFiltersTab6();
         }
 
         function applyFiltersTab1() {
@@ -1566,6 +1968,22 @@
 
             updateTab5KPIs(filtered);
             renderTab5Chart(filtered);
+        }
+
+        function applyFiltersTab6() {
+            if (!globalManutencaoData.length) return;
+
+            const selectedPocos = getSelectedWellsTab6();
+            const selectedResp = getSelectedRespTab6();
+
+            let filtered = globalManutencaoData.filter(d => 
+                selectedPocos.includes(d.Poco) && 
+                (selectedResp.length === 0 || selectedResp.includes(d.ResponsavelTec) || d.ResponsavelTec === 'N/I')
+            );
+
+            updateTab6KPIs(filtered);
+            renderTab6Table(filtered);
+            renderTab6Charts(filtered);
         }
 
         function updateTab1KPIs(data) {
@@ -1642,7 +2060,7 @@
                 agg[key].records++;
             });
 
-            let rows = Object.values(agg).sort((a,b) => a.Poco.localeCompare(b.Poco));
+            let rows = Object.values(agg).sort((a,b) => a.Poco.localeCompare(b.Poco, undefined, { numeric: true, sensitivity: 'base' }));
             tbody.innerHTML = '';
             rows.forEach(r => {
                 let avg = r.countVazao > 0 ? r.sumVazao / r.countVazao : 0;
@@ -1650,333 +2068,544 @@
                     <tr class="hover:bg-slate-50 transition">
                         <td class="py-3 px-4 font-semibold">${r.Poco}</td>
                         <td class="py-3 px-4">${r.Mes}</td>
-                        <td class="py-3 px-4 text-right">${avg.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits:2})}</td>
-                        <td class="py-3 px-4 text-right">${r.sumVol.toLocaleString('pt-BR', {maximumFractionDigits:0})}</td>
+                        <td class="py-3 px-4 text-right font-medium">${avg.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits:2})}</td>
+                        <td class="py-3 px-4 text-right font-medium">${r.sumVol.toLocaleString('pt-BR', {maximumFractionDigits:0})}</td>
                         <td class="py-3 px-4 text-center">
-                            <span class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-xs font-bold border border-slate-200">${r.records}</span>
+                            <span class="bg-slate-100 text-slate-700 font-bold px-2 py-0.5 rounded text-xs">${r.records}</span>
                         </td>
-                    </tr>
-                `;
+                    </tr>`;
             });
         }
-
-        function updateTab4KPIs(data) {
-            if (!data.length) {
-                document.getElementById('kpi4_totalVol').textContent = "0 L";
-                document.getElementById('kpi4_avgHours').textContent = "0 h/dia";
-                document.getElementById('kpi4_maxPeak').textContent = "0 L";
-                return;
-            }
-            let vol = 0; let maxP = 0; let hours = 0;
-            let byDay = {};
-            data.forEach(d => {
-                vol += d.VolumeCalculado;
-                hours += d.Horas;
-                if (!byDay[d.IsoDate]) byDay[d.IsoDate] = 0;
-                byDay[d.IsoDate] += d.VolumeCalculado;
-            });
-            let uniqueDays = Object.keys(byDay).length || 1;
-            for (let k in byDay) { if(byDay[k] > maxP) maxP = byDay[k]; }
-            
-            document.getElementById('kpi4_totalVol').textContent = vol.toLocaleString('pt-BR', {maximumFractionDigits:0}) + ' L';
-            document.getElementById('kpi4_avgHours').textContent = (hours / uniqueDays).toLocaleString('pt-BR', {maximumFractionDigits:2}) + ' h/dia';
-            document.getElementById('kpi4_maxPeak').textContent = maxP.toLocaleString('pt-BR', {maximumFractionDigits:0}) + ' L';
-        }
-
-        function updateSaidaKPIs(dataOut) {
-            if (!dataOut.length) {
-                document.getElementById('kpi4_saidaVol').textContent = "0 L";
-                document.getElementById('kpi4_saidaLocais').textContent = "0";
-                document.getElementById('kpi4_saidaTempo').textContent = "0 h";
-                return;
-            }
-            let vol = 0; let hours = 0; let locais = new Set();
-            dataOut.forEach(d => {
-                vol += d.VolumeCalculado;
-                hours += d.DiffHours;
-                locais.add(d.Local);
-            });
-            document.getElementById('kpi4_saidaVol').textContent = vol.toLocaleString('pt-BR', {maximumFractionDigits:0}) + ' L';
-            document.getElementById('kpi4_saidaLocais').textContent = locais.size;
-            document.getElementById('kpi4_saidaTempo').textContent = hours.toLocaleString('pt-BR', {maximumFractionDigits:1}) + ' h';
-        }
-
-        function updateTab5KPIs(filtered) {
-            const elVol = document.getElementById('kpi5_volIrrigado');
-            const elTransp = document.getElementById('kpi5_transplantado');
-            const elLtrsPl = document.getElementById('kpi5_ltrsPlanta');
-            const elDiasIrr = document.getElementById('kpi5_diasIrrigados');
-            const elLtrsDiaPl = document.getElementById('kpi5_ltrsDiaPlanta');
-            const elFimCol = document.getElementById('kpi5_fimColheita');
-
-            if (!filtered.length) {
-                if (elVol) elVol.textContent = "0 L";
-                if (elTransp) elTransp.textContent = "0 plantas";
-                if (elLtrsPl) elLtrsPl.textContent = "0 L/planta";
-                if (elDiasIrr) elDiasIrr.textContent = "0 dias";
-                if (elLtrsDiaPl) elLtrsDiaPl.textContent = "0 L/dia/planta";
-                if (elFimCol) elFimCol.textContent = "--/--/----";
-                return;
-            }
-
-            let volIrrigado = 0;
-            let transplantioMap = {};
-            let minTime = Number.MAX_SAFE_INTEGER;
-            let maxTime = 0;
-            let maxFimColheita = null;
-
-            filtered.forEach(d => {
-                volIrrigado += d.VolumeCalculado;
-                
-                let key = d.Local + '|' + d.Ciclo;
-                if (!transplantioMap[key] || d.TotalTransplantio > transplantioMap[key]) {
-                    transplantioMap[key] = d.TotalTransplantio || 0;
-                }
-                
-                let t = d.DataObj.getTime();
-                if (t < minTime) minTime = t;
-                if (t > maxTime) maxTime = t;
-
-                if (d.DataColheita) {
-                    if (!maxFimColheita || d.DataColheita > maxFimColheita) maxFimColheita = d.DataColheita;
-                }
-            });
-
-            let transplantado = Object.values(transplantioMap).reduce((a, b) => a + b, 0);
-            
-            let diasIrrigados = 1;
-            if (minTime !== Number.MAX_SAFE_INTEGER && maxTime > minTime) {
-                diasIrrigados = Math.floor((maxTime - minTime) / (1000 * 60 * 60 * 24));
-            }
-            if (diasIrrigados === 0) diasIrrigados = 1;
-
-            let ltrsPlanta = transplantado > 0 ? (volIrrigado / transplantado) : 0;
-            let ltrsDiaPlanta = ltrsPlanta / diasIrrigados;
-
-            let fimColheitaStr = maxFimColheita ? maxFimColheita.toLocaleDateString('pt-BR') : '--/--/----';
-
-            if (elVol) elVol.textContent = volIrrigado.toLocaleString('pt-BR', { maximumFractionDigits: 0 }) + ' L';
-            if (elTransp) elTransp.textContent = transplantado.toLocaleString('pt-BR') + ' plantas';
-            if (elLtrsPl) elLtrsPl.textContent = ltrsPlanta.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' L/planta';
-            if (elDiasIrr) elDiasIrr.textContent = diasIrrigados.toLocaleString('pt-BR') + ' dias';
-            if (elLtrsDiaPl) elLtrsDiaPl.textContent = ltrsDiaPlanta.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' L/dia/planta';
-            if (elFimCol) elFimCol.textContent = fimColheitaStr;
-        }
-
-        // --- RENDERIZAÇÃO DOS GRÁFICOS (COMPLETADA E APRIMORADA) ---
-        
-        function formatTick(val) { return Math.round(val).toLocaleString('pt-BR'); }
 
         function renderTab1(data) {
-            let aggW = {};
+            // Weekly chart
+            let weekAgg = {};
             data.forEach(d => {
-                let key = `Semana ${d.SemanaNum}`;
-                if(!aggW[key]) aggW[key] = { vol:0, count:0 };
-                aggW[key].vol += d.VolumeCalculado; aggW[key].count++;
+                let key = `Semana ${d.SemanaNum}/${d.Ano}`;
+                if (!weekAgg[key]) weekAgg[key] = { sum: 0, count: 0 };
+                if (d.Vazao > 0) { weekAgg[key].sum += d.Vazao; weekAgg[key].count++; }
             });
+            let weekLabels = Object.keys(weekAgg);
+            let weekValues = weekLabels.map(k => weekAgg[k].count > 0 ? weekAgg[k].sum / weekAgg[k].count : 0);
+
             renderChart('weeklyFlowChart', 'weeklyFlow', 'bar', {
-                labels: Object.keys(aggW),
-                datasets: [{ label: 'Volume Total (L)', data: Object.values(aggW).map(v => v.vol), backgroundColor: '#3b82f6', borderRadius: 4 }]
-            }, { 
-                responsive:true, 
-                maintainAspectRatio:false, 
-                scales: { y: { ticks: { callback: formatTick } } }, 
-                plugins: { 
-                    datalabels: { 
-                        formatter: (v) => v === 0 ? '' : Math.round(v).toLocaleString('pt-BR') + ' L', 
-                        color: '#334155', 
-                        font: {size: 10, weight: 'bold'}, 
-                        anchor: 'end', 
-                        align: 'end' 
-                    } 
+                labels: weekLabels,
+                datasets: [{
+                    label: 'Vazão Média (L/h)',
+                    data: weekValues,
+                    backgroundColor: 'rgba(37, 99, 235, 0.75)',
+                    borderColor: '#1d4ed8',
+                    borderWidth: 1,
+                    borderRadius: 4
+                }]
+            }, {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    datalabels: {
+                        anchor: 'end',
+                        align: 'top',
+                        font: { size: 10, weight: 'bold' },
+                        formatter: (val) => val > 0 ? Math.round(val).toLocaleString('pt-BR') : ''
+                    }
                 },
-                layout: { padding: { top: 30 } }
+                scales: { y: { beginAtZero: true, title: { display: true, text: 'L/h' } } }
             });
 
-            let aggD = {};
+            // Daily chart
+            let dailyAgg = {};
             data.forEach(d => {
-                if(!aggD[d.DataFormatted]) aggD[d.DataFormatted] = 0;
-                aggD[d.DataFormatted] += d.VolumeCalculado;
+                let key = d.DataFormatted;
+                if (!dailyAgg[key]) dailyAgg[key] = { sum: 0, count: 0 };
+                if (d.Vazao > 0) { dailyAgg[key].sum += d.Vazao; dailyAgg[key].count++; }
             });
+            let dailyLabels = Object.keys(dailyAgg);
+            let dailyValues = dailyLabels.map(k => dailyAgg[k].count > 0 ? dailyAgg[k].sum / dailyAgg[k].count : 0);
+
             renderChart('dailyFlowChart', 'dailyFlow', 'line', {
-                labels: Object.keys(aggD),
-                datasets: [{ label: 'Volume Diário', data: Object.values(aggD), borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', fill: true, tension: 0.3 }]
-            }, { 
-                responsive:true, 
-                maintainAspectRatio:false, 
-                scales: { y: { ticks: { callback: formatTick } } }, 
-                plugins: { datalabels: { display: false } } 
+                labels: dailyLabels,
+                datasets: [{
+                    label: 'Vazão Diária (L/h)',
+                    data: dailyValues,
+                    borderColor: '#0284c7',
+                    backgroundColor: 'rgba(2, 132, 199, 0.1)',
+                    fill: true,
+                    tension: 0.3,
+                    pointRadius: 3
+                }]
+            }, {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    datalabels: { display: false }
+                },
+                scales: { y: { beginAtZero: true, title: { display: true, text: 'L/h' } } }
             });
         }
 
         function renderTab2(data) {
-            let aggM = {};
+            // Monthly Volume Chart
+            let monthAgg = {};
             data.forEach(d => {
-                if(!aggM[d.MesLabel]) aggM[d.MesLabel] = 0;
-                aggM[d.MesLabel] += d.VolumeCalculado;
+                let key = d.MesLabel;
+                if (!monthAgg[key]) monthAgg[key] = 0;
+                monthAgg[key] += d.VolumeCalculado;
             });
-            
+            let monthLabels = Object.keys(monthAgg);
+            let monthValues = monthLabels.map(k => monthAgg[k]);
+
             renderChart('monthlyVolumeChart', 'monthlyVolume', 'bar', {
-                labels: Object.keys(aggM),
-                datasets: [{ label: 'Volume Mensal (L)', data: Object.values(aggM), backgroundColor: '#6366f1', borderRadius: 4 }]
-            }, { 
-                responsive:true, 
-                maintainAspectRatio:false, 
-                scales: { y: { ticks: { callback: formatTick } } }, 
-                plugins: { 
-                    datalabels: { 
-                        formatter: (v) => v === 0 ? '' : Math.round(v).toLocaleString('pt-BR') + ' L', 
-                        color: '#334155', 
-                        font: {size: 10, weight: 'bold'}, 
-                        anchor: 'end', 
-                        align: 'end' 
-                    } 
+                labels: monthLabels,
+                datasets: [{
+                    label: 'Volume Total (L)',
+                    data: monthValues,
+                    backgroundColor: 'rgba(79, 70, 229, 0.8)',
+                    borderColor: '#4338ca',
+                    borderWidth: 1,
+                    borderRadius: 6
+                }]
+            }, {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    datalabels: {
+                        anchor: 'end',
+                        align: 'top',
+                        font: { size: 10, weight: 'bold' },
+                        formatter: (val) => val > 0 ? Math.round(val).toLocaleString('pt-BR') : ''
+                    }
                 },
-                layout: { padding: { top: 30 } }
+                scales: { y: { beginAtZero: true, title: { display: true, text: 'Litros (L)' } } }
+            });
+
+            // TREND CHART ABA 2: VAZÃO MÉDIA MÊS A MÊS POR POÇO COM DIFERENÇA E PORCENTAGEM
+            let monthSet = new Set();
+            let wellSet = new Set();
+            let monthWellMap = {};
+
+            data.forEach(d => {
+                let mKey = d.MesLabel;
+                monthSet.add(mKey);
+                wellSet.add(d.Poco);
+                
+                if (!monthWellMap[mKey]) monthWellMap[mKey] = {};
+                if (!monthWellMap[mKey][d.Poco]) monthWellMap[mKey][d.Poco] = { sumVazao: 0, countVazao: 0 };
+                
+                if (d.Vazao > 0) {
+                    monthWellMap[mKey][d.Poco].sumVazao += d.Vazao;
+                    monthWellMap[mKey][d.Poco].countVazao++;
+                }
+            });
+
+            const monthsArr = Array.from(monthSet);
+            const wellsArr = Array.from(wellSet).sort((a,b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
+
+            const palette = ['#2563eb', '#059669', '#d97706', '#7c3aed', '#db2777', '#0891b2', '#ea580c', '#4f46e5'];
+
+            let trendDatasets = wellsArr.map((well, idx) => {
+                let values = [];
+                let diffs = [];
+                let pcts = [];
+                let statuses = [];
+                let prevAvg = null;
+
+                monthsArr.forEach(m => {
+                    let entry = monthWellMap[m] && monthWellMap[m][well];
+                    let avg = entry && entry.countVazao > 0 ? entry.sumVazao / entry.countVazao : 0;
+                    values.push(avg);
+
+                    if (prevAvg !== null && prevAvg > 0) {
+                        let diff = avg - prevAvg;
+                        let pct = (diff / prevAvg) * 100;
+                        let status = diff > 0 ? 'Aumentou' : diff < 0 ? 'Diminuiu' : 'Manteve';
+                        diffs.push(diff);
+                        pcts.push(pct);
+                        statuses.push(status);
+                    } else {
+                        diffs.push(null);
+                        pcts.push(null);
+                        statuses.push('Manteve');
+                    }
+                    if (avg > 0) prevAvg = avg;
+                });
+
+                let color = palette[idx % palette.length];
+                return {
+                    label: well,
+                    data: values,
+                    diffs: diffs,
+                    pcts: pcts,
+                    statuses: statuses,
+                    backgroundColor: color + '22',
+                    borderColor: color,
+                    borderWidth: 2.5,
+                    tension: 0.25,
+                    fill: false,
+                    pointRadius: 5,
+                    pointHoverRadius: 7
+                };
             });
 
             renderChart('trendChart', 'trend', 'line', {
-                labels: Object.keys(aggM),
-                datasets: [{ label: 'Tendência', data: Object.values(aggM), borderColor: '#8b5cf6', backgroundColor: 'rgba(139, 92, 246, 0.1)', fill: true, tension: 0.3 }]
-            }, { 
-                responsive:true, 
-                maintainAspectRatio:false, 
-                plugins: { datalabels: { display: false } },
-                scales: { y: { ticks: { callback: formatTick } } } 
-            });
-        }
+                labels: monthsArr,
+                datasets: trendDatasets
+            }, {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    datalabels: {
+                        display: true,
+                        align: 'top',
+                        offset: 6,
+                        font: { size: 9, weight: 'bold' },
+                        formatter: function(value, context) {
+                            if (!value || value === 0) return '';
+                            let dataset = context.dataset;
+                            let idx = context.dataIndex;
+                            let diff = dataset.diffs[idx];
+                            let pct = dataset.pcts[idx];
 
-        function renderTab4(data) {
-            let agg = {};
-            data.forEach(d => {
-                if(!agg[d.Poco]) agg[d.Poco] = { vol:0, h:0 };
-                agg[d.Poco].vol += d.VolumeCalculado;
-                agg[d.Poco].h += d.Horas;
-            });
-            renderChart('entradaAguaChart', 'entradaAgua', 'bar', {
-                labels: Object.keys(agg),
-                datasets: [
-                    { label: 'Volume Jorado (L)', data: Object.values(agg).map(x=>x.vol), backgroundColor: '#0ea5e9', yAxisID: 'y' },
-                    { label: 'Horas Trabalhadas', data: Object.values(agg).map(x=>x.h), type: 'line', borderColor: '#f59e0b', yAxisID: 'y1' }
-                ]
-            }, { 
-                responsive:true, 
-                maintainAspectRatio:false, 
-                scales: { 
-                    y: { type: 'linear', position: 'left', ticks: { callback: formatTick } }, 
-                    y1: { type: 'linear', position: 'right' } 
-                }, 
-                plugins: { 
-                    datalabels: { 
-                        formatter: (v, ctx) => {
-                            if(v === 0) return '';
-                            if(ctx.datasetIndex === 0) return Math.round(v).toLocaleString('pt-BR') + ' L';
-                            return v.toLocaleString('pt-BR', {maximumFractionDigits:1}) + ' h';
-                        }, 
-                        color: '#334155', 
-                        anchor: 'end', 
-                        align: 'end',
-                        font: { size: 10, weight: 'bold' }
-                    } 
-                },
-                layout: { padding: { top: 30 } }
-            });
-        }
+                            let valStr = Math.round(value).toLocaleString('pt-BR') + ' L/h';
+                            if (diff !== null && diff !== undefined) {
+                                let sign = diff > 0 ? '▲ +' : diff < 0 ? '▼ ' : '= ';
+                                let diffStr = Math.round(diff).toLocaleString('pt-BR');
+                                let pctStr = (pct >= 0 ? '+' : '') + pct.toFixed(1) + '%';
+                                return `${valStr}\n${sign}${diffStr} (${pctStr})`;
+                            }
+                            return valStr;
+                        },
+                        color: function(context) {
+                            let dataset = context.dataset;
+                            let idx = context.dataIndex;
+                            let diff = dataset.diffs[idx];
+                            if (diff > 0) return '#047857';
+                            if (diff < 0) return '#b91c1c';
+                            return '#334155';
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let val = context.raw || 0;
+                                let dataset = context.dataset;
+                                let idx = context.dataIndex;
+                                let diff = dataset.diffs[idx];
+                                let pct = dataset.pcts[idx];
+                                let status = dataset.statuses[idx];
 
-        function renderSaidaChart(data) {
-            let agg = {};
-            data.forEach(d => {
-                if(!agg[d.Local]) agg[d.Local] = 0;
-                agg[d.Local] += d.VolumeCalculado;
-            });
-            renderChart('saidaAguaChart', 'saidaAgua', 'bar', {
-                labels: Object.keys(agg),
-                datasets: [{ label: 'Volume Irrigado (L)', data: Object.values(agg), backgroundColor: '#10b981', borderRadius: 4 }]
-            }, { 
-                responsive:true, 
-                maintainAspectRatio:false, 
-                plugins: { 
-                    datalabels: { 
-                        formatter: (v) => v === 0 ? '' : Math.round(v).toLocaleString('pt-BR') + ' L', 
-                        color: '#334155', 
-                        anchor: 'end', 
-                        align: 'end',
-                        font: { size: 10, weight: 'bold' }
-                    } 
-                },
-                layout: { padding: { top: 35 } },
-                scales: { y: { ticks: { callback: formatTick } } }
-            });
-        }
-
-        // Gráfico da Aba 5 Expandido e Formatado com Numeração Inteira sobre as barras
-        function renderTab5Chart(data) {
-            let aggB = {};
-            let blocos = new Set();
-            
-            data.forEach(d => {
-                let key = d.DataFormatted;
-                if(!aggB[key]) aggB[key] = {};
-                if(!aggB[key][d.Local]) aggB[key][d.Local] = 0;
-                aggB[key][d.Local] += d.VolumeCalculado;
-                blocos.add(d.Local);
-            });
-            
-            let labels = Object.keys(aggB).sort((a,b) => parsePortugueseDate(a) - parsePortugueseDate(b));
-            let datasets = [];
-            let colors = ['#2563eb', '#16a34a', '#d97706', '#dc2626', '#9333ea', '#0891b2', '#ea580c', '#4f46e5'];
-            let i = 0;
-            
-            blocos.forEach(b => {
-                let dData = labels.map(l => aggB[l][b] || 0);
-                datasets.push({
-                    label: b,
-                    data: dData,
-                    backgroundColor: colors[i % colors.length],
-                    borderRadius: 4
-                });
-                i++;
-            });
-
-            const chartContainer = document.getElementById('chart-container-tab5');
-            const minWidthPerLabel = 60 * blocos.size; // Garante espaço para a barra e rótulo
-            const requiredWidth = labels.length * minWidthPerLabel;
-            
-            if (requiredWidth > chartContainer.parentElement.clientWidth) {
-                chartContainer.style.width = requiredWidth + 'px';
-            } else {
-                chartContainer.style.width = '100%';
-            }
-
-            renderChart('resumoBlocoChart', 'resumoBloco', 'bar', {
-                labels: labels,
-                datasets: datasets
-            }, { 
-                responsive:true, 
-                maintainAspectRatio:false, 
-                plugins: { 
-                    datalabels: { 
-                        formatter: (value) => {
-                            if (value === 0) return '';
-                            // Formata o número completo com a unidade (Ex: 70.770 L)
-                            return Math.round(value).toLocaleString('pt-BR') + ' L';
-                        }, 
-                        color: '#334155', // Cor mais escura para boa leitura
-                        anchor: 'end',
-                        align: 'end',     // Coloca o rótulo fora, sobre a barra
-                        font: { size: 10, weight: 'bold' }
-                    } 
-                },
-                layout: {
-                    padding: { top: 35 } // Espaço superior para os rótulos não cortarem na borda
+                                let lines = [
+                                    `${dataset.label}: ${Math.round(val).toLocaleString('pt-BR')} L/h`
+                                ];
+                                if (diff !== null && diff !== undefined) {
+                                    let diffFormatted = (diff >= 0 ? '+' : '') + Math.round(diff).toLocaleString('pt-BR');
+                                    let pctFormatted = (pct >= 0 ? '+' : '') + pct.toFixed(1) + '%';
+                                    lines.push(`Diferença: ${diffFormatted} L/h (${pctFormatted})`);
+                                    lines.push(`Tendência: ${status}`);
+                                }
+                                return lines;
+                            }
+                        }
+                    }
                 },
                 scales: {
-                    x: { stacked: false },
-                    y: { beginAtZero: true, ticks: { callback: formatTick } }
+                    y: {
+                        beginAtZero: true,
+                        title: { display: true, text: 'Vazão Média (L/h)', font: { weight: 'bold' } }
+                    }
                 }
             });
         }
 
+        function updateTab4KPIs(data) {
+            let totalVol = 0; let totalHours = 0; let maxVol = 0;
+            data.forEach(d => {
+                totalVol += d.VolumeCalculado;
+                totalHours += d.Horas;
+                if (d.VolumeCalculado > maxVol) maxVol = d.VolumeCalculado;
+            });
+            let avgHours = data.length > 0 ? (totalHours / data.length) : 0;
+            document.getElementById('kpi4_totalVol').textContent = totalVol.toLocaleString('pt-BR', { maximumFractionDigits: 0 }) + ' L';
+            document.getElementById('kpi4_avgHours').textContent = avgHours.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' h/dia';
+            document.getElementById('kpi4_maxPeak').textContent = maxVol.toLocaleString('pt-BR', { maximumFractionDigits: 0 }) + ' L';
+        }
+
+        function renderTab4(data) {
+            let wellAgg = {};
+            data.forEach(d => {
+                if (!wellAgg[d.Poco]) wellAgg[d.Poco] = { volume: 0, horas: 0 };
+                wellAgg[d.Poco].volume += d.VolumeCalculado;
+                wellAgg[d.Poco].horas += d.Horas;
+            });
+
+            let wells = Object.keys(wellAgg).sort((a,b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
+            let volumes = wells.map(w => wellAgg[w].volume);
+
+            renderChart('entradaAguaChart', 'entradaAgua', 'bar', {
+                labels: wells,
+                datasets: [{
+                    label: 'Volume Total (L)',
+                    data: volumes,
+                    backgroundColor: 'rgba(14, 165, 233, 0.8)',
+                    borderColor: '#0284c7',
+                    borderWidth: 1,
+                    borderRadius: 6
+                }]
+            }, {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    datalabels: {
+                        anchor: 'end',
+                        align: 'top',
+                        font: { size: 10, weight: 'bold' },
+                        formatter: (val) => val > 0 ? Math.round(val).toLocaleString('pt-BR') + ' L' : ''
+                    }
+                },
+                scales: { y: { beginAtZero: true, title: { display: true, text: 'Litros (L)' } } }
+            });
+        }
+
+        function updateSaidaKPIs(data) {
+            let totalVol = 0; let totalHoras = 0; let locaisSet = new Set();
+            data.forEach(d => {
+                totalVol += d.VolumeCalculado;
+                totalHoras += d.DiffHours;
+                locaisSet.add(d.Local);
+            });
+            document.getElementById('kpi4_saidaVol').textContent = totalVol.toLocaleString('pt-BR', { maximumFractionDigits: 0 }) + ' L';
+            document.getElementById('kpi4_saidaLocais').textContent = locaisSet.size.toLocaleString('pt-BR');
+            document.getElementById('kpi4_saidaTempo').textContent = totalHoras.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' h';
+        }
+
+        function renderSaidaChart(data) {
+            let localAgg = {};
+            data.forEach(d => {
+                if (!localAgg[d.Local]) localAgg[d.Local] = 0;
+                localAgg[d.Local] += d.VolumeCalculado;
+            });
+
+            let locais = Object.keys(localAgg).sort((a,b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
+            let volumes = locais.map(l => localAgg[l]);
+
+            renderChart('saidaAguaChart', 'saidaAgua', 'bar', {
+                labels: locais,
+                datasets: [{
+                    label: 'Volume de Saída (L)',
+                    data: volumes,
+                    backgroundColor: 'rgba(16, 185, 129, 0.8)',
+                    borderColor: '#059669',
+                    borderWidth: 1,
+                    borderRadius: 6
+                }]
+            }, {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    datalabels: {
+                        anchor: 'end',
+                        align: 'top',
+                        font: { size: 10, weight: 'bold' },
+                        formatter: (val) => val > 0 ? Math.round(val).toLocaleString('pt-BR') + ' L' : ''
+                    }
+                },
+                scales: { y: { beginAtZero: true, title: { display: true, text: 'Litros (L)' } } }
+            });
+        }
+
+        function updateTab5KPIs(data) {
+            if (!data.length) {
+                document.getElementById('kpi5_volIrrigado').textContent = "0 L";
+                document.getElementById('kpi5_transplantado').textContent = "0 plantas";
+                document.getElementById('kpi5_ltrsPlanta').textContent = "0 L/planta";
+                document.getElementById('kpi5_ltrsDiaPlanta').textContent = "0 L/dia/planta";
+                document.getElementById('kpi5_diasIrrigados').textContent = "0 dias";
+                document.getElementById('kpi5_fimColheita').textContent = "--/--/----";
+                return;
+            }
+
+            let totalVol = 0;
+            let totalPlantas = 0;
+            let datasIrrigadas = new Set();
+            let maxColheita = null;
+
+            data.forEach(d => {
+                totalVol += d.VolumeCalculado;
+                if (d.TotalTransplantio > totalPlantas) totalPlantas = d.TotalTransplantio;
+                if (d.IsoDate) datasIrrigadas.add(d.IsoDate);
+                if (d.DataColheita && (!maxColheita || d.DataColheita > maxColheita)) {
+                    maxColheita = d.DataColheita;
+                }
+            });
+
+            let numDias = datasIrrigadas.size;
+            let ltrsPlanta = totalPlantas > 0 ? (totalVol / totalPlantas) : 0;
+            let ltrsDiaPlanta = (totalPlantas > 0 && numDias > 0) ? (totalVol / totalPlantas / numDias) : 0;
+
+            document.getElementById('kpi5_volIrrigado').textContent = totalVol.toLocaleString('pt-BR', { maximumFractionDigits: 0 }) + ' L';
+            document.getElementById('kpi5_transplantado').textContent = totalPlantas.toLocaleString('pt-BR') + ' plantas';
+            document.getElementById('kpi5_ltrsPlanta').textContent = ltrsPlanta.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' L/planta';
+            document.getElementById('kpi5_ltrsDiaPlanta').textContent = ltrsDiaPlanta.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' L/dia';
+            document.getElementById('kpi5_diasIrrigados').textContent = numDias.toLocaleString('pt-BR') + ' dias';
+            document.getElementById('kpi5_fimColheita').textContent = maxColheita ? maxColheita.toLocaleDateString('pt-BR') : '--/--/----';
+        }
+
+        function renderTab5Chart(data) {
+            let dayAgg = {};
+            data.forEach(d => {
+                let key = d.DataFormatted;
+                if (!dayAgg[key]) dayAgg[key] = 0;
+                dayAgg[key] += d.VolumeCalculado;
+            });
+
+            let days = Object.keys(dayAgg);
+            let volumes = days.map(d => dayAgg[d]);
+
+            renderChart('resumoBlocoChart', 'resumoBloco', 'bar', {
+                labels: days,
+                datasets: [{
+                    label: 'Volume Irrigado (L)',
+                    data: volumes,
+                    backgroundColor: 'rgba(37, 99, 235, 0.85)',
+                    borderColor: '#1d4ed8',
+                    borderWidth: 1,
+                    borderRadius: 4
+                }]
+            }, {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    datalabels: {
+                        anchor: 'end',
+                        align: 'top',
+                        font: { size: 10, weight: 'bold' },
+                        formatter: (val) => val > 0 ? Math.round(val).toLocaleString('pt-BR') : ''
+                    }
+                },
+                scales: { y: { beginAtZero: true, title: { display: true, text: 'Litros (L)' } } }
+            });
+        }
+
+        // LÓGICA DA ABA 6: MANUTENÇÃO DAS BOMBAS
+        function updateTab6KPIs(data) {
+            if (!data.length) {
+                document.getElementById('kpi6_totalPocos').textContent = "0";
+                document.getElementById('kpi6_totalManutencao').textContent = "0";
+                document.getElementById('kpi6_proximas').textContent = "0";
+                document.getElementById('kpi6_avgVazaoInicial').textContent = "0 L/h";
+                return;
+            }
+
+            let pocosSet = new Set();
+            let countProximas = 0;
+            let sumVazao = 0;
+            let countVazao = 0;
+
+            data.forEach(d => {
+                pocosSet.add(d.Poco);
+                if (d.Status === 'Próxima' || d.Status === 'Vencida') countProximas++;
+                if (d.VazaoInicial > 0) {
+                    sumVazao += d.VazaoInicial;
+                    countVazao++;
+                }
+            });
+
+            let avgVazao = countVazao > 0 ? (sumVazao / countVazao) : 0;
+
+            document.getElementById('kpi6_totalPocos').textContent = pocosSet.size.toLocaleString('pt-BR');
+            document.getElementById('kpi6_totalManutencao').textContent = data.length.toLocaleString('pt-BR');
+            document.getElementById('kpi6_proximas').textContent = countProximas.toLocaleString('pt-BR');
+            document.getElementById('kpi6_avgVazaoInicial').textContent = avgVazao.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + ' L/h';
+        }
+
+        function renderTab6Table(data) {
+            const tbody = document.getElementById('tab6TableBody');
+            if (!tbody) return;
+
+            if (!data.length) {
+                tbody.innerHTML = '<tr><td colspan="11" class="py-6 text-center text-slate-400">Nenhum registro de manutenção encontrado.</td></tr>';
+                return;
+            }
+
+            let sorted = [...data].sort((a, b) => a.Poco.localeCompare(b.Poco, undefined, { numeric: true, sensitivity: 'base' }));
+
+            tbody.innerHTML = '';
+            sorted.forEach(row => {
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 transition border-b border-slate-100">
+                        <td class="py-3 px-3.5 font-bold text-slate-900">${row.Poco}</td>
+                        <td class="py-3 px-3.5">${row.DataManutStr}</td>
+                        <td class="py-3 px-3.5 font-semibold">${row.DataNovaManutStr}</td>
+                        <td class="py-3 px-3.5">${row.Marca}</td>
+                        <td class="py-3 px-3.5">${row.Modelo}</td>
+                        <td class="py-3 px-3.5 text-right font-semibold">${row.CV > 0 ? row.CV.toLocaleString('pt-BR') : '-'}</td>
+                        <td class="py-3 px-3.5 text-right font-semibold">${row.Profundidade > 0 ? row.Profundidade.toLocaleString('pt-BR') + ' m' : '-'}</td>
+                        <td class="py-3 px-3.5 text-right font-bold text-indigo-900">${row.VazaoInicial > 0 ? row.VazaoInicial.toLocaleString('pt-BR') + ' L/h' : '-'}</td>
+                        <td class="py-3 px-3.5">${row.Instalador}</td>
+                        <td class="py-3 px-3.5">${row.ResponsavelTec}</td>
+                        <td class="py-3 px-3.5 text-center">
+                            <span class="inline-block px-2.5 py-1 rounded-md text-[11px] font-bold border ${row.StatusBg}">${row.Status}</span>
+                        </td>
+                    </tr>`;
+            });
+        }
+
+        function renderTab6Charts(data) {
+            let sorted = [...data].sort((a, b) => a.Poco.localeCompare(b.Poco, undefined, { numeric: true, sensitivity: 'base' }));
+            
+            let pocos = sorted.map(d => d.Poco);
+            let vazaos = sorted.map(d => d.VazaoInicial);
+            let profs = sorted.map(d => d.Profundidade);
+
+            // Gráfico 1: Vazão Inicial Instalada
+            renderChart('manutencaoVazaoChart', 'manutencaoVazao', 'bar', {
+                labels: pocos,
+                datasets: [{
+                    label: 'Vazão Inicial Instalada (L/h)',
+                    data: vazaos,
+                    backgroundColor: 'rgba(79, 70, 229, 0.85)',
+                    borderColor: '#4338ca',
+                    borderWidth: 1,
+                    borderRadius: 6
+                }]
+            }, {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    datalabels: {
+                        anchor: 'end',
+                        align: 'top',
+                        font: { size: 10, weight: 'bold' },
+                        formatter: (val) => val > 0 ? val.toLocaleString('pt-BR') + ' L/h' : ''
+                    }
+                },
+                scales: { y: { beginAtZero: true, title: { display: true, text: 'L/h' } } }
+            });
+
+            // Gráfico 2: Profundidade do Poço
+            renderChart('manutencaoProfundidadeChart', 'manutencaoProf', 'bar', {
+                labels: pocos,
+                datasets: [{
+                    label: 'Profundidade (Metros)',
+                    data: profs,
+                    backgroundColor: 'rgba(14, 165, 233, 0.85)',
+                    borderColor: '#0284c7',
+                    borderWidth: 1,
+                    borderRadius: 6
+                }]
+            }, {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    datalabels: {
+                        anchor: 'end',
+                        align: 'top',
+                        font: { size: 10, weight: 'bold' },
+                        formatter: (val) => val > 0 ? val.toLocaleString('pt-BR') + ' m' : ''
+                    }
+                },
+                scales: { y: { beginAtZero: true, title: { display: true, text: 'Metros (m)' } } }
+            });
+        }
     </script>
 </body>
 </html>
