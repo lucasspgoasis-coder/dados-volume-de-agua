@@ -46,7 +46,7 @@
             position: relative;
             height: 580px;
             width: 100%;
-            min-width: 1200px;
+            /* A largura mínima é controlada dinamicamente via JS para evitar labels em 90 graus */
         }
 
         .chart-container-no-scroll {
@@ -92,14 +92,15 @@
         }
 
         .kpi-compact-card {
-            background: #ffffff;
-            border: 1px solid rgba(226, 232, 240, 0.9);
             border-radius: 0.75rem;
-            padding: 1rem 1.25rem;
+            padding: 0.75rem 1rem;
             transition: all 0.2s ease-in-out;
+            border-width: 1px;
+            border-style: solid;
         }
         .kpi-compact-card:hover {
             box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.05);
+            transform: translateY(-1px);
         }
 
         #login-screen {
@@ -173,7 +174,7 @@
 
         <main class="max-w-[1700px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1">
             
-            <!-- NAUGAÇÃO DE ABAS -->
+            <!-- NAVEGAÇÃO DE ABAS -->
             <div class="border-b border-slate-200 mb-6 flex flex-wrap justify-between items-end gap-4">
                 <nav class="flex gap-1 sm:gap-2 flex-wrap" aria-label="Tabs">
                     <button onclick="switchTab('diario')" id="tab-diario" class="tab-btn tab-active flex items-center gap-2">
@@ -197,33 +198,33 @@
             <!-- TAB 1: DIÁRIO -->
             <div id="content-diario" class="space-y-6">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="kpi-compact-card flex items-center gap-3.5">
-                        <div class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                    <div class="kpi-compact-card bg-cyan-50 border-cyan-200 flex items-center gap-3.5">
+                        <div class="w-10 h-10 rounded-lg bg-cyan-100 text-cyan-600 flex items-center justify-center shrink-0">
                             <i class="fa-solid fa-faucet-drip text-lg"></i>
                         </div>
                         <div>
-                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Vazão Média Geral</p>
-                            <h3 id="kpi1_avgFlow" class="text-xl font-bold text-slate-800">-- L/h</h3>
+                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Vazão Média Geral</p>
+                            <h3 id="kpi1_avgFlow" class="text-xl font-bold text-cyan-900">-- L/h</h3>
                         </div>
                     </div>
                     
-                    <div class="kpi-compact-card flex items-center gap-3.5">
-                        <div class="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                    <div class="kpi-compact-card bg-emerald-50 border-emerald-200 flex items-center gap-3.5">
+                        <div class="w-10 h-10 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
                             <i class="fa-solid fa-droplet text-lg"></i>
                         </div>
                         <div>
-                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Volume Total Extraído</p>
-                            <h3 id="kpi1_totalVolume" class="text-xl font-bold text-slate-800">-- L</h3>
+                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Volume Total Extraído</p>
+                            <h3 id="kpi1_totalVolume" class="text-xl font-bold text-emerald-900">-- L</h3>
                         </div>
                     </div>
 
-                    <div class="kpi-compact-card flex items-center gap-3.5">
-                        <div class="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+                    <div class="kpi-compact-card bg-indigo-50 border-indigo-200 flex items-center gap-3.5">
+                        <div class="w-10 h-10 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0">
                             <i class="fa-solid fa-layer-group text-lg"></i>
                         </div>
                         <div>
-                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Total de Poços</p>
-                            <h3 id="kpi1_totalWells" class="text-xl font-bold text-slate-800">--</h3>
+                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Total de Poços</p>
+                            <h3 id="kpi1_totalWells" class="text-xl font-bold text-indigo-900">--</h3>
                         </div>
                     </div>
                 </div>
@@ -299,33 +300,33 @@
             <!-- TAB 2: MENSAL -->
             <div id="content-mensal" class="hidden space-y-6">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="kpi-compact-card flex items-center gap-3.5">
-                        <div class="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+                    <div class="kpi-compact-card bg-indigo-50 border-indigo-200 flex items-center gap-3.5">
+                        <div class="w-10 h-10 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0">
                             <i class="fa-solid fa-calendar-days text-lg"></i>
                         </div>
                         <div>
-                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Volume Média Mensal</p>
-                            <h3 id="kpi2_avgMonthlyVol" class="text-xl font-bold text-slate-800">-- L</h3>
+                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Volume Média Mensal</p>
+                            <h3 id="kpi2_avgMonthlyVol" class="text-xl font-bold text-indigo-900">-- L</h3>
                         </div>
                     </div>
 
-                    <div class="kpi-compact-card flex items-center gap-3.5">
-                        <div class="w-10 h-10 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center shrink-0">
+                    <div class="kpi-compact-card bg-sky-50 border-sky-200 flex items-center gap-3.5">
+                        <div class="w-10 h-10 rounded-lg bg-sky-100 text-sky-600 flex items-center justify-center shrink-0">
                             <i class="fa-solid fa-chart-column text-lg"></i>
                         </div>
                         <div>
-                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Maior Volume Mensal</p>
-                            <h3 id="kpi2_maxVolumeWell" class="text-xl font-bold text-slate-800">--</h3>
+                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Maior Volume Mensal</p>
+                            <h3 id="kpi2_maxVolumeWell" class="text-xl font-bold text-sky-900">--</h3>
                         </div>
                     </div>
 
-                    <div class="kpi-compact-card flex items-center gap-3.5">
-                        <div class="w-10 h-10 rounded-lg bg-violet-50 text-violet-600 flex items-center justify-center shrink-0">
+                    <div class="kpi-compact-card bg-violet-50 border-violet-200 flex items-center gap-3.5">
+                        <div class="w-10 h-10 rounded-lg bg-violet-100 text-violet-600 flex items-center justify-center shrink-0">
                             <i class="fa-solid fa-arrow-trend-up text-lg"></i>
                         </div>
                         <div>
-                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Média de Vazão Mensal</p>
-                            <h3 id="kpi2_avgMonthlyFlow" class="text-xl font-bold text-slate-800">-- L/h</h3>
+                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Média de Vazão Mensal</p>
+                            <h3 id="kpi2_avgMonthlyFlow" class="text-xl font-bold text-violet-900">-- L/h</h3>
                         </div>
                     </div>
                 </div>
@@ -398,33 +399,33 @@
             <!-- TAB 3: COMPARAÇÃO / TABELAS -->
             <div id="content-comparacao" class="hidden space-y-6">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="kpi-compact-card flex items-center gap-3.5">
-                        <div class="w-10 h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+                    <div class="kpi-compact-card bg-amber-50 border-amber-200 flex items-center gap-3.5">
+                        <div class="w-10 h-10 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
                             <i class="fa-solid fa-list-check text-lg"></i>
                         </div>
                         <div>
-                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Total de Registros</p>
-                            <h3 id="kpi3_totalRecords" class="text-xl font-bold text-slate-800">--</h3>
+                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Total de Registros</p>
+                            <h3 id="kpi3_totalRecords" class="text-xl font-bold text-amber-900">--</h3>
                         </div>
                     </div>
 
-                    <div class="kpi-compact-card flex items-center gap-3.5">
-                        <div class="w-10 h-10 rounded-lg bg-orange-50 text-orange-600 flex items-center justify-center shrink-0">
+                    <div class="kpi-compact-card bg-orange-50 border-orange-200 flex items-center gap-3.5">
+                        <div class="w-10 h-10 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center shrink-0">
                             <i class="fa-solid fa-calculator text-lg"></i>
                         </div>
                         <div>
-                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Média Geral Tabulada</p>
-                            <h3 id="kpi3_avgFlow" class="text-xl font-bold text-slate-800">-- L/h</h3>
+                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Média Geral Tabulada</p>
+                            <h3 id="kpi3_avgFlow" class="text-xl font-bold text-orange-900">-- L/h</h3>
                         </div>
                     </div>
 
-                    <div class="kpi-compact-card flex items-center gap-3.5">
-                        <div class="w-10 h-10 rounded-lg bg-teal-50 text-teal-600 flex items-center justify-center shrink-0">
+                    <div class="kpi-compact-card bg-teal-50 border-teal-200 flex items-center gap-3.5">
+                        <div class="w-10 h-10 rounded-lg bg-teal-100 text-teal-600 flex items-center justify-center shrink-0">
                             <i class="fa-solid fa-glass-water text-lg"></i>
                         </div>
                         <div>
-                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Volume Médio p/ Registro</p>
-                            <h3 id="kpi3_avgVolPerRecord" class="text-xl font-bold text-slate-800">-- L</h3>
+                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Volume Médio p/ Registro</p>
+                            <h3 id="kpi3_avgVolPerRecord" class="text-xl font-bold text-teal-900">-- L</h3>
                         </div>
                     </div>
                 </div>
@@ -505,33 +506,33 @@
             <div id="content-entrada" class="hidden space-y-6">
                 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="kpi-compact-card flex items-center gap-3.5 border-l-4 border-cyan-500">
-                        <div class="w-10 h-10 rounded-lg bg-cyan-50 text-cyan-600 flex items-center justify-center shrink-0">
+                    <div class="kpi-compact-card bg-cyan-50 border-cyan-200 flex items-center gap-3.5">
+                        <div class="w-10 h-10 rounded-lg bg-cyan-100 text-cyan-600 flex items-center justify-center shrink-0">
                             <i class="fa-solid fa-faucet text-lg"></i>
                         </div>
                         <div>
-                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Volume Total Jorado</p>
-                            <h3 id="kpi4_totalVol" class="text-xl font-bold text-slate-800">-- L</h3>
+                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Volume Total Jorado</p>
+                            <h3 id="kpi4_totalVol" class="text-xl font-bold text-cyan-900">-- L</h3>
                         </div>
                     </div>
 
-                    <div class="kpi-compact-card flex items-center gap-3.5 border-l-4 border-blue-500">
-                        <div class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                    <div class="kpi-compact-card bg-blue-50 border-blue-200 flex items-center gap-3.5">
+                        <div class="w-10 h-10 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
                             <i class="fa-solid fa-clock text-lg"></i>
                         </div>
                         <div>
-                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Média Horas Ligadas</p>
-                            <h3 id="kpi4_avgHours" class="text-xl font-bold text-slate-800">-- h/dia</h3>
+                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Média Horas Ligadas</p>
+                            <h3 id="kpi4_avgHours" class="text-xl font-bold text-blue-900">-- h/dia</h3>
                         </div>
                     </div>
 
-                    <div class="kpi-compact-card flex items-center gap-3.5 border-l-4 border-emerald-500">
-                        <div class="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                    <div class="kpi-compact-card bg-emerald-50 border-emerald-200 flex items-center gap-3.5">
+                        <div class="w-10 h-10 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
                             <i class="fa-solid fa-chart-line text-lg"></i>
                         </div>
                         <div>
-                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Pico de Volume em 1 Dia</p>
-                            <h3 id="kpi4_maxPeak" class="text-xl font-bold text-slate-800">--</h3>
+                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Pico de Volume em 1 Dia</p>
+                            <h3 id="kpi4_maxPeak" class="text-xl font-bold text-emerald-900">--</h3>
                         </div>
                     </div>
                 </div>
@@ -605,31 +606,31 @@
 
                 <!-- KPIs Saída -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-                    <div class="kpi-compact-card flex items-center gap-3.5 border-l-4 border-emerald-500">
-                        <div class="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                    <div class="kpi-compact-card bg-emerald-50 border-emerald-200 flex items-center gap-3.5">
+                        <div class="w-10 h-10 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
                             <i class="fa-solid fa-seedling text-lg"></i>
                         </div>
                         <div>
-                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Volume Total Saída</p>
-                            <h3 id="kpi4_saidaVol" class="text-xl font-bold text-slate-800">-- L</h3>
+                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Volume Total Saída</p>
+                            <h3 id="kpi4_saidaVol" class="text-xl font-bold text-emerald-900">-- L</h3>
                         </div>
                     </div>
-                    <div class="kpi-compact-card flex items-center gap-3.5 border-l-4 border-emerald-500">
-                        <div class="w-10 h-10 rounded-lg bg-teal-50 text-teal-600 flex items-center justify-center shrink-0">
+                    <div class="kpi-compact-card bg-teal-50 border-teal-200 flex items-center gap-3.5">
+                        <div class="w-10 h-10 rounded-lg bg-teal-100 text-teal-600 flex items-center justify-center shrink-0">
                             <i class="fa-solid fa-map-location-dot text-lg"></i>
                         </div>
                         <div>
-                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Total de Locais/Blocos</p>
-                            <h3 id="kpi4_saidaLocais" class="text-xl font-bold text-slate-800">--</h3>
+                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Total de Locais/Blocos</p>
+                            <h3 id="kpi4_saidaLocais" class="text-xl font-bold text-teal-900">--</h3>
                         </div>
                     </div>
-                    <div class="kpi-compact-card flex items-center gap-3.5 border-l-4 border-emerald-500">
-                        <div class="w-10 h-10 rounded-lg bg-cyan-50 text-cyan-600 flex items-center justify-center shrink-0">
+                    <div class="kpi-compact-card bg-cyan-50 border-cyan-200 flex items-center gap-3.5">
+                        <div class="w-10 h-10 rounded-lg bg-cyan-100 text-cyan-600 flex items-center justify-center shrink-0">
                             <i class="fa-solid fa-stopwatch text-lg"></i>
                         </div>
                         <div>
-                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Tempo de Irrigação</p>
-                            <h3 id="kpi4_saidaTempo" class="text-xl font-bold text-slate-800">-- h</h3>
+                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Tempo de Irrigação</p>
+                            <h3 id="kpi4_saidaTempo" class="text-xl font-bold text-cyan-900">-- h</h3>
                         </div>
                     </div>
                 </div>
@@ -641,7 +642,6 @@
                             <h3 class="text-base font-bold text-slate-800">Saída de Água - Irrigação por Bloco (Cálculo Detalhado)</h3>
                             <p class="text-xs text-slate-500">
                                 Cálculo: <b class="text-emerald-700">Se 1 Válvula: Qtd × Vazão × (Tempo/60) | Se ≥ 2 Válvulas: (Qtd ÷ Válvulas) × Vazão × (Tempo/60)</b>. 
-                                Nomes dos blocos exibidos na horizontal.
                             </p>
                         </div>
                     </div>
@@ -652,76 +652,87 @@
             <!-- TAB 5: RESUMO GERAL POR BLOCO -->
             <div id="content-bloco" class="hidden space-y-6">
                 
-                <!-- CARDS DE RESUMO/GERAIS NO TOPO DA ABA 5 -->
+                <!-- CARDS DE RESUMO/GERAIS NO TOPO DA ABA 5 (Em Grid de 4) -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     
-                    <div class="kpi-compact-card border-l-4 border-blue-600 flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                    <div class="kpi-compact-card bg-blue-50 border-blue-200 flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
                             <i class="fa-solid fa-shower text-lg"></i>
                         </div>
                         <div>
-                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Volume Total Irrigado</p>
-                            <h3 id="kpi5_volIrrigado" class="text-xl font-extrabold text-slate-800">-- L</h3>
+                            <p class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Volume Total Irrigado</p>
+                            <h3 id="kpi5_volIrrigado" class="text-lg font-extrabold text-blue-900">-- L</h3>
                         </div>
                     </div>
 
-                    <div class="kpi-compact-card border-l-4 border-cyan-500 flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-lg bg-cyan-50 text-cyan-600 flex items-center justify-center shrink-0">
-                            <i class="fa-solid fa-faucet text-lg"></i>
-                        </div>
-                        <div>
-                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Total Água que Entrou</p>
-                            <h3 id="kpi5_aguaEntrou" class="text-xl font-extrabold text-slate-800">-- L</h3>
-                        </div>
-                    </div>
-
-                    <div class="kpi-compact-card border-l-4 border-indigo-500 flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
-                            <i class="fa-solid fa-boxes-stacked text-lg"></i>
-                        </div>
-                        <div>
-                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Total Acumulado</p>
-                            <h3 id="kpi5_acumulado" class="text-xl font-extrabold text-slate-800">-- L</h3>
-                        </div>
-                    </div>
-
-                    <div class="kpi-compact-card border-l-4 border-emerald-500 flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                    <div class="kpi-compact-card bg-emerald-50 border-emerald-200 flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
                             <i class="fa-solid fa-seedling text-lg"></i>
                         </div>
                         <div>
-                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Total Transplantado</p>
-                            <h3 id="kpi5_transplantado" class="text-xl font-extrabold text-slate-800">-- plantas</h3>
+                            <p class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Total Transplantado</p>
+                            <h3 id="kpi5_transplantado" class="text-lg font-extrabold text-emerald-900">-- plantas</h3>
                         </div>
                     </div>
 
-                    <div class="kpi-compact-card border-l-4 border-amber-500 flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+                    <div class="kpi-compact-card bg-cyan-50 border-cyan-200 flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg bg-cyan-100 text-cyan-600 flex items-center justify-center shrink-0">
                             <i class="fa-solid fa-glass-water-droplet text-lg"></i>
                         </div>
                         <div>
-                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Volume Ltrs / Planta</p>
-                            <h3 id="kpi5_ltrsPlanta" class="text-xl font-extrabold text-slate-800">-- L/planta</h3>
+                            <p class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Volume Ltrs / Planta</p>
+                            <h3 id="kpi5_ltrsPlanta" class="text-lg font-extrabold text-cyan-900">-- L/planta</h3>
                         </div>
                     </div>
 
-                    <div class="kpi-compact-card border-l-4 border-teal-500 flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-lg bg-teal-50 text-teal-600 flex items-center justify-center shrink-0">
-                            <i class="fa-solid fa-calendar-check text-lg"></i>
-                        </div>
-                        <div>
-                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Total Dias Irrigados</p>
-                            <h3 id="kpi5_diasIrrigados" class="text-xl font-extrabold text-slate-800">-- dias</h3>
-                        </div>
-                    </div>
-
-                    <div class="kpi-compact-card border-l-4 border-purple-500 flex items-center gap-3 sm:col-span-2">
-                        <div class="w-10 h-10 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
+                    <div class="kpi-compact-card bg-purple-50 border-purple-200 flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center shrink-0">
                             <i class="fa-solid fa-gauge-high text-lg"></i>
                         </div>
                         <div>
-                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Média Ltrs / Dia por Planta</p>
-                            <h3 id="kpi5_ltrsDiaPlanta" class="text-xl font-extrabold text-slate-800">-- L/dia/planta</h3>
+                            <p class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Ltrs / Dia por Planta</p>
+                            <h3 id="kpi5_ltrsDiaPlanta" class="text-lg font-extrabold text-purple-900">-- L/dia/planta</h3>
+                        </div>
+                    </div>
+
+                    <!-- Novos cards focados em Datas de Colheita e Irrigação -->
+                    <div class="kpi-compact-card bg-indigo-50 border-indigo-200 flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-calendar-check text-lg"></i>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Total Dias Irrigados</p>
+                            <h3 id="kpi5_diasIrrigados" class="text-lg font-extrabold text-indigo-900">-- dias</h3>
+                        </div>
+                    </div>
+
+                    <div class="kpi-compact-card bg-amber-50 border-amber-200 flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-calendar-plus text-lg"></i>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Início Colheita</p>
+                            <h3 id="kpi5_inicioColheita" class="text-lg font-extrabold text-amber-900">--/--/----</h3>
+                        </div>
+                    </div>
+
+                    <div class="kpi-compact-card bg-amber-50 border-amber-200 flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-calendar-day text-lg"></i>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Fim Colheita</p>
+                            <h3 id="kpi5_fimColheita" class="text-lg font-extrabold text-amber-900">--/--/----</h3>
+                        </div>
+                    </div>
+
+                    <div class="kpi-compact-card bg-orange-50 border-orange-200 flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-clock text-lg"></i>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Dias de Colheita</p>
+                            <h3 id="kpi5_diasColheita" class="text-lg font-extrabold text-orange-900">-- dias</h3>
                         </div>
                     </div>
 
@@ -788,18 +799,18 @@
                     </div>
                 </div>
 
-                <!-- GRÁFICO PRINCIPAL EXPANDIDO DA ABA 5 (OCUPA BOA PARTE DA PÁGINA) -->
+                <!-- GRÁFICO PRINCIPAL EXPANDIDO DA ABA 5 -->
                 <div class="glass-card p-6 shadow-sm">
                     <div class="flex justify-between items-center mb-2 flex-wrap gap-2 border-b border-slate-100 pb-3">
                         <div>
                             <h3 class="text-lg font-extrabold text-slate-800 flex items-center gap-2">
                                 <i class="fa-solid fa-chart-column text-blue-600"></i> Volume Total Irrigado por Dia (Por Bloco)
                             </h3>
-                            <p class="text-xs text-slate-500 mt-0.5">Eixo horizontal exibe as datas organizadas cronologicamente/alfabeticamente com o volume diário exato irrigado no bloco.</p>
+                            <p class="text-xs text-slate-500 mt-0.5">As datas sempre permanecem na horizontal. Se houver muitos dias, a largura será expandida sem espremer os dados.</p>
                         </div>
                     </div>
                     <div class="chart-scroll-wrapper mt-4">
-                        <div class="chart-container-large">
+                        <div id="chart-container-tab5" class="chart-container-large">
                             <canvas id="resumoBlocoChart"></canvas>
                         </div>
                     </div>
@@ -817,7 +828,6 @@
     <script>
         Chart.register(ChartDataLabels);
 
-        // URLs das Planilhas do Google Sheets
         const ENTRADA_SHEETS = [
             "https://docs.google.com/spreadsheets/d/e/2PACX-1vSafB5fd5osyELyMS1T-pVO-WbL25l53ICs1dmVMgByrAlQsqSHT2YscIE-ClYrJvzPS-dGZSp25ysi/pub?output=csv",
             "https://docs.google.com/spreadsheets/d/e/2PACX-1vQAcr8_XCwnJWwn5DMCKsb3-03ZogzTgiJ9qtCtnEp9fnLMtEuTcCXpxeslsvQGzJ81nDkLy7DYBX8d/pub?output=csv"
@@ -838,11 +848,6 @@
             saidaAgua: null,
             resumoBloco: null
         };
-
-        const vibrantColors = [
-            '#2563eb', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4', 
-            '#ec4899', '#f97316', '#14b8a6', '#6366f1'
-        ];
 
         function handleLogin() {
             const u = document.getElementById('username').value;
@@ -889,16 +894,11 @@
 
         document.addEventListener('click', (e) => {
             if (!e.target.closest('.relative')) {
-                document.getElementById('dropdownTab1')?.classList.add('hidden');
-                document.getElementById('dropdownMonthTab1')?.classList.add('hidden');
-                document.getElementById('dropdownTab2')?.classList.add('hidden');
-                document.getElementById('dropdownMonthTab2')?.classList.add('hidden');
-                document.getElementById('dropdownTab3')?.classList.add('hidden');
-                document.getElementById('dropdownMonthTab3')?.classList.add('hidden');
-                document.getElementById('dropdownTab4')?.classList.add('hidden');
-                document.getElementById('dropdownTab4Locais')?.classList.add('hidden');
-                document.getElementById('dropdownTab5Bloco')?.classList.add('hidden');
-                document.getElementById('dropdownTab5Ciclo')?.classList.add('hidden');
+                const dropdowns = ['dropdownTab1', 'dropdownMonthTab1', 'dropdownTab2', 'dropdownMonthTab2', 'dropdownTab3', 'dropdownMonthTab3', 'dropdownTab4', 'dropdownTab4Locais', 'dropdownTab5Bloco', 'dropdownTab5Ciclo'];
+                dropdowns.forEach(id => {
+                    const el = document.getElementById(id);
+                    if(el) el.classList.add('hidden');
+                });
             }
         });
 
@@ -944,16 +944,13 @@
         function parseBrazilianNumber(val) {
             if (val === null || val === undefined || val === '') return 0;
             let str = String(val).trim().replace(/\s/g, '');
-            if (str.includes('.') && str.includes(',')) {
-                let lastDot = str.lastIndexOf('.');
-                let lastComma = str.lastIndexOf(',');
-                if (lastComma > lastDot) {
-                    str = str.replace(/\./g, '').replace(',', '.');
-                } else {
-                    str = str.replace(/,/g, '');
+            if (str.includes(',')) {
+                str = str.replace(/\./g, '').replace(',', '.');
+            } else {
+                // Se só tem ponto, sem vírgula, e são 3 dígitos no final, provavelmente é separador de milhar (ex: 25.386)
+                if (/\.\d{3}$/.test(str)) {
+                    str = str.replace(/\./g, '');
                 }
-            } else if (str.includes(',')) {
-                str = str.replace(',', '.');
             }
             let res = parseFloat(str);
             return isNaN(res) ? 0 : res;
@@ -1085,6 +1082,7 @@
                 const cicloKey = findKey(['ciclo']);
                 
                 const dtTransplantioKey = findKey(['data - transplantio', 'data transplantio', 'dt transplantio']);
+                const dtInicioColheitaKey = findKey(['inicio colheita', 'início colheita', 'data inicio colheita', 'dt inicio colheita']);
                 const dtColheitaKey = findKey(['data - final colheita', 'data colheita', 'final colheita', 'dt colheita']);
                 const totalTransplantioKey = findKey(['total - transplantio', 'total transplantio', 'transplantio total', 'total plantas', 'plantas']);
 
@@ -1099,9 +1097,12 @@
                 if (local) {
                     let parsedDate = parsePortugueseDate(row[dateKey] || '');
                     let parsedDtTransplantio = dtTransplantioKey ? parsePortugueseDate(row[dtTransplantioKey] || '') : null;
+                    let parsedDtInicioColheita = dtInicioColheitaKey ? parsePortugueseDate(row[dtInicioColheitaKey] || '') : null;
                     let parsedDtColheita = dtColheitaKey ? parsePortugueseDate(row[dtColheitaKey] || '') : null;
 
                     let cicloVal = cicloKey && row[cicloKey] ? String(row[cicloKey]).trim() : 'Ciclo 1';
+                    
+                    // Extração do número preservando separador de milhar correto se for p. ex. 25.386
                     let totalTransplantio = totalTransplantioKey ? parseBrazilianNumber(row[totalTransplantioKey]) : 0;
 
                     let qtde = 0;
@@ -1155,6 +1156,7 @@
                             Cultura: row[culturaKey] ? String(row[culturaKey]).trim() : 'Sem Cultura',
                             Ciclo: cicloVal,
                             DataTransplantio: parsedDtTransplantio,
+                            DataInicioColheita: parsedDtInicioColheita,
                             DataColheita: parsedDtColheita,
                             TotalTransplantio: totalTransplantio,
                             Qtde: qtde,
@@ -1177,7 +1179,7 @@
         }
 
         function parsePortugueseDate(dateStr) {
-            if (!dateStr) return new Date();
+            if (!dateStr || String(dateStr).trim() === '') return null; // Não forçar data atual se vazio
             let cleaned = String(dateStr).trim();
             if (cleaned.includes('/')) {
                 let parts = cleaned.split('/');
@@ -1332,7 +1334,7 @@
             if (!label) return;
             
             if (checked.length === checks.length && checks.length > 0) label.textContent = "Todos os Locais";
-            else if (checked.length === 1) label.textContent = "1 Local";
+            else if (checked.length === 1) label.textContent = checked[0].value;
             else if (checked.length === 0) label.textContent = "Nenhum";
             else label.textContent = `${checked.length} Locais`;
         }
@@ -1346,7 +1348,7 @@
             if (!label) return;
             
             if (checked.length === checks.length && checks.length > 0) label.textContent = "Todos os Blocos";
-            else if (checked.length === 1) label.textContent = "1 Bloco";
+            else if (checked.length === 1) label.textContent = checked[0].value;
             else if (checked.length === 0) label.textContent = "Nenhum";
             else label.textContent = `${checked.length} Blocos`;
         }
@@ -1360,7 +1362,7 @@
             if (!label) return;
             
             if (checked.length === checks.length && checks.length > 0) label.textContent = "Todos os Ciclos";
-            else if (checked.length === 1) label.textContent = "1 Ciclo";
+            else if (checked.length === 1) label.textContent = checked[0].value;
             else if (checked.length === 0) label.textContent = "Nenhum";
             else label.textContent = `${checked.length} Ciclos`;
         }
@@ -1372,8 +1374,9 @@
             const masterBtn = document.getElementById(`selectAllMonthsTab${tab}`);
             if (masterBtn) masterBtn.checked = (checked.length === checks.length && checks.length > 0);
             if (!label) return;
+            
             if (checked.length === checks.length && checks.length > 0) label.textContent = "Todos os Meses";
-            else if (checked.length === 1) label.textContent = "1 Mês";
+            else if (checked.length === 1) label.textContent = monthNames[parseInt(checked[0].value, 10)];
             else if (checked.length === 0) label.textContent = "Nenhum";
             else label.textContent = `${checked.length} Meses`;
         }
@@ -1385,8 +1388,9 @@
             const masterBtn = document.getElementById(`selectAllWellsTab${tab}`);
             if (masterBtn) masterBtn.checked = (checked.length === checks.length && checks.length > 0);
             if (!label) return;
+            
             if (checked.length === checks.length && checks.length > 0) label.textContent = "Todos os Poços";
-            else if (checked.length === 1) label.textContent = "1 Poço";
+            else if (checked.length === 1) label.textContent = checked[0].value;
             else if (checked.length === 0) label.textContent = "Nenhum";
             else label.textContent = `${checked.length} Poços`;
         }
@@ -1541,516 +1545,290 @@
             data.forEach(d => { totalVolume += d.VolumeCalculado; if (d.Vazao > 0) { sumVazao += d.Vazao; countVazao++; } });
             let avgFlow = countVazao > 0 ? (sumVazao / countVazao) : 0;
             let avgVolPerRec = data.length > 0 ? (totalVolume / data.length) : 0;
+            
             document.getElementById('kpi3_totalRecords').textContent = data.length.toLocaleString('pt-BR');
             document.getElementById('kpi3_avgFlow').textContent = avgFlow.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' L/h';
             document.getElementById('kpi3_avgVolPerRecord').textContent = avgVolPerRec.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + ' L';
         }
 
-        function updateTab4KPIs(data) {
+        function renderTab3Table(data) {
+            const tbody = document.getElementById('tab3TableBody');
+            if (!tbody) return;
             if (!data.length) {
-                document.getElementById('kpi4_totalVol').textContent = "0 L"; 
-                document.getElementById('kpi4_avgHours').textContent = "0 h/dia"; 
-                document.getElementById('kpi4_maxPeak').textContent = "N/A"; 
+                tbody.innerHTML = '<tr><td colspan="5" class="py-6 text-center text-slate-400">Nenhum dado encontrado para os filtros selecionados.</td></tr>';
                 return;
             }
-            let totalVol = 0; let totalHoras = 0; let countHoras = 0; let maxPeak = 0; let maxPeakLabel = "N/A";
+
+            let agg = {};
             data.forEach(d => {
-                totalVol += d.VolumeCalculado;
-                if (d.Horas > 0) { totalHoras += d.Horas; countHoras++; }
-                if (d.VolumeCalculado > maxPeak) { maxPeak = d.VolumeCalculado; maxPeakLabel = `${d.Poco} (${d.DataFormatted})`; }
+                let key = `${d.Poco}|${d.MesLabel}`;
+                if (!agg[key]) agg[key] = { Poco: d.Poco, Mes: d.MesLabel, sumVazao: 0, countVazao: 0, sumVol: 0, records: 0 };
+                if (d.Vazao > 0) { agg[key].sumVazao += d.Vazao; agg[key].countVazao++; }
+                agg[key].sumVol += d.VolumeCalculado;
+                agg[key].records++;
             });
-            let avgHours = countHoras > 0 ? (totalHoras / countHoras) : 0;
-            document.getElementById('kpi4_totalVol').textContent = totalVol.toLocaleString('pt-BR', { maximumFractionDigits: 0 }) + ' L';
-            document.getElementById('kpi4_avgHours').textContent = avgHours.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' h/dia';
-            document.getElementById('kpi4_maxPeak').textContent = maxPeak > 0 ? `${maxPeak.toLocaleString('pt-BR', { maximumFractionDigits: 0 })} L (${maxPeakLabel})` : 'N/A';
+
+            let rows = Object.values(agg).sort((a,b) => a.Poco.localeCompare(b.Poco));
+            tbody.innerHTML = '';
+            rows.forEach(r => {
+                let avg = r.countVazao > 0 ? r.sumVazao / r.countVazao : 0;
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="py-3 px-4 font-semibold">${r.Poco}</td>
+                        <td class="py-3 px-4">${r.Mes}</td>
+                        <td class="py-3 px-4 text-right">${avg.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits:2})}</td>
+                        <td class="py-3 px-4 text-right">${r.sumVol.toLocaleString('pt-BR', {maximumFractionDigits:0})}</td>
+                        <td class="py-3 px-4 text-center">
+                            <span class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-xs font-bold border border-slate-200">${r.records}</span>
+                        </td>
+                    </tr>
+                `;
+            });
         }
 
-        function updateSaidaKPIs(data) {
+        function updateTab4KPIs(data) {
             if (!data.length) {
+                document.getElementById('kpi4_totalVol').textContent = "0 L";
+                document.getElementById('kpi4_avgHours').textContent = "0 h/dia";
+                document.getElementById('kpi4_maxPeak').textContent = "0 L";
+                return;
+            }
+            let vol = 0; let maxP = 0; let hours = 0;
+            let byDay = {};
+            data.forEach(d => {
+                vol += d.VolumeCalculado;
+                hours += d.Horas;
+                if (!byDay[d.IsoDate]) byDay[d.IsoDate] = 0;
+                byDay[d.IsoDate] += d.VolumeCalculado;
+            });
+            let uniqueDays = Object.keys(byDay).length || 1;
+            for (let k in byDay) { if(byDay[k] > maxP) maxP = byDay[k]; }
+            
+            document.getElementById('kpi4_totalVol').textContent = vol.toLocaleString('pt-BR', {maximumFractionDigits:0}) + ' L';
+            document.getElementById('kpi4_avgHours').textContent = (hours / uniqueDays).toLocaleString('pt-BR', {maximumFractionDigits:2}) + ' h/dia';
+            document.getElementById('kpi4_maxPeak').textContent = maxP.toLocaleString('pt-BR', {maximumFractionDigits:0}) + ' L';
+        }
+
+        function updateSaidaKPIs(dataOut) {
+            if (!dataOut.length) {
                 document.getElementById('kpi4_saidaVol').textContent = "0 L";
                 document.getElementById('kpi4_saidaLocais').textContent = "0";
                 document.getElementById('kpi4_saidaTempo').textContent = "0 h";
                 return;
             }
-            let totalVol = 0; let totalTempo = 0; let locaisSet = new Set();
-            data.forEach(d => {
-                totalVol += d.VolumeCalculado;
-                totalTempo += d.DiffHours;
-                locaisSet.add(d.Local);
+            let vol = 0; let hours = 0; let locais = new Set();
+            dataOut.forEach(d => {
+                vol += d.VolumeCalculado;
+                hours += d.DiffHours;
+                locais.add(d.Local);
             });
-            
-            const volFormatado = totalVol.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + ' L';
-            
-            document.getElementById('kpi4_saidaVol').textContent = volFormatado;
-            document.getElementById('kpi4_saidaLocais').textContent = locaisSet.size.toLocaleString('pt-BR');
-            document.getElementById('kpi4_saidaTempo').textContent = totalTempo.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' h';
+            document.getElementById('kpi4_saidaVol').textContent = vol.toLocaleString('pt-BR', {maximumFractionDigits:0}) + ' L';
+            document.getElementById('kpi4_saidaLocais').textContent = locais.size;
+            document.getElementById('kpi4_saidaTempo').textContent = hours.toLocaleString('pt-BR', {maximumFractionDigits:1}) + ' h';
         }
 
-        function updateTab5KPIs(data) {
-            if (!data.length) {
+        function updateTab5KPIs(filtered) {
+            if (!filtered.length) {
                 document.getElementById('kpi5_volIrrigado').textContent = "0 L";
-                document.getElementById('kpi5_aguaEntrou').textContent = "0 L";
-                document.getElementById('kpi5_acumulado').textContent = "0 L";
                 document.getElementById('kpi5_transplantado').textContent = "0 plantas";
                 document.getElementById('kpi5_ltrsPlanta').textContent = "0 L/planta";
-                document.getElementById('kpi5_ltrsDiaPlanta').textContent = "0 L/dia/planta";
                 document.getElementById('kpi5_diasIrrigados').textContent = "0 dias";
+                document.getElementById('kpi5_ltrsDiaPlanta').textContent = "0 L/dia/planta";
+                document.getElementById('kpi5_inicioColheita').textContent = "--/--/----";
+                document.getElementById('kpi5_fimColheita').textContent = "--/--/----";
+                document.getElementById('kpi5_diasColheita').textContent = "-- dias";
                 return;
             }
 
-            // 1. Volume Total Irrigado
-            const totalVolIrrigado = data.reduce((acc, d) => acc + d.VolumeCalculado, 0);
-
-            // 2. Dias Irrigados (com base na data que aparece uma vez no dia que foi irrigado)
-            const uniqueIrrigationDates = Array.from(new Set(data.map(d => d.IsoDate))).sort();
-            const totalDiasIrrigados = uniqueIrrigationDates.length;
-
-            const minIrrigationDate = uniqueIrrigationDates[0];
-            const maxIrrigationDate = uniqueIrrigationDates[uniqueIrrigationDates.length - 1];
-
-            // 3. Total Água que Entrou (com base na janela de irrigação dos blocos selecionados)
-            let entradaFiltered = globalRawData;
-            if (minIrrigationDate && maxIrrigationDate) {
-                entradaFiltered = entradaFiltered.filter(d => d.IsoDate >= minIrrigationDate && d.IsoDate <= maxIrrigationDate);
-            }
-            const totalAguaEntrou = entradaFiltered.reduce((acc, d) => acc + d.VolumeCalculado, 0);
-
-            // 4. Total Acumulado (Entrada - Irrigado)
-            const totalAcumulado = totalAguaEntrou - totalVolIrrigado;
-
-            // 5. Total Transplantado (da coluna Total - Transplantio)
-            const blockCicloTransplantMap = {};
-            data.forEach(d => {
-                const key = `${d.Local}_${d.Ciclo}`;
-                if (!blockCicloTransplantMap[key] || d.TotalTransplantio > blockCicloTransplantMap[key]) {
-                    blockCicloTransplantMap[key] = d.TotalTransplantio;
-                }
-            });
-            const totalTransplantado = Object.values(blockCicloTransplantMap).reduce((a, b) => a + b, 0);
-
-            // 6. Volume Ltrs / Planta
-            const ltrsPorPlanta = totalTransplantado > 0 ? (totalVolIrrigado / totalTransplantado) : 0;
-
-            // 7. Período e Ltrs / Dia por Planta
-            let minTransplantio = null;
-            let maxColheita = null;
-            data.forEach(d => {
-                if (d.DataTransplantio && (!minTransplantio || d.DataTransplantio < minTransplantio)) {
-                    minTransplantio = d.DataTransplantio;
-                }
-                if (d.DataColheita && (!maxColheita || d.DataColheita > maxColheita)) {
-                    maxColheita = d.DataColheita;
-                }
-            });
-
-            let periodDays = totalDiasIrrigados > 0 ? totalDiasIrrigados : 1;
-            if (minTransplantio && maxColheita) {
-                const diffTime = Math.abs(maxColheita - minTransplantio);
-                const calcDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                if (calcDays > 0) periodDays = calcDays;
-            }
-
-            const ltrsDiaPorPlanta = (totalTransplantado > 0 && periodDays > 0) ? (totalVolIrrigado / periodDays / totalTransplantado) : 0;
-
-            // Exibir números com formatação completa (todos os dígitos)
-            document.getElementById('kpi5_volIrrigado').textContent = totalVolIrrigado.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + ' L';
-            document.getElementById('kpi5_aguaEntrou').textContent = totalAguaEntrou.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + ' L';
+            let volIrrigado = 0;
+            let transplantioMap = {};
             
-            const acumEl = document.getElementById('kpi5_acumulado');
-            acumEl.textContent = totalAcumulado.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + ' L';
-            if (totalAcumulado < 0) acumEl.className = "text-xl font-extrabold text-rose-600";
-            else acumEl.className = "text-xl font-extrabold text-emerald-600";
+            let minTime = Number.MAX_SAFE_INTEGER;
+            let maxTime = 0;
+            
+            let minInicioColheita = null;
+            let maxFimColheita = null;
 
-            document.getElementById('kpi5_transplantado').textContent = totalTransplantado.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + ' plantas';
-            document.getElementById('kpi5_ltrsPlanta').textContent = ltrsPorPlanta.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' L/planta';
-            document.getElementById('kpi5_ltrsDiaPlanta').textContent = ltrsDiaPorPlanta.toLocaleString('pt-BR', { minimumFractionDigits: 3, maximumFractionDigits: 3 }) + ' L/dia/planta';
-            document.getElementById('kpi5_diasIrrigados').textContent = totalDiasIrrigados.toLocaleString('pt-BR') + ' dias';
-        }
-
-        function getStandardChartOptions(yTitle) {
-            return {
-                responsive: true, maintainAspectRatio: false, layout: { padding: { top: 40 } }, 
-                plugins: {
-                    legend: { position: 'top' },
-                    datalabels: {
-                        display: (ctx) => { if(ctx.dataset.datalabels?.display === false) return false; return ctx.dataset.data[ctx.dataIndex] > 0; },
-                        anchor: 'end', align: 'top', 
-                        formatter: (val) => val ? val.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) : '',
-                        font: { weight: 'bold', size: 10 }, color: (ctx) => ctx.dataset.type === 'line' ? '#ffffff' : '#334155'
-                    }
-                },
-                scales: {
-                    y: { beginAtZero: true, title: { display: true, text: yTitle, font: { weight: 'bold' } }, grid: { color: '#f1f5f9' },
-                         suggestedMax: (ctx) => { let m = 0; ctx.chart.data.datasets.forEach(d => { let max = Math.max(...d.data.filter(n => n)); if(max>m) m=max; }); return m*1.2; }
-                    },
-                    x: { grid: { display: false } }
+            filtered.forEach(d => {
+                volIrrigado += d.VolumeCalculado;
+                
+                // Agrupar max transplant por Local + Ciclo
+                let key = d.Local + '|' + d.Ciclo;
+                if (!transplantioMap[key] || d.TotalTransplantio > transplantioMap[key]) {
+                    transplantioMap[key] = d.TotalTransplantio || 0;
                 }
-            };
+                
+                let t = d.DataObj.getTime();
+                if (t < minTime) minTime = t;
+                if (t > maxTime) maxTime = t;
+
+                // Capturar as datas de Início e Fim da Colheita
+                if (d.DataInicioColheita) {
+                    if (!minInicioColheita || d.DataInicioColheita < minInicioColheita) minInicioColheita = d.DataInicioColheita;
+                }
+                if (d.DataColheita) {
+                    if (!maxFimColheita || d.DataColheita > maxFimColheita) maxFimColheita = d.DataColheita;
+                }
+            });
+
+            let transplantado = Object.values(transplantioMap).reduce((a, b) => a + b, 0);
+            
+            // Calculo de dias irrigados
+            let diasIrrigados = 1;
+            if (minTime !== Number.MAX_SAFE_INTEGER && maxTime > minTime) {
+                diasIrrigados = Math.floor((maxTime - minTime) / (1000 * 60 * 60 * 24));
+            }
+            if (diasIrrigados === 0) diasIrrigados = 1;
+
+            let ltrsPlanta = transplantado > 0 ? (volIrrigado / transplantado) : 0;
+            let ltrsDiaPlanta = ltrsPlanta / diasIrrigados;
+
+            // Formatação das Datas de Colheita
+            let inicioColheitaStr = minInicioColheita ? minInicioColheita.toLocaleDateString('pt-BR') : '--/--/----';
+            let fimColheitaStr = maxFimColheita ? maxFimColheita.toLocaleDateString('pt-BR') : '--/--/----';
+            
+            let diasColheita = '--';
+            if (minInicioColheita && maxFimColheita) {
+                let diffTime = maxFimColheita.getTime() - minInicioColheita.getTime();
+                let dias = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                diasColheita = dias >= 0 ? dias : 0;
+            }
+
+            // Exibir Valores
+            document.getElementById('kpi5_volIrrigado').textContent = volIrrigado.toLocaleString('pt-BR', { maximumFractionDigits: 0 }) + ' L';
+            // Transplantado mostrará o número inteiro completo (ex: 25.386 plantas invés de 25)
+            document.getElementById('kpi5_transplantado').textContent = transplantado.toLocaleString('pt-BR') + ' plantas';
+            document.getElementById('kpi5_ltrsPlanta').textContent = ltrsPlanta.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' L/planta';
+            document.getElementById('kpi5_diasIrrigados').textContent = diasIrrigados.toLocaleString('pt-BR') + ' dias';
+            document.getElementById('kpi5_ltrsDiaPlanta').textContent = ltrsDiaPlanta.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' L/dia/planta';
+            
+            // Novos campos de colheita
+            document.getElementById('kpi5_inicioColheita').textContent = inicioColheitaStr;
+            document.getElementById('kpi5_fimColheita').textContent = fimColheitaStr;
+            document.getElementById('kpi5_diasColheita').textContent = diasColheita !== '--' ? `${diasColheita} dias` : '-- dias';
         }
 
+        function formatTick(val) { return val.toLocaleString('pt-BR'); }
+        
         function renderTab1(data) {
-            const wellsArray = Array.from(new Set(data.map(d => d.Poco))).sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
-            const weeklyMap = {};
+            let aggW = {};
             data.forEach(d => {
-                let w = `S. ${String(d.SemanaNum).padStart(2, '0')}`;
-                if (!weeklyMap[w]) weeklyMap[w] = {};
-                if (!weeklyMap[w][d.Poco]) weeklyMap[w][d.Poco] = { sum: 0, count: 0 };
-                if (d.Vazao > 0) { weeklyMap[w][d.Poco].sum += d.Vazao; weeklyMap[w][d.Poco].count++; }
+                let key = `Semana ${d.SemanaNum}`;
+                if(!aggW[key]) aggW[key] = { vol:0, count:0 };
+                aggW[key].vol += d.VolumeCalculado; aggW[key].count++;
             });
-            const weeksArray = Object.keys(weeklyMap).sort();
-            const wDatasets = wellsArray.map((well, idx) => ({
-                type: 'bar', label: well,
-                data: weeksArray.map(w => (weeklyMap[w][well] && weeklyMap[w][well].count > 0) ? (weeklyMap[w][well].sum / weeklyMap[w][well].count) : null),
-                backgroundColor: vibrantColors[idx % vibrantColors.length], borderRadius: 6
-            }));
-            renderChart('weeklyFlowChart', 'weeklyFlow', 'bar', { labels: weeksArray, datasets: wDatasets }, getStandardChartOptions('Vazão Média Semanal (L/h)'));
+            renderChart('weeklyFlowChart', 'weeklyFlow', 'bar', {
+                labels: Object.keys(aggW),
+                datasets: [{ label: 'Volume (Semana)', data: Object.values(aggW).map(v => v.vol), backgroundColor: '#3b82f6', borderRadius: 4 }]
+            }, { responsive:true, maintainAspectRatio:false, scales: { y: { ticks: { callback: formatTick } } }, plugins: { datalabels: { formatter: formatTick, color: '#fff', font: {size: 10, weight: 'bold'} } } });
 
-            const datesArray = Array.from(new Set(data.map(d => d.DataFormatted)));
-            const dMap = {};
+            let aggD = {};
             data.forEach(d => {
-                if (!dMap[d.DataFormatted]) dMap[d.DataFormatted] = { geral: {sum: 0, count: 0}, wells: {} };
-                if (!dMap[d.DataFormatted].wells[d.Poco]) dMap[d.DataFormatted].wells[d.Poco] = { sum: 0, count: 0 };
-                if (d.Vazao > 0) { dMap[d.DataFormatted].wells[d.Poco].sum += d.Vazao; dMap[d.DataFormatted].wells[d.Poco].count++; dMap[d.DataFormatted].geral.sum += d.Vazao; dMap[d.DataFormatted].geral.count++; }
+                if(!aggD[d.DataFormatted]) aggD[d.DataFormatted] = 0;
+                aggD[d.DataFormatted] += d.VolumeCalculado;
             });
-            const dDatasets = wellsArray.map((well, idx) => ({
-                type: 'bar', label: well,
-                data: datesArray.map(dt => (dMap[dt].wells[well] && dMap[dt].wells[well].count > 0) ? (dMap[dt].wells[well].sum / dMap[dt].wells[well].count) : null),
-                backgroundColor: vibrantColors[idx % vibrantColors.length], borderRadius: 4
-            }));
-            dDatasets.push({
-                type: 'line', label: 'Média Geral do Dia',
-                data: datesArray.map(dt => (dMap[dt].geral.count > 0) ? (dMap[dt].geral.sum / dMap[dt].geral.count) : null),
-                borderColor: '#ef4444', backgroundColor: '#ef4444', borderWidth: 2, tension: 0.2, datalabels: { display: false }
-            });
-            renderChart('dailyFlowChart', 'dailyFlow', 'bar', { labels: datesArray, datasets: dDatasets }, getStandardChartOptions('Vazão Média Diária (L/h)'));
+            renderChart('dailyFlowChart', 'dailyFlow', 'line', {
+                labels: Object.keys(aggD),
+                datasets: [{ label: 'Volume Diário', data: Object.values(aggD), borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', fill: true, tension: 0.3 }]
+            }, { responsive:true, maintainAspectRatio:false, scales: { y: { ticks: { callback: formatTick } } }, plugins: { datalabels: { display: false } } });
         }
 
         function renderTab2(data) {
-            const wellsArray = Array.from(new Set(data.map(d => d.Poco))).sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
-            const monthlyData = {};
-            
+            let aggM = {};
             data.forEach(d => {
-                let mKey = `${d.Ano}-${String(d.MesNumero + 1).padStart(2, '0')}`;
-                if (!monthlyData[mKey]) monthlyData[mKey] = { label: `${monthNames[d.MesNumero]} ${d.Ano}`, geral: { sum: 0, count: 0 }, wells: {} };
-                if (!monthlyData[mKey].wells[d.Poco]) monthlyData[mKey].wells[d.Poco] = { vazaoSum: 0, volumeSum: 0, count: 0 };
-                if (d.Vazao > 0) { monthlyData[mKey].wells[d.Poco].vazaoSum += d.Vazao; monthlyData[mKey].wells[d.Poco].count += 1; monthlyData[mKey].geral.sum += d.Vazao; monthlyData[mKey].geral.count += 1; }
-                monthlyData[mKey].wells[d.Poco].volumeSum += d.VolumeCalculado;
+                if(!aggM[d.MesLabel]) aggM[d.MesLabel] = 0;
+                aggM[d.MesLabel] += d.VolumeCalculado;
             });
-            const mKeys = Object.keys(monthlyData).sort();
-            const mLabels = mKeys.map(k => monthlyData[k].label);
-            const volDatasets = wellsArray.map((well, idx) => ({
-                label: well, backgroundColor: vibrantColors[idx % vibrantColors.length], borderRadius: 6,
-                data: mKeys.map(k => monthlyData[k].wells[well] ? monthlyData[k].wells[well].volumeSum : 0)
-            }));
-            renderChart('monthlyVolumeChart', 'monthlyVolume', 'bar', { labels: mLabels, datasets: volDatasets }, getStandardChartOptions('Volume Total (L)'));
+            renderChart('monthlyVolumeChart', 'monthlyVolume', 'bar', {
+                labels: Object.keys(aggM),
+                datasets: [{ label: 'Volume Mensal', data: Object.values(aggM), backgroundColor: '#6366f1', borderRadius: 4 }]
+            }, { responsive:true, maintainAspectRatio:false, scales: { y: { ticks: { callback: formatTick } } }, plugins: { datalabels: { formatter: formatTick, color: '#fff' } } });
 
-            const trendDatasets = wellsArray.map((well, idx) => ({
-                type: 'line', label: well,
-                data: mKeys.map(k => { let wd = monthlyData[k].wells[well]; return (wd && wd.count > 0) ? (wd.vazaoSum / wd.count) : null; }),
-                borderColor: vibrantColors[idx % vibrantColors.length], backgroundColor: vibrantColors[idx % vibrantColors.length],
-                borderWidth: 3.5, tension: 0.25, pointRadius: 6, pointHoverRadius: 8, pointBackgroundColor: '#fff'
-            }));
-            trendDatasets.push({
-                type: 'line', label: 'Média Geral do Mês',
-                data: mKeys.map(k => (monthlyData[k].geral.count > 0) ? (monthlyData[k].geral.sum / monthlyData[k].geral.count) : null),
-                borderColor: '#0f172a', backgroundColor: '#0f172a', borderWidth: 4, borderDash: [6, 6], tension: 0.25, pointRadius: 7, pointBackgroundColor: '#fff'
-            });
-
-            // GRÁFICO COM EXIBIÇÃO DE VALOR E PERCENTUAL DE AUMENTO/QUEDA (%) NO TOPO
-            renderChart('trendChart', 'trend', 'line', { labels: mLabels, datasets: trendDatasets }, {
-                responsive: true, maintainAspectRatio: false, layout: { padding: { top: 85, bottom: 40 } },
-                plugins: {
-                    legend: { position: 'top' },
-                    datalabels: {
-                        display: (ctx) => ctx.dataset.data[ctx.dataIndex] !== null,
-                        align: (ctx) => (ctx.datasetIndex % 2 === 0) ? 'top' : 'bottom',
-                        anchor: (ctx) => (ctx.datasetIndex % 2 === 0) ? 'end' : 'start',
-                        offset: 6,
-                        formatter: (val, ctx) => {
-                            if (val === null) return '';
-                            const ds = ctx.dataset.data; let prev = null;
-                            for (let i = ctx.dataIndex - 1; i >= 0; i--) { if (ds[i] !== null) { prev = ds[i]; break; } }
-                            let vStr = val.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 2 }) + ' L/h'; 
-                            if (prev === null || prev === 0) return vStr;
-                            
-                            let diff = val - prev;
-                            let pct = (diff / prev) * 100;
-                            let dStr = Math.abs(diff).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
-                            let pctStr = Math.abs(pct).toFixed(1).replace('.', ',') + '%';
-                            
-                            if (diff > 0) return [vStr, `↑ +${dStr} (+${pctStr})`];
-                            if (diff < 0) return [vStr, `↓ -${dStr} (-${pctStr})`];
-                            return [vStr, `= ${dStr} (0%)`];
-                        },
-                        color: '#ffffff', font: { weight: 'bold', size: 9.5 },
-                        backgroundColor: (ctx) => {
-                            if (ctx.dataset.label.includes('Geral')) return 'rgba(15, 23, 42, 0.95)';
-                            const ds = ctx.dataset.data; const val = ds[ctx.dataIndex]; let prev = null;
-                            for (let i = ctx.dataIndex - 1; i >= 0; i--) { if (ds[i] !== null) { prev = ds[i]; break; } }
-                            if (prev === null) return 'rgba(51, 65, 85, 0.9)';
-                            let diff = val - prev;
-                            if (diff > 0) return 'rgba(16, 185, 129, 0.95)';
-                            if (diff < 0) return 'rgba(239, 68, 68, 0.95)';
-                            return 'rgba(100, 116, 139, 0.9)';
-                        },
-                        borderRadius: 6, padding: { top: 3, bottom: 3, left: 6, right: 6 }
-                    }
-                },
-                scales: { 
-                    y: { title: { display: true, text: 'Média de Vazão (L/h) e Tendência (%)', font: { weight: 'bold' } }, grid: { color: '#f1f5f9' },
-                         suggestedMax: (ctx) => { let m = 0; ctx.chart.data.datasets.forEach(d => { let max = Math.max(...d.data.filter(n => n !== null)); if(max > m) m = max; }); return m * 1.45; }
-                    }, x: { grid: { display: false } } 
-                }
-            });
-        }
-
-        function renderTab3Table(data) {
-            const tbody = document.getElementById('tab3TableBody');
-            if (!tbody) return;
-            if (!data.length) { tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-400">Nenhum registro encontrado para os filtros selecionados.</td></tr>`; return; }
-
-            const aggregated = {};
-            data.forEach(d => {
-                let key = `${d.Poco}__${d.Ano}-${String(d.MesNumero + 1).padStart(2, '0')}`;
-                if (!aggregated[key]) { aggregated[key] = { poco: d.Poco, mesLabel: `${monthNames[d.MesNumero]} ${d.Ano}`, vazaoSum: 0, vazaoCount: 0, volumeSum: 0, records: 0 }; }
-                if (d.Vazao > 0) { aggregated[key].vazaoSum += d.Vazao; aggregated[key].vazaoCount += 1; }
-                aggregated[key].volumeSum += d.VolumeCalculado; aggregated[key].records += 1;
-            });
-
-            let html = '';
-            Object.values(aggregated).sort((a, b) => a.poco.localeCompare(b.poco, undefined, { numeric: true }) || a.mesLabel.localeCompare(b.mesLabel)).forEach(item => {
-                let avgFlow = item.vazaoCount > 0 ? (item.vazaoSum / item.vazaoCount) : 0;
-                html += `
-                <tr class="hover:bg-slate-50 transition border-b border-slate-100">
-                    <td class="py-3 px-4 font-semibold text-slate-800">${item.poco}</td>
-                    <td class="py-3 px-4 text-slate-600">${item.mesLabel}</td>
-                    <td class="py-3 px-4 text-right font-medium text-blue-600">${avgFlow > 0 ? avgFlow.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' L/h' : '-'}</td>
-                    <td class="py-3 px-4 text-right font-semibold text-emerald-600">${item.volumeSum.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} L</td>
-                    <td class="py-3 px-4 text-center"><span class="bg-slate-100 text-slate-700 px-2.5 py-1 rounded-full text-xs font-bold">${item.records.toLocaleString('pt-BR')}</span></td>
-                </tr>`;
-            });
-            tbody.innerHTML = html;
+            renderChart('trendChart', 'trend', 'line', {
+                labels: Object.keys(aggM),
+                datasets: [{ label: 'Tendência', data: Object.values(aggM), borderColor: '#f59e0b', tension: 0.4 }]
+            }, { responsive:true, maintainAspectRatio:false, scales: { y: { ticks: { callback: formatTick } } }, plugins: { datalabels: { display: false } } });
         }
 
         function renderTab4(data) {
-            const wellsMap = {};
+            let aggP = {};
             data.forEach(d => {
-                if (!wellsMap[d.Poco]) { wellsMap[d.Poco] = { volCalculado: 0, horas: 0 }; }
-                wellsMap[d.Poco].volCalculado += d.VolumeCalculado;
-                wellsMap[d.Poco].horas += d.Horas;
+                if(!aggP[d.Poco]) aggP[d.Poco] = 0;
+                aggP[d.Poco] += d.VolumeCalculado;
             });
-
-            const wellsArray = Object.keys(wellsMap).sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
-            
-            const datasets = [{
-                type: 'bar',
-                label: 'Volume Total (L)',
-                data: wellsArray.map(w => wellsMap[w].volCalculado),
-                backgroundColor: '#0ea5e9',
-                borderRadius: 6,
-                maxBarThickness: 60
-            }];
-
-            renderChart('entradaAguaChart', 'entradaAgua', 'bar', { labels: wellsArray, datasets }, {
-                responsive: true,
-                maintainAspectRatio: false,
-                layout: { padding: { top: 40 } },
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                const well = context.label;
-                                const vol = context.raw;
-                                const horas = wellsMap[well].horas;
-                                return [
-                                    `Volume Total: ${vol.toLocaleString('pt-BR', { maximumFractionDigits: 0 })} L`,
-                                    `Total de Horas: ${horas.toFixed(2).replace('.', ',')}h`
-                                ];
-                            }
-                        }
-                    },
-                    datalabels: {
-                        display: (ctx) => ctx.dataset.data[ctx.dataIndex] > 0,
-                        anchor: 'end',
-                        align: 'top',
-                        formatter: (val) => val ? `${val.toLocaleString('pt-BR', { maximumFractionDigits: 0 })} L` : '',
-                        color: '#0284c7',
-                        font: { weight: 'bold', size: 10 }
-                    }
-                },
-                scales: {
-                    x: { grid: { display: false } },
-                    y: {
-                        beginAtZero: true,
-                        title: { display: true, text: 'Volume de Entrada (L)', font: { weight: 'bold' } },
-                        grid: { color: '#f1f5f9' },
-                        suggestedMax: (ctx) => {
-                            let max = Math.max(...datasets[0].data, 0);
-                            return max * 1.25;
-                        }
-                    }
-                }
-            });
+            renderChart('entradaAguaChart', 'entradaAgua', 'bar', {
+                labels: Object.keys(aggP),
+                datasets: [{ label: 'Entrada Água (L)', data: Object.values(aggP), backgroundColor: '#0ea5e9', borderRadius: 4 }]
+            }, { responsive:true, maintainAspectRatio:false, scales: { y: { ticks: { callback: formatTick } } }, plugins: { datalabels: { formatter: formatTick, color: '#fff' } } });
         }
 
         function renderSaidaChart(data) {
-            // Eixo X: Blocos em ordem alfabética
-            const blocksSet = new Set(data.map(d => d.Local));
-            const blocksArray = Array.from(blocksSet).sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
-
-            const culturesSet = new Set(data.map(d => d.Cultura));
-            const culturesArray = Array.from(culturesSet);
-
-            const cultureColors = {
-                'brócolis': '#10b981',
-                'brocolis': '#10b981', 
-                'tâmaras': '#3b82f6',
-                'tamaras': '#3b82f6',
-                'gotejo': '#ef4444'
-            };
-            const fallbackColors = ['#f59e0b', '#8b5cf6', '#06b6d4', '#ec4899', '#f97316', '#14b8a6', '#6366f1'];
-
-            const datasets = culturesArray.map((cult, i) => {
-                let colorKey = cult.toLowerCase().trim();
-                let color = cultureColors[colorKey] || fallbackColors[i % fallbackColors.length];
-                
-                let dataForCult = blocksArray.map(b => {
-                    return data.filter(d => d.Local === b && d.Cultura === cult).reduce((s, d) => s + d.VolumeCalculado, 0);
-                });
-
-                return {
-                    type: 'bar',
-                    label: cult,
-                    data: dataForCult,
-                    backgroundColor: color,
-                    borderRadius: 6,
-                    maxBarThickness: 60
-                };
+            let aggL = {};
+            data.forEach(d => {
+                if(!aggL[d.Local]) aggL[d.Local] = 0;
+                aggL[d.Local] += d.VolumeCalculado;
             });
-
-            renderChart('saidaAguaChart', 'saidaAgua', 'bar', { labels: blocksArray, datasets }, {
-                responsive: true,
-                maintainAspectRatio: false,
-                layout: { padding: { top: 40 } },
-                plugins: {
-                    legend: { 
-                        display: true, 
-                        position: 'top',
-                        labels: { font: { weight: 'bold' }, padding: 20 }
-                    },
-                    tooltip: {
-                        callbacks: {
-                            title: (ctx) => `Bloco/Local: ${ctx[0].label}`,
-                            label: (ctx) => {
-                                return `Cultura ${ctx.dataset.label}: ${ctx.raw.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} L`;
-                            }
-                        }
-                    },
-                    datalabels: {
-                        display: (ctx) => ctx.dataset.data[ctx.dataIndex] > 0,
-                        anchor: 'end',
-                        align: 'top',
-                        formatter: (val) => val ? `${val.toLocaleString('pt-BR', { maximumFractionDigits: 0 })} L` : '',
-                        font: { weight: 'bold', size: 10 },
-                        color: '#334155'
-                    }
-                },
-                scales: {
-                    x: {
-                        grid: { display: false },
-                        ticks: { 
-                            font: { weight: 'bold', size: 11 },
-                            maxRotation: 0, // MANTÉM OS BLOCOS NA HORIZONTAL (SEM ROTACIONAR A 90 GRAUS)
-                            minRotation: 0 
-                        }
-                    },
-                    y: {
-                        beginAtZero: true,
-                        title: { display: true, text: 'Volume de Irrigação (L)', font: { weight: 'bold' } },
-                        grid: { color: '#f1f5f9' },
-                        suggestedMax: (ctx) => {
-                            let m = 0;
-                            ctx.chart.data.datasets.forEach(d => { 
-                                let max = Math.max(...d.data); 
-                                if(max > m) m = max; 
-                            });
-                            return m * 1.25;
-                        }
-                    }
-                }
-            });
+            renderChart('saidaAguaChart', 'saidaAgua', 'bar', {
+                labels: Object.keys(aggL),
+                datasets: [{ label: 'Saída Água (L)', data: Object.values(aggL), backgroundColor: '#10b981', borderRadius: 4 }]
+            }, { responsive:true, maintainAspectRatio:false, indexAxis: 'y', scales: { x: { ticks: { callback: formatTick } } }, plugins: { datalabels: { formatter: formatTick, color: '#fff' } } });
         }
 
-        function renderTab5Chart(data) {
-            // Agrupar volume total irrigado por dia
-            const dailyMap = {};
-            data.forEach(d => {
-                const key = d.IsoDate;
-                if (!dailyMap[key]) {
-                    dailyMap[key] = {
-                        dateObj: d.DataObj,
-                        formatted: d.DataFormatted,
-                        volume: 0
-                    };
-                }
-                dailyMap[key].volume += d.VolumeCalculado;
+        function renderTab5Chart(filtered) {
+            let aggD = {};
+            filtered.forEach(d => {
+                if(!aggD[d.DataFormatted]) aggD[d.DataFormatted] = 0;
+                aggD[d.DataFormatted] += d.VolumeCalculado;
             });
+            
+            // Ordenar de forma cronológica garantida
+            let sortedKeys = Object.keys(aggD).sort((a,b) => parsePortugueseDate(a) - parsePortugueseDate(b));
+            let dataArr = sortedKeys.map(k => aggD[k]);
+            
+            // Ajustar a largura do contêiner para que os dias fiquem na horizontal e não "espremam"
+            let container = document.getElementById('chart-container-tab5');
+            
+            // A largura dependerá da quantidade de dias. ~65px por dia é o suficiente para não rotacionar
+            let calculatedWidth = sortedKeys.length * 65;
+            
+            // Para não quebrar em telas grandes, usa 100% da tela, ou o limite gerado pelo gráfico.
+            container.style.minWidth = `max(100%, ${calculatedWidth}px)`;
 
-            // Ordenar datas cronologicamente / alfabeticamente no eixo horizontal
-            const sortedKeys = Object.keys(dailyMap).sort();
-            const labels = sortedKeys.map(k => dailyMap[k].formatted);
-            const volumes = sortedKeys.map(k => dailyMap[k].volume);
-
-            const dataset = {
-                type: 'bar',
-                label: 'Volume Total Irrigado por Dia (L)',
-                data: volumes,
-                backgroundColor: '#2563eb',
-                hoverBackgroundColor: '#1d4ed8',
-                borderRadius: 4,
-                maxBarThickness: 50
-            };
-
-            renderChart('resumoBlocoChart', 'resumoBloco', 'bar', { labels, datasets: [dataset] }, {
-                responsive: true,
-                maintainAspectRatio: false,
-                layout: { padding: { top: 45, bottom: 20 } },
-                plugins: {
-                    legend: { display: true, position: 'top' },
-                    tooltip: {
-                        callbacks: {
-                            label: (ctx) => `Volume Irrigado: ${ctx.raw.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} L`
-                        }
+            renderChart('resumoBlocoChart', 'resumoBloco', 'bar', {
+                labels: sortedKeys,
+                datasets: [{ 
+                    label: 'Volume Irrigado (L)', 
+                    data: dataArr, 
+                    backgroundColor: '#3b82f6', 
+                    borderRadius: 4 
+                }]
+            }, { 
+                responsive: true, 
+                maintainAspectRatio: false, 
+                scales: { 
+                    x: { 
+                        ticks: { 
+                            // Impede a rotação do texto do eixo X, garantindo 100% horizontalidade
+                            maxRotation: 0, 
+                            minRotation: 0, 
+                            autoSkip: false,
+                            font: { size: 11, weight: '500' }
+                        },
+                        grid: { display: false }
                     },
-                    datalabels: {
-                        display: (ctx) => ctx.dataset.data[ctx.dataIndex] > 0,
-                        anchor: 'end',
-                        align: 'top',
-                        formatter: (val) => val ? val.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + ' L' : '',
-                        font: { weight: 'bold', size: 10 },
-                        color: '#1e293b'
-                    }
-                },
-                scales: {
-                    x: {
-                        grid: { display: false },
-                        ticks: {
-                            font: { weight: 'bold', size: 10 },
-                            maxRotation: 45,
-                            minRotation: 0
-                        }
+                    y: { 
+                        ticks: { callback: formatTick },
+                        beginAtZero: true
+                    } 
+                }, 
+                plugins: { 
+                    datalabels: { 
+                        formatter: formatTick, 
+                        color: '#fff', 
+                        font: { weight: 'bold', size: 10 }
                     },
-                    y: {
-                        beginAtZero: true,
-                        title: { display: true, text: 'Volume Irrigado (Litros)', font: { weight: 'bold' } },
-                        grid: { color: '#f1f5f9' },
-                        suggestedMax: (ctx) => {
-                            let max = Math.max(...volumes, 0);
-                            return max * 1.25;
-                        }
-                    }
-                }
+                    legend: { display: false }
+                } 
             });
         }
     </script>
