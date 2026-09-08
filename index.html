@@ -5,24 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Monitoramento Hidrográfico Pro</title>
     
-    <!-- Tailwind CSS para Estilização -->
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Chart.js para os Gráficos -->
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Plugin Chart.js DataLabels para Exibir os Números nos Gráficos -->
+    <!-- Plugin Chart.js DataLabels -->
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
     
-    <!-- PapaParse para ler CSV do Google Sheets -->
+    <!-- PapaParse -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 
-    <!-- html2canvas para captura de tela por aba -->
+    <!-- html2canvas -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
-    <!-- jsPDF para exportação direta em PDF -->
+    <!-- jsPDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     
-    <!-- FontAwesome para Ícones -->
+    <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
@@ -50,13 +50,13 @@
 
         .chart-container-large {
             position: relative;
-            height: 600px;
+            height: 580px;
             width: 100%;
         }
 
         .chart-container-no-scroll {
             position: relative; 
-            height: 450px; 
+            height: 440px; 
             width: 100%;
         }
 
@@ -336,7 +336,7 @@
                 </div>
             </div>
 
-            <!-- TAB 2: MENSAL -->
+            <!-- TAB 2: MENSAL (TENDÊNCIA ATUALIZADA) -->
             <div id="content-mensal" class="hidden space-y-6">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div class="kpi-compact-card bg-indigo-50 border-indigo-200 flex items-center gap-3.5">
@@ -436,7 +436,7 @@
                             <div>
                                 <h3 class="text-base font-bold text-slate-800">Regressão e Tendência da Média de Vazão por Poço (Mês a Mês)</h3>
                                 <p class="text-xs text-slate-500">
-                                    Exibe a média de vazão por poço em cada mês e a variação exata em valor <b class="text-emerald-600">(▲ +X L/h)</b> ou <b class="text-rose-600">(▼ -X L/h)</b> e percentual <b class="text-emerald-600">(+%)</b> ou <b class="text-rose-600">(-%)</b> informando se aumentou, diminuiu ou se manteve (sem contornos nos textos).
+                                    Exibe a média de vazão por poço em cada mês e a variação exata em valor e % com status (Aumentou, Diminuiu ou Se manteve) sem contornos nos dados.
                                 </p>
                             </div>
                         </div>
@@ -559,7 +559,7 @@
                 </div>
             </div>
 
-            <!-- TAB 4: ENTRADA / SAÍDA -->
+            <!-- TAB 4: ENTRADA / SAÍDA (ATUALIZADA COM COMPONENTES DE EMISSORES) -->
             <div id="content-entrada" class="hidden space-y-6">
                 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -642,6 +642,16 @@
                                 </div>
                             </div>
 
+                            <!-- Filtro Tipo de Emissores -->
+                            <div>
+                                <label class="block text-[11px] font-semibold text-slate-500 mb-0.5">Tipo de Emissor</label>
+                                <select id="filterTipoEmissorTab4" onchange="applyFiltersTab4()" class="bg-white border border-slate-300 rounded-lg text-xs px-3 py-1.5 shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                                    <option value="ALL">Todos os Emissores</option>
+                                    <option value="MICRO">Micro (90 L/h)</option>
+                                    <option value="ASPERSOR">Aspersor (520 L/h)</option>
+                                </select>
+                            </div>
+
                             <div>
                                 <label class="block text-[11px] font-semibold text-slate-500 mb-0.5">Data Inicial</label>
                                 <input type="date" id="filterStartDateTab4" onchange="applyFiltersTab4()" class="bg-white border border-slate-300 rounded-lg text-xs px-2.5 py-1.5 shadow-sm">
@@ -659,11 +669,12 @@
                     </div>
                 </div>
 
+                <!-- Gráfico Entrada de Água com Rótulos Visíveis -->
                 <div class="glass-card p-5">
                     <div class="flex justify-between items-center mb-1 flex-wrap gap-2">
                         <div>
                             <h3 class="text-base font-bold text-slate-800">Volume Total e Horas Trabalhadas por Poço (Entrada)</h3>
-                            <p class="text-xs text-slate-500">Exibe o volume total jorado (média vazão × tempo trabalhado no dia) diretamente no topo de cada barra sem ocultação.</p>
+                            <p class="text-xs text-slate-500">Exibe o volume total jorado (em barras com valores no topo da média vazão × tempo) e as horas trabalhadas.</p>
                         </div>
                     </div>
                     <div class="chart-container-no-scroll mt-3"><canvas id="entradaAguaChart"></canvas></div>
@@ -713,121 +724,104 @@
                     <div class="chart-container-no-scroll mt-3"><canvas id="saidaAguaChart"></canvas></div>
                 </div>
 
-                <!-- NOVO PAINEL SOLICITADO: MICRO E ASPERSORES POR BLOCO -->
-                <div class="pt-6 border-t border-slate-200 space-y-6">
-                    <div class="flex justify-between items-center flex-wrap gap-2">
-                        <div>
-                            <h3 class="text-lg font-extrabold text-slate-800 flex items-center gap-2">
-                                <i class="fa-solid fa-shower text-blue-600"></i> Quantidade de Microaspersores e Aspersores por Bloco
-                            </h3>
-                            <p class="text-xs text-slate-500">Resumo técnico dos emissores, válvulas ativas e vazão total por hora lançada por cada bloco.</p>
-                        </div>
-                    </div>
-
-                    <!-- CAMPOS GERAIS / KPIS EMISSORES -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
-                        <div class="kpi-compact-card bg-indigo-50 border-indigo-200 flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0">
+                <!-- NOVO PAINEL DE CAMPOS GERAIS PARA EMISSORES POR BLOCO -->
+                <div class="pt-4 border-t border-slate-200">
+                    <h3 class="text-lg font-extrabold text-slate-800 mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-droplet text-blue-600"></i> Resumo Geral de Emissores (Micro e Aspersores por Bloco)
+                    </h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4">
+                        <div class="kpi-compact-card bg-blue-50 border-blue-200 flex items-center gap-3.5">
+                            <div class="w-10 h-10 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
                                 <i class="fa-solid fa-asterisk text-lg"></i>
                             </div>
                             <div>
-                                <p class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Total Emissores</p>
-                                <h3 id="kpi4_totalEmissores" class="text-lg font-extrabold text-indigo-900">--</h3>
+                                <p class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Total de Emissores</p>
+                                <h3 id="kpi4_totalEmissores" class="text-lg font-extrabold text-blue-900">--</h3>
                             </div>
                         </div>
 
-                        <div class="kpi-compact-card bg-cyan-50 border-cyan-200 flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-lg bg-cyan-100 text-cyan-600 flex items-center justify-center shrink-0">
-                                <i class="fa-solid fa-droplet text-lg"></i>
+                        <div class="kpi-compact-card bg-sky-50 border-sky-200 flex items-center gap-3.5">
+                            <div class="w-10 h-10 rounded-lg bg-sky-100 text-sky-600 flex items-center justify-center shrink-0">
+                                <i class="fa-solid fa-shower text-lg"></i>
                             </div>
                             <div>
                                 <p class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Micro (90 L/h)</p>
-                                <h3 id="kpi4_totalMicro" class="text-lg font-extrabold text-cyan-900">--</h3>
+                                <h3 id="kpi4_totalMicro" class="text-lg font-extrabold text-sky-900">--</h3>
                             </div>
                         </div>
 
-                        <div class="kpi-compact-card bg-emerald-50 border-emerald-200 flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
-                                <i class="fa-solid fa-spray-can-sparkles text-lg"></i>
+                        <div class="kpi-compact-card bg-indigo-50 border-indigo-200 flex items-center gap-3.5">
+                            <div class="w-10 h-10 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0">
+                                <i class="fa-solid fa-spray-can text-lg"></i>
                             </div>
                             <div>
                                 <p class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Aspersores (520 L/h)</p>
-                                <h3 id="kpi4_totalAspersor" class="text-lg font-extrabold text-emerald-900">--</h3>
+                                <h3 id="kpi4_totalAspersor" class="text-lg font-extrabold text-indigo-900">--</h3>
                             </div>
                         </div>
 
-                        <div class="kpi-compact-card bg-blue-50 border-blue-200 flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+                        <div class="kpi-compact-card bg-emerald-50 border-emerald-200 flex items-center gap-3.5">
+                            <div class="w-10 h-10 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
                                 <i class="fa-solid fa-gauge-high text-lg"></i>
                             </div>
                             <div>
-                                <p class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Vazão Lançada L/h</p>
-                                <h3 id="kpi4_vazaoTotalEmissores" class="text-lg font-extrabold text-blue-900">-- L/h</h3>
+                                <p class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Vazão Total Jorada / Hora</p>
+                                <h3 id="kpi4_vazaoHoraTotal" class="text-lg font-extrabold text-emerald-900">-- L/h</h3>
                             </div>
                         </div>
 
-                        <div class="kpi-compact-card bg-amber-50 border-amber-200 flex items-center gap-3">
+                        <div class="kpi-compact-card bg-amber-50 border-amber-200 flex items-center gap-3.5">
                             <div class="w-10 h-10 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
-                                <i class="fa-solid fa-clock-rotate-left text-lg"></i>
+                                <i class="fa-solid fa-calendar-check text-lg"></i>
                             </div>
                             <div>
-                                <p class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Última Atualização</p>
+                                <p class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Data de Atualização</p>
                                 <h3 id="kpi4_dataAtualizacao" class="text-lg font-extrabold text-amber-900">--/--/----</h3>
                             </div>
                         </div>
                     </div>
+                </div>
 
-                    <!-- FILTROS ESPECÍFICOS PARA OS EMISSORES -->
-                    <div class="glass-card p-4 bg-slate-50/80 border-slate-200">
-                        <div class="flex flex-wrap items-center justify-between gap-4">
-                            <span class="text-slate-700 font-bold text-xs uppercase tracking-wide flex items-center gap-1.5">
-                                <i class="fa-solid fa-filter text-blue-600"></i> Filtros de Emissores e Blocos:
-                            </span>
-                            <div class="flex flex-wrap items-center gap-3">
-                                <div>
-                                    <label class="block text-[11px] font-semibold text-slate-500 mb-0.5">Tipo de Emissor</label>
-                                    <select id="filterTipoEmissorTab4" onchange="renderEmissoresSectionTab4()" class="bg-white border border-slate-300 rounded-lg text-xs px-2.5 py-1.5 shadow-sm font-medium focus:ring-2 focus:ring-blue-500">
-                                        <option value="ALL">Todos os Tipos (Micro + Aspersor)</option>
-                                        <option value="MICRO">Apenas Micro (90 L/h)</option>
-                                        <option value="ASPERSOR">Apenas Aspersor (520 L/h)</option>
-                                    </select>
-                                </div>
-                            </div>
+                <!-- NOVO GRÁFICO DE EMISSORES EM ORDEM ALFABÉTICA POR BLOCO -->
+                <div class="glass-card p-5">
+                    <div class="flex justify-between items-center mb-1 flex-wrap gap-2">
+                        <div>
+                            <h3 class="text-base font-bold text-slate-800">Quantidade e Vazão Total por Hora de Emissores por Bloco (Ordem Alfabética)</h3>
+                            <p class="text-xs text-slate-500">Exibição detalhada por bloco do total de microaspersores e/ou aspersores e a quantidade total jorada por hora.</p>
                         </div>
                     </div>
-
-                    <!-- GRÁFICO DE EMISSORES EM ORDEM ALFABÉTICA -->
-                    <div class="glass-card p-5">
-                        <h3 class="text-base font-bold text-slate-800 mb-1">Quantidade de Emissores por Bloco (Ordem Alfabética)</h3>
-                        <p class="text-xs text-slate-500 mb-3">Gráfico comparativo exibindo a quantidade de microaspersores e aspersores por bloco organizados de A a Z.</p>
-                        <div class="chart-scroll-wrapper"><div class="chart-container-no-scroll"><canvas id="emissoresBlocoChart"></canvas></div></div>
-                    </div>
-
-                    <!-- TABELA DETALHADA DE EMISSORES -->
-                    <div class="glass-card p-5">
-                        <h3 class="text-base font-bold text-slate-800 mb-3 flex items-center gap-2">
-                            <i class="fa-solid fa-table-list text-blue-600"></i> Tabela Detalhada de Emissores por Bloco
-                        </h3>
-                        <div class="overflow-x-auto">
-                            <table class="w-full border-collapse text-xs">
-                                <thead>
-                                    <tr class="bg-slate-100/90 text-slate-700 uppercase tracking-wider border-b border-slate-200">
-                                        <th class="table-custom-header">Bloco</th>
-                                        <th class="table-custom-header">Tipo de Emissor</th>
-                                        <th class="table-custom-header">Total de Emissores</th>
-                                        <th class="table-custom-header">Detalhamento das Qtds</th>
-                                        <th class="table-custom-header">Válvulas Ativas</th>
-                                        <th class="table-custom-header">Vazão Lançada / Hora (L/h)</th>
-                                        <th class="table-custom-header">Data de Atualização</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="tab4EmissoresTableBody" class="divide-y divide-slate-100 text-slate-700 font-medium">
-                                    <tr><td colspan="7" class="py-6 text-center text-slate-400">Carregando dados dos emissores...</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
+                    <div class="chart-scroll-wrapper mt-3">
+                        <div class="chart-container-large"><canvas id="emissoresBlocoChart"></canvas></div>
                     </div>
                 </div>
+
+                <!-- NOVA TABELA DETALHADA DE EMISSORES -->
+                <div class="glass-card p-5">
+                    <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
+                        <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                            <i class="fa-solid fa-table text-blue-600"></i> Tabela Detalhada de Emissores por Bloco e Tipo (Ordem Alfabética)
+                        </h3>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-center border-collapse text-xs">
+                            <thead>
+                                <tr class="bg-slate-100/90 text-slate-700 uppercase tracking-wider border-b border-slate-200">
+                                    <th class="py-3 px-3 table-custom-header">Bloco</th>
+                                    <th class="py-3 px-3 table-custom-header">Total de Emissores</th>
+                                    <th class="py-3 px-3 table-custom-header">Tipo de Emissor</th>
+                                    <th class="py-3 px-3 table-custom-header">Válvulas Ativas</th>
+                                    <th class="py-3 px-3 table-custom-header">Vazão Unit. por Emissor</th>
+                                    <th class="py-3 px-3 table-custom-header">Total Jorado p/ Hora (L/h)</th>
+                                    <th class="py-3 px-3 table-custom-header">Data de Atualização</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tab4EmissoresTableBody" class="divide-y divide-slate-100 text-slate-700 font-medium">
+                                <tr><td colspan="7" class="py-6 text-center text-slate-400">Carregando dados de emissores...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
             </div>
 
             <!-- TAB 5: RESUMO GERAL POR BLOCO -->
@@ -910,7 +904,6 @@
                             </button>
                         </div>
                         <div class="flex flex-wrap items-center gap-3">
-                            <!-- Filtro Bloco -->
                             <div class="relative">
                                 <label class="block text-[11px] font-semibold text-slate-500 mb-0.5">Bloco</label>
                                 <button type="button" onclick="toggleDropdown('dropdownTab5Bloco')" class="bg-white border border-slate-300 rounded-lg text-xs px-3 py-1.5 shadow-sm w-48 flex justify-between items-center font-medium">
@@ -928,7 +921,6 @@
                                 </div>
                             </div>
 
-                            <!-- Filtro Ciclo -->
                             <div class="relative">
                                 <label class="block text-[11px] font-semibold text-slate-500 mb-0.5">Ciclo</label>
                                 <button type="button" onclick="toggleDropdown('dropdownTab5Ciclo')" class="bg-white border border-slate-300 rounded-lg text-xs px-3 py-1.5 shadow-sm w-44 flex justify-between items-center font-medium">
@@ -946,7 +938,6 @@
                                 </div>
                             </div>
 
-                            <!-- Datas -->
                             <div>
                                 <label class="block text-[11px] font-semibold text-slate-500 mb-0.5">Data Inicial</label>
                                 <input type="date" id="filterStartDateTab5" onchange="applyFiltersTab5()" class="bg-white border border-slate-300 rounded-lg text-xs px-2.5 py-1.5 shadow-sm">
@@ -970,7 +961,7 @@
                             <h3 class="text-lg font-extrabold text-slate-800 flex items-center gap-2">
                                 <i class="fa-solid fa-chart-column text-blue-600"></i> Volume Total Irrigado por Dia (Por Bloco)
                             </h3>
-                            <p class="text-xs text-slate-500 mt-0.5">Valores exibidos em cada rótulo de barra em formato íntegro sobre cada barra com rolagem horizontal automatizada.</p>
+                            <p class="text-xs text-slate-500 mt-0.5">Valores exibidos em cada rótulo de barra com rolagem horizontal automatizada.</p>
                         </div>
                     </div>
                     <div class="chart-scroll-wrapper mt-4">
@@ -984,7 +975,6 @@
 
             <!-- TAB 6: MANUTENÇÃO DAS BOMBAS -->
             <div id="content-manutencao" class="hidden space-y-6">
-                <!-- KPIs ABA 6 -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                     <div class="kpi-compact-card bg-indigo-50 border-indigo-200 flex items-center gap-3.5">
                         <div class="w-11 h-11 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0">
@@ -1027,7 +1017,6 @@
                     </div>
                 </div>
 
-                <!-- FILTROS DA ABA 6 -->
                 <div class="glass-card p-4 bg-slate-50/80 border-slate-200">
                     <div class="flex flex-wrap items-center justify-between gap-4">
                         <div class="flex items-center gap-2">
@@ -1043,7 +1032,6 @@
                         </div>
 
                         <div class="flex flex-wrap items-center gap-3">
-                            <!-- Filtro Poços -->
                             <div class="relative">
                                 <label class="block text-[11px] font-semibold text-slate-500 mb-0.5">Poços</label>
                                 <button type="button" onclick="toggleDropdown('dropdownTab6Poço')" class="bg-white border border-slate-300 rounded-lg text-xs px-3 py-1.5 shadow-sm w-44 flex justify-between items-center">
@@ -1061,7 +1049,6 @@
                                 </div>
                             </div>
 
-                            <!-- Filtro de Mês -->
                             <div class="relative">
                                 <label class="block text-[11px] font-semibold text-slate-500 mb-0.5">Mês</label>
                                 <button type="button" onclick="toggleDropdown('dropdownMonthTab6')" class="bg-white border border-slate-300 rounded-lg text-xs px-3 py-1.5 shadow-sm w-44 flex justify-between items-center">
@@ -1079,7 +1066,6 @@
                                 </div>
                             </div>
 
-                            <!-- Filtro Responsáveis -->
                             <div class="relative">
                                 <label class="block text-[11px] font-semibold text-slate-500 mb-0.5">Responsável (Téc.)</label>
                                 <button type="button" onclick="toggleDropdown('dropdownTab6Resp')" class="bg-white border border-slate-300 rounded-lg text-xs px-3 py-1.5 shadow-sm w-48 flex justify-between items-center">
@@ -1199,10 +1185,10 @@
             trend: null,
             entradaAgua: null,
             saidaAgua: null,
+            emissoresBloco: null,
             resumoBloco: null,
             manutencaoVazao: null,
-            manutencaoProf: null,
-            emissoresBloco: null
+            manutencaoProf: null
         };
 
         function handleLogin() {
@@ -1250,7 +1236,7 @@
             if (!tabEl) return;
 
             const originalContent = btn.innerHTML;
-            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Processando...`;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Processando Imagem...`;
             btn.disabled = true;
 
             try {
@@ -1273,6 +1259,7 @@
                 link.click();
             } catch (err) {
                 console.error('Erro ao capturar imagem:', err);
+                alert('Ocorreu um erro ao realizar a captura da tela.');
             } finally {
                 btn.innerHTML = originalContent;
                 btn.disabled = false;
@@ -1317,6 +1304,7 @@
                 pdf.save(`${fileName}_${new Date().toISOString().split('T')[0]}.pdf`);
             } catch (e) {
                 console.error('Erro ao baixar PDF:', e);
+                alert('Não foi possível gerar o arquivo PDF.');
             } finally {
                 btn.innerHTML = origText;
                 btn.disabled = false;
@@ -1528,6 +1516,7 @@
                 
                 const dateKey = findKey(['data', 'date']);
                 const localKey = findKey(['local', 'bloco']);
+                const pocoKey = findKey(['poço', 'poco', 'well']);
                 const culturaKey = findKey(['cultura']);
                 const cicloKey = findKey(['ciclo']);
                 
@@ -1536,13 +1525,14 @@
                 const dtColheitaKey = findKey(['data - final colheita', 'data colheita', 'final colheita', 'dt colheita']);
                 const totalTransplantioKey = findKey(['total - transplantio', 'total transplantio', 'transplantio total', 'total plantas', 'plantas']);
 
-                const qtdeKey = findKey(['qtde. aspersor ativos', 'qtde', 'quantidade', 'aspersor', 'micro']);
+                const qtdeKey = findKey(['qtde. aspersor ativos', 'qtde', 'quantidade', 'aspersor', 'emissores']);
                 const valvulaKey = findKey(['tipo vávlula', 'tipo valvula', 'valvula', 'válvula']);
                 const tempoKey = findKey(['tempo (min)', 'tempo', 'minutos', 'min']);
                 const flowKey = findKey(['por hora ltrs/h', 'por hora', 'ltrs/h', 'vazão', 'vazao']);
                 const tipoKey = findKey(['tipo']);
 
                 const local = row[localKey] ? String(row[localKey]).trim() : null;
+                const pocoVal = pocoKey && row[pocoKey] ? formatWellName(row[pocoKey]) : null;
                 
                 if (local) {
                     let parsedDate = parsePortugueseDate(row[dateKey] || '');
@@ -1563,29 +1553,29 @@
                     let tempoMin = 0;
                     if (tempoKey && row[tempoKey]) tempoMin = parseBrazilianNumber(row[tempoKey]);
 
+                    let tipoStr = tipoKey && row[tipoKey] ? String(row[tipoKey]).trim() : '';
                     let vazao = 0;
-                    let tipoStr = tipoKey && row[tipoKey] ? String(row[tipoKey]).trim().toLowerCase() : '';
-
                     if (flowKey && row[flowKey]) {
                         vazao = parseBrazilianNumber(row[flowKey]);
-                    } else if (tipoStr) {
-                        let matchFlow = tipoStr.match(/(\d+(?:\.\d+)?)\s*(?:l\/h|lh|l\\h|litros\/h)/i);
+                    } else {
+                        let lowerType = tipoStr.toLowerCase();
+                        let matchFlow = lowerType.match(/(\d+(?:\.\d+)?)\s*(?:l\/h|lh|l\\h|litros\/h)/i);
                         if (matchFlow) {
                             vazao = parseFloat(matchFlow[1]);
-                        } else if (tipoStr.includes('90') || tipoStr.includes('micro')) {
+                        } else if (lowerType.includes('90') || lowerType.includes('micro')) {
                             vazao = 90;
-                        } else if (tipoStr.includes('520') || tipoStr.includes('aspersor')) {
+                        } else if (lowerType.includes('520') || lowerType.includes('aspersor')) {
                             vazao = 520;
                         }
                     }
 
-                    // Identificação exata do tipo de emissor
-                    let tipoEmissor = 'Micro (90 L/h)';
-                    if (vazao > 150 || tipoStr.includes('aspersor') || tipoStr.includes('520')) {
-                        tipoEmissor = 'Aspersor (520 L/h)';
-                        if (vazao <= 0) vazao = 520;
+                    let tipoEmissor = 'Outro';
+                    if (tipoStr.toLowerCase().includes('micro') || vazao === 90) {
+                        tipoEmissor = 'MICRO';
+                    } else if (tipoStr.toLowerCase().includes('aspersor') || vazao === 520) {
+                        tipoEmissor = 'ASPERSOR';
                     } else {
-                        if (vazao <= 0) vazao = 90;
+                        tipoEmissor = tipoStr ? tipoStr.toUpperCase() : 'OUTRO';
                     }
 
                     let quantidadeCalculada = qtde;
@@ -1611,6 +1601,7 @@
                             DataFormatted: parsedDate.toLocaleDateString('pt-BR'),
                             IsoDate: parsedDate.toISOString().split('T')[0],
                             Local: local,
+                            Poco: pocoVal,
                             Cultura: row[culturaKey] ? String(row[culturaKey]).trim() : 'Sem Cultura',
                             Ciclo: cicloVal,
                             DataTransplantio: parsedDtTransplantio,
@@ -1621,6 +1612,7 @@
                             Valvulas: valvulas,
                             FlowRate: vazao,
                             TipoEmissor: tipoEmissor,
+                            TipoStr: tipoStr,
                             DiffHours: diffHours,
                             VolumeCalculado: volume
                         });
@@ -1730,285 +1722,328 @@
             if (tab === 4) applyFiltersTab4();
         }
 
+        function toggleSelectAllLocais(masterCheckbox) {
+            const isChecked = masterCheckbox.checked;
+            document.querySelectorAll('.local-chk-4').forEach(c => c.checked = isChecked);
+            updateLocalLabelTab4();
+            applyFiltersTab4();
+        }
+
+        function toggleSelectAllBlocosTab5(masterCheckbox) {
+            const isChecked = masterCheckbox.checked;
+            document.querySelectorAll('.bloco-chk-5').forEach(c => c.checked = isChecked);
+            updateBlocoLabelTab5();
+            applyFiltersTab5();
+        }
+
+        function toggleSelectAllCiclosTab5(masterCheckbox) {
+            const isChecked = masterCheckbox.checked;
+            document.querySelectorAll('.ciclo-chk-5').forEach(c => c.checked = isChecked);
+            updateCicloLabelTab5();
+            applyFiltersTab5();
+        }
+
+        function toggleSelectAllTab6(type, masterCheckbox) {
+            const isChecked = masterCheckbox.checked;
+            if (type === 'well') {
+                document.querySelectorAll('.well-chk-6').forEach(c => c.checked = isChecked);
+                updatePocoLabelTab6();
+            } else if (type === 'month') {
+                document.querySelectorAll('.month-chk-6').forEach(c => c.checked = isChecked);
+                updateMonthLabelTab6();
+            } else if (type === 'resp') {
+                document.querySelectorAll('.resp-chk-6').forEach(c => c.checked = isChecked);
+                updateRespLabelTab6();
+            }
+            applyFiltersTab6();
+        }
+
+        function updateWellLabel(tab) {
+            const checked = document.querySelectorAll(`.well-chk-${tab}:checked`);
+            const total = document.querySelectorAll(`.well-chk-${tab}`);
+            const lbl = document.getElementById(`labelTab${tab}`);
+            if (!lbl) return;
+            if (checked.length === total.length) lbl.innerText = 'Todos os Poços';
+            else if (checked.length === 0) lbl.innerText = 'Nenhum Poço';
+            else lbl.innerText = `${checked.length} de ${total.length} Poços`;
+        }
+
+        function updateMonthLabel(tab) {
+            const checked = document.querySelectorAll(`.month-chk-${tab}:checked`);
+            const total = document.querySelectorAll(`.month-chk-${tab}`);
+            const lbl = document.getElementById(`labelMonthTab${tab}`);
+            if (!lbl) return;
+            if (checked.length === total.length) lbl.innerText = 'Todos os Meses';
+            else if (checked.length === 0) lbl.innerText = 'Nenhum Mês';
+            else lbl.innerText = `${checked.length} de ${total.length} Meses`;
+        }
+
+        function updateLocalLabelTab4() {
+            const checked = document.querySelectorAll('.local-chk-4:checked');
+            const total = document.querySelectorAll('.local-chk-4');
+            const lbl = document.getElementById('labelTab4Locais');
+            if (!lbl) return;
+            if (checked.length === total.length) lbl.innerText = 'Todos os Locais';
+            else if (checked.length === 0) lbl.innerText = 'Nenhum Local';
+            else lbl.innerText = `${checked.length} de ${total.length} Locais`;
+        }
+
+        function updateBlocoLabelTab5() {
+            const checked = document.querySelectorAll('.bloco-chk-5:checked');
+            const total = document.querySelectorAll('.bloco-chk-5');
+            const lbl = document.getElementById('labelTab5Bloco');
+            if (!lbl) return;
+            if (checked.length === total.length) lbl.innerText = 'Todos os Blocos';
+            else if (checked.length === 0) lbl.innerText = 'Nenhum Bloco';
+            else lbl.innerText = `${checked.length} de ${total.length} Blocos`;
+        }
+
+        function updateCicloLabelTab5() {
+            const checked = document.querySelectorAll('.ciclo-chk-5:checked');
+            const total = document.querySelectorAll('.ciclo-chk-5');
+            const lbl = document.getElementById('labelTab5Ciclo');
+            if (!lbl) return;
+            if (checked.length === total.length) lbl.innerText = 'Todos os Ciclos';
+            else if (checked.length === 0) lbl.innerText = 'Nenhum Ciclo';
+            else lbl.innerText = `${checked.length} de ${total.length} Ciclos`;
+        }
+
+        function updatePocoLabelTab6() {
+            const checked = document.querySelectorAll('.well-chk-6:checked');
+            const total = document.querySelectorAll('.well-chk-6');
+            const lbl = document.getElementById('labelTab6Poco');
+            if (!lbl) return;
+            if (checked.length === total.length) lbl.innerText = 'Todos os Poços';
+            else if (checked.length === 0) lbl.innerText = 'Nenhum Poço';
+            else lbl.innerText = `${checked.length} de ${total.length} Poços`;
+        }
+
+        function updateMonthLabelTab6() {
+            const checked = document.querySelectorAll('.month-chk-6:checked');
+            const total = document.querySelectorAll('.month-chk-6');
+            const lbl = document.getElementById('labelMonthTab6');
+            if (!lbl) return;
+            if (checked.length === total.length) lbl.innerText = 'Todos os Meses';
+            else if (checked.length === 0) lbl.innerText = 'Nenhum Mês';
+            else lbl.innerText = `${checked.length} de ${total.length} Meses`;
+        }
+
+        function updateRespLabelTab6() {
+            const checked = document.querySelectorAll('.resp-chk-6:checked');
+            const total = document.querySelectorAll('.resp-chk-6');
+            const lbl = document.getElementById('labelTab6Resp');
+            if (!lbl) return;
+            if (checked.length === total.length) lbl.innerText = 'Todos Técnicos';
+            else if (checked.length === 0) lbl.innerText = 'Nenhum Técnico';
+            else lbl.innerText = `${checked.length} de ${total.length} Técnicos`;
+        }
+
         function populateWellSelectors() {
-            const wells = Array.from(new Set(globalRawData.map(d => d.Poco))).sort((a,b) => a.localeCompare(b, undefined, {numeric: true}));
-            
+            const wells = Array.from(new Set(globalRawData.map(d => d.Poco))).filter(Boolean).sort((a,b) => a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'}));
             [1, 2, 3, 4].forEach(tab => {
                 const container = document.getElementById(`wellCheckboxesTab${tab}`);
                 if (!container) return;
                 container.innerHTML = '';
-                
                 wells.forEach(w => {
-                    const label = document.createElement('label');
-                    label.className = 'flex items-center gap-2 px-1 py-0.5 hover:bg-slate-50 rounded cursor-pointer text-xs font-medium text-slate-700';
-                    label.innerHTML = `
-                        <input type="checkbox" value="${w}" checked class="well-chk-${tab} w-3.5 h-3.5 text-blue-600 rounded" onchange="onWellCheckboxChange(${tab})">
-                        ${w}
-                    `;
-                    container.appendChild(label);
+                    const lbl = document.createElement('label');
+                    lbl.className = 'flex items-center gap-2 px-1 py-0.5 hover:bg-slate-100 rounded cursor-pointer text-xs text-slate-700';
+                    lbl.innerHTML = `<input type="checkbox" value="${w}" checked class="well-chk-${tab} w-3.5 h-3.5 text-blue-600 rounded" onchange="updateWellLabel(${tab}); if(${tab}===1)applyFiltersTab1(); if(${tab}===2)applyFiltersTab2(); if(${tab}===3)applyFiltersTab3(); if(${tab}===4)applyFiltersTab4();"> ${w}`;
+                    container.appendChild(lbl);
                 });
+                updateWellLabel(tab);
             });
         }
 
         function populateMonthSelectors() {
-            const months = Array.from(new Set(globalRawData.map(d => d.MesLabel)));
-            
+            const months = Array.from(new Set(globalRawData.map(d => d.MesLabel))).filter(Boolean);
             [1, 2, 3].forEach(tab => {
                 const container = document.getElementById(`monthCheckboxesTab${tab}`);
                 if (!container) return;
                 container.innerHTML = '';
-                
                 months.forEach(m => {
-                    const label = document.createElement('label');
-                    label.className = 'flex items-center gap-2 px-1 py-0.5 hover:bg-slate-50 rounded cursor-pointer text-xs font-medium text-slate-700';
-                    label.innerHTML = `
-                        <input type="checkbox" value="${m}" checked class="month-chk-${tab} w-3.5 h-3.5 text-blue-600 rounded" onchange="onMonthCheckboxChange(${tab})">
-                        ${m}
-                    `;
-                    container.appendChild(label);
+                    const lbl = document.createElement('label');
+                    lbl.className = 'flex items-center gap-2 px-1 py-0.5 hover:bg-slate-100 rounded cursor-pointer text-xs text-slate-700';
+                    lbl.innerHTML = `<input type="checkbox" value="${m}" checked class="month-chk-${tab} w-3.5 h-3.5 text-blue-600 rounded" onchange="updateMonthLabel(${tab}); if(${tab}===1)applyFiltersTab1(); if(${tab}===2)applyFiltersTab2(); if(${tab}===3)applyFiltersTab3();"> ${m}`;
+                    container.appendChild(lbl);
                 });
+                updateMonthLabel(tab);
             });
         }
 
         function populateLocalSelectors() {
-            const locais = Array.from(new Set(globalSaidaData.map(d => d.Local))).sort((a,b) => a.localeCompare(b, undefined, {numeric: true}));
+            const locais = Array.from(new Set(globalSaidaData.map(d => d.Local))).filter(Boolean).sort((a,b) => a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'}));
             const container = document.getElementById('localCheckboxesTab4');
             if (!container) return;
             container.innerHTML = '';
-            
             locais.forEach(loc => {
-                const label = document.createElement('label');
-                label.className = 'flex items-center gap-2 px-1 py-0.5 hover:bg-slate-50 rounded cursor-pointer text-xs font-medium text-slate-700';
-                label.innerHTML = `
-                    <input type="checkbox" value="${loc}" checked class="local-chk-4 w-3.5 h-3.5 text-emerald-600 rounded" onchange="onLocalCheckboxChangeTab4()">
-                    ${loc}
-                `;
-                container.appendChild(label);
+                const lbl = document.createElement('label');
+                lbl.className = 'flex items-center gap-2 px-1 py-0.5 hover:bg-slate-100 rounded cursor-pointer text-xs text-slate-700';
+                lbl.innerHTML = `<input type="checkbox" value="${loc}" checked class="local-chk-4 w-3.5 h-3.5 text-emerald-600 rounded" onchange="updateLocalLabelTab4(); applyFiltersTab4();"> ${loc}`;
+                container.appendChild(lbl);
             });
+            updateLocalLabelTab4();
         }
 
         function populateBlocoSelectorsTab5() {
-            const blocos = Array.from(new Set(globalSaidaData.map(d => d.Local))).sort((a,b) => a.localeCompare(b, undefined, {numeric: true}));
+            const blocos = Array.from(new Set(globalSaidaData.map(d => d.Local))).filter(Boolean).sort((a,b) => a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'}));
             const container = document.getElementById('blocoCheckboxesTab5');
             if (!container) return;
             container.innerHTML = '';
-            
             blocos.forEach(b => {
-                const label = document.createElement('label');
-                label.className = 'flex items-center gap-2 px-1 py-0.5 hover:bg-slate-50 rounded cursor-pointer text-xs font-medium text-slate-700';
-                label.innerHTML = `
-                    <input type="checkbox" value="${b}" checked class="bloco-chk-5 w-3.5 h-3.5 text-blue-600 rounded" onchange="onBlocoCheckboxChangeTab5()">
-                    ${b}
-                `;
-                container.appendChild(label);
+                const lbl = document.createElement('label');
+                lbl.className = 'flex items-center gap-2 px-1 py-0.5 hover:bg-slate-100 rounded cursor-pointer text-xs text-slate-700';
+                lbl.innerHTML = `<input type="checkbox" value="${b}" checked class="bloco-chk-5 w-3.5 h-3.5 text-blue-600 rounded" onchange="updateBlocoLabelTab5(); applyFiltersTab5();"> ${b}`;
+                container.appendChild(lbl);
             });
+            updateBlocoLabelTab5();
         }
 
         function populateCicloSelectorsTab5() {
-            const ciclos = Array.from(new Set(globalSaidaData.map(d => d.Ciclo))).sort();
+            const ciclos = Array.from(new Set(globalSaidaData.map(d => d.Ciclo))).filter(Boolean).sort();
             const container = document.getElementById('cicloCheckboxesTab5');
             if (!container) return;
             container.innerHTML = '';
-            
             ciclos.forEach(c => {
-                const label = document.createElement('label');
-                label.className = 'flex items-center gap-2 px-1 py-0.5 hover:bg-slate-50 rounded cursor-pointer text-xs font-medium text-slate-700';
-                label.innerHTML = `
-                    <input type="checkbox" value="${c}" checked class="ciclo-chk-5 w-3.5 h-3.5 text-indigo-600 rounded" onchange="onCicloCheckboxChangeTab5()">
-                    ${c}
-                `;
-                container.appendChild(label);
+                const lbl = document.createElement('label');
+                lbl.className = 'flex items-center gap-2 px-1 py-0.5 hover:bg-slate-100 rounded cursor-pointer text-xs text-slate-700';
+                lbl.innerHTML = `<input type="checkbox" value="${c}" checked class="ciclo-chk-5 w-3.5 h-3.5 text-indigo-600 rounded" onchange="updateCicloLabelTab5(); applyFiltersTab5();"> ${c}`;
+                container.appendChild(lbl);
             });
+            updateCicloLabelTab5();
         }
 
         function populateManutencaoSelectors() {
-            const pocos = Array.from(new Set(globalManutencaoData.map(d => d.Poco))).sort((a,b) => a.localeCompare(b, undefined, {numeric: true}));
-            const meses = Array.from(new Set(globalManutencaoData.map(d => d.MesLabel))).sort();
-            const resps = Array.from(new Set(globalManutencaoData.map(d => d.ResponsavelTec))).sort();
-
-            const containerPoco = document.getElementById('wellCheckboxesTab6');
-            if (containerPoco) {
-                containerPoco.innerHTML = '';
+            const pocos = Array.from(new Set(globalManutencaoData.map(d => d.Poco))).filter(Boolean).sort((a,b) => a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'}));
+            const cPoco = document.getElementById('wellCheckboxesTab6');
+            if (cPoco) {
+                cPoco.innerHTML = '';
                 pocos.forEach(p => {
-                    const label = document.createElement('label');
-                    label.className = 'flex items-center gap-2 px-1 py-0.5 hover:bg-slate-50 rounded cursor-pointer text-xs font-medium text-slate-700';
-                    label.innerHTML = `<input type="checkbox" value="${p}" checked class="well-chk-6 w-3.5 h-3.5 text-indigo-600 rounded" onchange="onCheckboxChangeTab6()"> ${p}`;
-                    containerPoco.appendChild(label);
+                    const lbl = document.createElement('label');
+                    lbl.className = 'flex items-center gap-2 px-1 py-0.5 hover:bg-slate-100 rounded cursor-pointer text-xs text-slate-700';
+                    lbl.innerHTML = `<input type="checkbox" value="${p}" checked class="well-chk-6 w-3.5 h-3.5 text-indigo-600 rounded" onchange="updatePocoLabelTab6(); applyFiltersTab6();"> ${p}`;
+                    cPoco.appendChild(lbl);
                 });
+                updatePocoLabelTab6();
             }
 
-            const containerMes = document.getElementById('monthCheckboxesTab6');
-            if (containerMes) {
-                containerMes.innerHTML = '';
+            const meses = Array.from(new Set(globalManutencaoData.map(d => d.MesLabel))).filter(m => m && m !== 'N/I');
+            const cMes = document.getElementById('monthCheckboxesTab6');
+            if (cMes) {
+                cMes.innerHTML = '';
                 meses.forEach(m => {
-                    const label = document.createElement('label');
-                    label.className = 'flex items-center gap-2 px-1 py-0.5 hover:bg-slate-50 rounded cursor-pointer text-xs font-medium text-slate-700';
-                    label.innerHTML = `<input type="checkbox" value="${m}" checked class="month-chk-6 w-3.5 h-3.5 text-indigo-600 rounded" onchange="onCheckboxChangeTab6()"> ${m}`;
-                    containerMes.appendChild(label);
+                    const lbl = document.createElement('label');
+                    lbl.className = 'flex items-center gap-2 px-1 py-0.5 hover:bg-slate-100 rounded cursor-pointer text-xs text-slate-700';
+                    lbl.innerHTML = `<input type="checkbox" value="${m}" checked class="month-chk-6 w-3.5 h-3.5 text-indigo-600 rounded" onchange="updateMonthLabelTab6(); applyFiltersTab6();"> ${m}`;
+                    cMes.appendChild(lbl);
                 });
+                updateMonthLabelTab6();
             }
 
-            const containerResp = document.getElementById('respCheckboxesTab6');
-            if (containerResp) {
-                containerResp.innerHTML = '';
+            const resps = Array.from(new Set(globalManutencaoData.map(d => d.ResponsavelTec))).filter(Boolean).sort();
+            const cResp = document.getElementById('respCheckboxesTab6');
+            if (cResp) {
+                cResp.innerHTML = '';
                 resps.forEach(r => {
-                    const label = document.createElement('label');
-                    label.className = 'flex items-center gap-2 px-1 py-0.5 hover:bg-slate-50 rounded cursor-pointer text-xs font-medium text-slate-700';
-                    label.innerHTML = `<input type="checkbox" value="${r}" checked class="resp-chk-6 w-3.5 h-3.5 text-indigo-600 rounded" onchange="onCheckboxChangeTab6()"> ${r}`;
-                    containerResp.appendChild(label);
+                    const lbl = document.createElement('label');
+                    lbl.className = 'flex items-center gap-2 px-1 py-0.5 hover:bg-slate-100 rounded cursor-pointer text-xs text-slate-700';
+                    lbl.innerHTML = `<input type="checkbox" value="${r}" checked class="resp-chk-6 w-3.5 h-3.5 text-indigo-600 rounded" onchange="updateRespLabelTab6(); applyFiltersTab6();"> ${r}`;
+                    cResp.appendChild(lbl);
                 });
+                updateRespLabelTab6();
             }
-        }
-
-        function onWellCheckboxChange(tab) {
-            updateWellLabel(tab);
-            if (tab === 1) applyFiltersTab1();
-            if (tab === 2) applyFiltersTab2();
-            if (tab === 3) applyFiltersTab3();
-            if (tab === 4) applyFiltersTab4();
-        }
-
-        function onMonthCheckboxChange(tab) {
-            updateMonthLabel(tab);
-            if (tab === 1) applyFiltersTab1();
-            if (tab === 2) applyFiltersTab2();
-            if (tab === 3) applyFiltersTab3();
-        }
-
-        function onLocalCheckboxChangeTab4() {
-            const chks = document.querySelectorAll('.local-chk-4');
-            const checked = Array.from(chks).filter(c => c.checked);
-            const lbl = document.getElementById('labelTab4Locais');
-            if (lbl) {
-                if (checked.length === chks.length) lbl.innerText = 'Todos os Locais';
-                else if (checked.length === 0) lbl.innerText = 'Nenhum Local';
-                else lbl.innerText = `${checked.length} Selecionados`;
-            }
-            applyFiltersTab4();
-        }
-
-        function toggleSelectAllLocais(master) {
-            const isChecked = master.checked;
-            document.querySelectorAll('.local-chk-4').forEach(c => c.checked = isChecked);
-            onLocalCheckboxChangeTab4();
-        }
-
-        function updateWellLabel(tab) {
-            const chks = document.querySelectorAll(`.well-chk-${tab}`);
-            const checked = Array.from(chks).filter(c => c.checked);
-            const lbl = document.getElementById(`labelTab${tab}`);
-            if (lbl) {
-                if (checked.length === chks.length) lbl.innerText = 'Todos os Poços';
-                else if (checked.length === 0) lbl.innerText = 'Nenhum Poço';
-                else lbl.innerText = `${checked.length} Selecionados`;
-            }
-        }
-
-        function updateMonthLabel(tab) {
-            const chks = document.querySelectorAll(`.month-chk-${tab}`);
-            const checked = Array.from(chks).filter(c => c.checked);
-            const lbl = document.getElementById(`labelMonthTab${tab}`);
-            if (lbl) {
-                if (checked.length === chks.length) lbl.innerText = 'Todos os Meses';
-                else if (checked.length === 0) lbl.innerText = 'Nenhum Mês';
-                else lbl.innerText = `${checked.length} Selecionados`;
-            }
-        }
-
-        function getSelectedWells(tab) {
-            return Array.from(document.querySelectorAll(`.well-chk-${tab}:checked`)).map(c => c.value);
-        }
-
-        function getSelectedMonths(tab) {
-            return Array.from(document.querySelectorAll(`.month-chk-${tab}:checked`)).map(c => c.value);
-        }
-
-        function getSelectedLocaisTab4() {
-            return Array.from(document.querySelectorAll(`.local-chk-4:checked`)).map(c => c.value);
-        }
-
-        function getSelectedBlocosTab5() {
-            return Array.from(document.querySelectorAll(`.bloco-chk-5:checked`)).map(c => c.value);
-        }
-
-        function getSelectedCiclosTab5() {
-            return Array.from(document.querySelectorAll(`.ciclo-chk-5:checked`)).map(c => c.value);
-        }
-
-        function onBlocoCheckboxChangeTab5() {
-            const chks = document.querySelectorAll('.bloco-chk-5');
-            const checked = Array.from(chks).filter(c => c.checked);
-            const lbl = document.getElementById('labelTab5Bloco');
-            if (lbl) {
-                if (checked.length === chks.length) lbl.innerText = 'Todos os Blocos';
-                else if (checked.length === 0) lbl.innerText = 'Nenhum Bloco';
-                else lbl.innerText = `${checked.length} Selecionados`;
-            }
-            applyFiltersTab5();
-        }
-
-        function onCicloCheckboxChangeTab5() {
-            const chks = document.querySelectorAll('.ciclo-chk-5');
-            const checked = Array.from(chks).filter(c => c.checked);
-            const lbl = document.getElementById('labelTab5Ciclo');
-            if (lbl) {
-                if (checked.length === chks.length) lbl.innerText = 'Todos os Ciclos';
-                else if (checked.length === 0) lbl.innerText = 'Nenhum Ciclo';
-                else lbl.innerText = `${checked.length} Selecionados`;
-            }
-            applyFiltersTab5();
-        }
-
-        function toggleSelectAllBlocosTab5(master) {
-            document.querySelectorAll('.bloco-chk-5').forEach(c => c.checked = master.checked);
-            onBlocoCheckboxChangeTab5();
-        }
-
-        function toggleSelectAllCiclosTab5(master) {
-            document.querySelectorAll('.ciclo-chk-5').forEach(c => c.checked = master.checked);
-            onCicloCheckboxChangeTab5();
-        }
-
-        function onCheckboxChangeTab6() {
-            applyFiltersTab6();
-        }
-
-        function toggleSelectAllTab6(type, master) {
-            const chkClass = type === 'well' ? 'well-chk-6' : (type === 'month' ? 'month-chk-6' : 'resp-chk-6');
-            document.querySelectorAll(`.${chkClass}`).forEach(c => c.checked = master.checked);
-            applyFiltersTab6();
         }
 
         function applyFiltersTab1() {
-            const selectedWells = getSelectedWells(1);
-            const selectedMonths = getSelectedMonths(1);
+            const selectedWells = Array.from(document.querySelectorAll('.well-chk-1:checked')).map(c => c.value);
+            const selectedMonths = Array.from(document.querySelectorAll('.month-chk-1:checked')).map(c => c.value);
             const startDate = document.getElementById('filterStartDateTab1').value;
             const endDate = document.getElementById('filterEndDateTab1').value;
 
             let filtered = globalRawData.filter(d => {
-                if (!selectedWells.includes(d.Poco)) return false;
-                if (!selectedMonths.includes(d.MesLabel)) return false;
+                if (selectedWells.length > 0 && !selectedWells.includes(d.Poco)) return false;
+                if (selectedMonths.length > 0 && !selectedMonths.includes(d.MesLabel)) return false;
                 if (startDate && d.IsoDate < startDate) return false;
                 if (endDate && d.IsoDate > endDate) return false;
                 return true;
             });
 
-            const totalVol = filtered.reduce((acc, cur) => acc + cur.VolumeCalculado, 0);
-            const avgFlow = filtered.length > 0 ? (filtered.reduce((acc, cur) => acc + cur.Vazao, 0) / filtered.length) : 0;
+            // KPIs
+            const totalVol = filtered.reduce((acc, curr) => acc + curr.Volume, 0);
+            const avgFlow = filtered.length > 0 ? (filtered.reduce((acc, curr) => acc + curr.Vazao, 0) / filtered.length) : 0;
             const uniqueWells = new Set(filtered.map(d => d.Poco)).size;
 
             document.getElementById('kpi1_avgFlow').innerText = `${Math.round(avgFlow).toLocaleString('pt-BR')} L/h`;
             document.getElementById('kpi1_totalVolume').innerText = `${Math.round(totalVol).toLocaleString('pt-BR')} L`;
-            document.getElementById('kpi1_totalWells').innerText = `${uniqueWells}`;
+            document.getElementById('kpi1_totalWells').innerText = uniqueWells;
 
-            renderWeeklyFlowChart(filtered);
-            renderDailyFlowChart(filtered);
+            // Chart Weekly Flow
+            const weeklyData = {};
+            filtered.forEach(d => {
+                const key = `Sema. ${d.SemanaNum} (${d.Ano})`;
+                if (!weeklyData[key]) weeklyData[key] = { sum: 0, count: 0 };
+                weeklyData[key].sum += d.Vazao;
+                weeklyData[key].count++;
+            });
+            const weeklyLabels = Object.keys(weeklyData);
+            const weeklyValues = weeklyLabels.map(k => Math.round(weeklyData[k].sum / weeklyData[k].count));
+
+            renderChart('weeklyFlowChart', 'weeklyFlow', 'bar', {
+                labels: weeklyLabels,
+                datasets: [{
+                    label: 'Vazão Média Semanal (L/h)',
+                    data: weeklyValues,
+                    backgroundColor: 'rgba(14, 165, 233, 0.85)',
+                    borderRadius: 6
+                }]
+            }, {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    datalabels: {
+                        anchor: 'end',
+                        align: 'end',
+                        formatter: (val) => val ? val.toLocaleString('pt-BR') : '',
+                        font: { size: 10, weight: 'bold' },
+                        color: '#0f172a'
+                    }
+                }
+            });
+
+            // Daily Chart
+            const dates = Array.from(new Set(filtered.map(d => d.DataFormatted)));
+            const wells = Array.from(new Set(filtered.map(d => d.Poco))).sort((a,b) => a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'}));
+            const colors = ['#2563eb', '#059669', '#d97706', '#dc2626', '#8b5cf6', '#06b6d4', '#ec4899', '#f59e0b'];
+
+            const datasetsDaily = wells.map((w, idx) => {
+                const dataMap = {};
+                filtered.filter(d => d.Poco === w).forEach(d => {
+                    dataMap[d.DataFormatted] = d.Vazao;
+                });
+                return {
+                    label: w,
+                    data: dates.map(dt => dataMap[dt] || null),
+                    borderColor: colors[idx % colors.length],
+                    backgroundColor: colors[idx % colors.length],
+                    tension: 0.2,
+                    spanGaps: true
+                };
+            });
+
+            renderChart('dailyFlowChart', 'dailyFlow', 'line', {
+                labels: dates,
+                datasets: datasetsDaily
+            }, {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { datalabels: { display: false } }
+            });
         }
 
         function resetFiltersTab1() {
-            document.querySelectorAll('.well-chk-1, .month-chk-1').forEach(c => c.checked = true);
-            document.getElementById('selectAllWellsTab1').checked = true;
-            document.getElementById('selectAllMonthsTab1').checked = true;
+            document.querySelectorAll('.well-chk-1').forEach(c => c.checked = true);
+            document.querySelectorAll('.month-chk-1').forEach(c => c.checked = true);
+            const selAllW = document.getElementById('selectAllWellsTab1'); if(selAllW) selAllW.checked = true;
+            const selAllM = document.getElementById('selectAllMonthsTab1'); if(selAllM) selAllM.checked = true;
             document.getElementById('filterStartDateTab1').value = '';
             document.getElementById('filterEndDateTab1').value = '';
             updateWellLabel(1);
@@ -2017,323 +2052,37 @@
         }
 
         function applyFiltersTab2() {
-            const selectedWells = getSelectedWells(2);
-            const selectedMonths = getSelectedMonths(2);
+            const selectedWells = Array.from(document.querySelectorAll('.well-chk-2:checked')).map(c => c.value);
+            const selectedMonths = Array.from(document.querySelectorAll('.month-chk-2:checked')).map(c => c.value);
 
             let filtered = globalRawData.filter(d => {
-                if (!selectedWells.includes(d.Poco)) return false;
-                if (!selectedMonths.includes(d.MesLabel)) return false;
+                if (selectedWells.length > 0 && !selectedWells.includes(d.Poco)) return false;
+                if (selectedMonths.length > 0 && !selectedMonths.includes(d.MesLabel)) return false;
                 return true;
             });
 
-            const totalVol = filtered.reduce((acc, cur) => acc + cur.VolumeCalculado, 0);
-            const avgMonthlyVol = selectedMonths.length > 0 ? (totalVol / selectedMonths.length) : 0;
-            const avgFlow = filtered.length > 0 ? (filtered.reduce((acc, cur) => acc + cur.Vazao, 0) / filtered.length) : 0;
+            const months = Array.from(new Set(filtered.map(d => d.MesLabel)));
+            const wells = Array.from(new Set(filtered.map(d => d.Poco))).sort((a,b) => a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'}));
 
-            let volByWell = {};
-            filtered.forEach(d => {
-                volByWell[d.Poco] = (volByWell[d.Poco] || 0) + d.VolumeCalculado;
-            });
-            let maxWell = Object.keys(volByWell).reduce((a, b) => volByWell[a] > volByWell[b] ? a : b, '--');
+            // KPIs
+            const totalMonthlyVol = filtered.reduce((acc, curr) => acc + curr.Volume, 0);
+            const avgVolMonth = months.length > 0 ? totalMonthlyVol / months.length : 0;
+            const avgFlowMonth = filtered.length > 0 ? (filtered.reduce((acc, curr) => acc + curr.Vazao, 0) / filtered.length) : 0;
 
-            document.getElementById('kpi2_avgMonthlyVol').innerText = `${Math.round(avgMonthlyVol).toLocaleString('pt-BR')} L`;
-            document.getElementById('kpi2_maxVolumeWell').innerText = maxWell !== '--' ? `${maxWell}` : '--';
-            document.getElementById('kpi2_avgMonthlyFlow').innerText = `${Math.round(avgFlow).toLocaleString('pt-BR')} L/h`;
+            document.getElementById('kpi2_avgMonthlyVol').innerText = `${Math.round(avgVolMonth).toLocaleString('pt-BR')} L`;
+            document.getElementById('kpi2_avgMonthlyFlow').innerText = `${Math.round(avgFlowMonth).toLocaleString('pt-BR')} L/h`;
+            document.getElementById('kpi2_maxVolumeWell').innerText = wells.length > 0 ? `${wells.length} Poços` : '--';
 
-            renderMonthlyVolumeChart(filtered);
-            renderTrendChart(filtered);
-        }
-
-        function resetFiltersTab2() {
-            document.querySelectorAll('.well-chk-2, .month-chk-2').forEach(c => c.checked = true);
-            document.getElementById('selectAllWellsTab2').checked = true;
-            document.getElementById('selectAllMonthsTab2').checked = true;
-            updateWellLabel(2);
-            updateMonthLabel(2);
-            applyFiltersTab2();
-        }
-
-        function applyFiltersTab3() {
-            const selectedWells = getSelectedWells(3);
-            const selectedMonths = getSelectedMonths(3);
-
-            let filtered = globalRawData.filter(d => {
-                if (!selectedWells.includes(d.Poco)) return false;
-                if (!selectedMonths.includes(d.MesLabel)) return false;
-                return true;
-            });
-
-            const totalRecords = filtered.length;
-            const avgFlow = totalRecords > 0 ? (filtered.reduce((acc, cur) => acc + cur.Vazao, 0) / totalRecords) : 0;
-            const totalVol = filtered.reduce((acc, cur) => acc + cur.VolumeCalculado, 0);
-            const avgVol = totalRecords > 0 ? (totalVol / totalRecords) : 0;
-
-            document.getElementById('kpi3_totalRecords').innerText = `${totalRecords}`;
-            document.getElementById('kpi3_avgFlow').innerText = `${Math.round(avgFlow).toLocaleString('pt-BR')} L/h`;
-            document.getElementById('kpi3_avgVolPerRecord').innerText = `${Math.round(avgVol).toLocaleString('pt-BR')} L`;
-
-            populateTab3Table(filtered);
-        }
-
-        function resetFiltersTab3() {
-            document.querySelectorAll('.well-chk-3, .month-chk-3').forEach(c => c.checked = true);
-            document.getElementById('selectAllWellsTab3').checked = true;
-            document.getElementById('selectAllMonthsTab3').checked = true;
-            updateWellLabel(3);
-            updateMonthLabel(3);
-            applyFiltersTab3();
-        }
-
-        function applyFiltersTab4() {
-            const selectedWells = getSelectedWells(4);
-            const selectedLocais = getSelectedLocaisTab4();
-            const startDate = document.getElementById('filterStartDateTab4').value;
-            const endDate = document.getElementById('filterEndDateTab4').value;
-
-            let filteredEntrada = globalRawData.filter(d => {
-                if (!selectedWells.includes(d.Poco)) return false;
-                if (startDate && d.IsoDate < startDate) return false;
-                if (endDate && d.IsoDate > endDate) return false;
-                return true;
-            });
-
-            let filteredSaida = globalSaidaData.filter(d => {
-                if (!selectedLocais.includes(d.Local)) return false;
-                if (startDate && d.IsoDate < startDate) return false;
-                if (endDate && d.IsoDate > endDate) return false;
-                return true;
-            });
-
-            const totalVolEntrada = filteredEntrada.reduce((acc, cur) => acc + cur.VolumeCalculado, 0);
-            const totalHoras = filteredEntrada.reduce((acc, cur) => acc + cur.Horas, 0);
-            const uniqueDays = new Set(filteredEntrada.map(d => d.IsoDate)).size;
-            const avgHoursPerDay = uniqueDays > 0 ? (totalHoras / uniqueDays) : 0;
-
-            let volByDay = {};
-            filteredEntrada.forEach(d => {
-                volByDay[d.IsoDate] = (volByDay[d.IsoDate] || 0) + d.VolumeCalculado;
-            });
-            let maxPeak = Object.values(volByDay).length > 0 ? Math.max(...Object.values(volByDay)) : 0;
-
-            document.getElementById('kpi4_totalVol').innerText = `${Math.round(totalVolEntrada).toLocaleString('pt-BR')} L`;
-            document.getElementById('kpi4_avgHours').innerText = `${avgHoursPerDay.toFixed(1)} h/dia`;
-            document.getElementById('kpi4_maxPeak').innerText = `${Math.round(maxPeak).toLocaleString('pt-BR')} L`;
-
-            const totalSaidaVol = filteredSaida.reduce((acc, cur) => acc + cur.VolumeCalculado, 0);
-            const uniqueLocais = new Set(filteredSaida.map(d => d.Local)).size;
-            const totalSaidaTempo = filteredSaida.reduce((acc, cur) => acc + cur.DiffHours, 0);
-
-            document.getElementById('kpi4_saidaVol').innerText = `${Math.round(totalSaidaVol).toLocaleString('pt-BR')} L`;
-            document.getElementById('kpi4_saidaLocais').innerText = `${uniqueLocais}`;
-            document.getElementById('kpi4_saidaTempo').innerText = `${totalSaidaTempo.toFixed(1)} h`;
-
-            renderEntradaAguaChart(filteredEntrada);
-            renderSaidaAguaChart(filteredSaida);
-            renderEmissoresSectionTab4();
-        }
-
-        function resetFiltersTab4() {
-            document.querySelectorAll('.well-chk-4, .local-chk-4').forEach(c => c.checked = true);
-            document.getElementById('selectAllWellsTab4').checked = true;
-            document.getElementById('selectAllLocaisTab4').checked = true;
-            document.getElementById('filterStartDateTab4').value = '';
-            document.getElementById('filterEndDateTab4').value = '';
-            const filterTipo = document.getElementById('filterTipoEmissorTab4');
-            if (filterTipo) filterTipo.value = 'ALL';
-
-            updateWellLabel(4);
-            onLocalCheckboxChangeTab4();
-            applyFiltersTab4();
-        }
-
-        function applyFiltersTab5() {
-            const selectedBlocos = getSelectedBlocosTab5();
-            const selectedCiclos = getSelectedCiclosTab5();
-            const startDate = document.getElementById('filterStartDateTab5').value;
-            const endDate = document.getElementById('filterEndDateTab5').value;
-
-            let filtered = globalSaidaData.filter(d => {
-                if (!selectedBlocos.includes(d.Local)) return false;
-                if (!selectedCiclos.includes(d.Ciclo)) return false;
-                if (startDate && d.IsoDate < startDate) return false;
-                if (endDate && d.IsoDate > endDate) return false;
-                return true;
-            });
-
-            const volTotal = filtered.reduce((acc, cur) => acc + cur.VolumeCalculado, 0);
-            
-            let totalPlantas = 0;
-            let mapBlocoPlantas = {};
-            filtered.forEach(d => {
-                if (d.TotalTransplantio > 0 && !mapBlocoPlantas[d.Local]) {
-                    mapBlocoPlantas[d.Local] = d.TotalTransplantio;
-                }
-            });
-            totalPlantas = Object.values(mapBlocoPlantas).reduce((a, b) => a + b, 0);
-
-            const uniqueDays = new Set(filtered.map(d => d.IsoDate)).size;
-            const ltrsPlanta = totalPlantas > 0 ? (volTotal / totalPlantas) : 0;
-            const ltrsDiaPlanta = (totalPlantas > 0 && uniqueDays > 0) ? (volTotal / totalPlantas / uniqueDays) : 0;
-
-            let maxColheita = null;
-            filtered.forEach(d => {
-                if (d.DataColheita) {
-                    if (!maxColheita || d.DataColheita > maxColheita) maxColheita = d.DataColheita;
-                }
-            });
-
-            document.getElementById('kpi5_volIrrigado').innerText = `${Math.round(volTotal).toLocaleString('pt-BR')} L`;
-            document.getElementById('kpi5_transplantado').innerText = totalPlantas > 0 ? `${totalPlantas.toLocaleString('pt-BR')}` : '--';
-            document.getElementById('kpi5_ltrsPlanta').innerText = ltrsPlanta > 0 ? `${ltrsPlanta.toFixed(2)} L` : '--';
-            document.getElementById('kpi5_ltrsDiaPlanta').innerText = ltrsDiaPlanta > 0 ? `${ltrsDiaPlanta.toFixed(2)} L` : '--';
-            document.getElementById('kpi5_diasIrrigados').innerText = `${uniqueDays} dias`;
-            document.getElementById('kpi5_fimColheita').innerText = maxColheita ? maxColheita.toLocaleDateString('pt-BR') : '--/--/----';
-
-            renderResumoBlocoChart(filtered);
-        }
-
-        function resetFiltersTab5() {
-            document.querySelectorAll('.bloco-chk-5, .ciclo-chk-5').forEach(c => c.checked = true);
-            document.getElementById('selectAllBlocosTab5').checked = true;
-            document.getElementById('selectAllCiclosTab5').checked = true;
-            document.getElementById('filterStartDateTab5').value = '';
-            document.getElementById('filterEndDateTab5').value = '';
-            onBlocoCheckboxChangeTab5();
-            onCicloCheckboxChangeTab5();
-            applyFiltersTab5();
-        }
-
-        function applyFiltersTab6() {
-            const selectedPocos = Array.from(document.querySelectorAll('.well-chk-6:checked')).map(c => c.value);
-            const selectedMonths = Array.from(document.querySelectorAll('.month-chk-6:checked')).map(c => c.value);
-            const selectedResps = Array.from(document.querySelectorAll('.resp-chk-6:checked')).map(c => c.value);
-
-            let filtered = globalManutencaoData.filter(d => {
-                if (!selectedPocos.includes(d.Poco)) return false;
-                if (!selectedMonths.includes(d.MesLabel)) return false;
-                if (!selectedResps.includes(d.ResponsavelTec)) return false;
-                return true;
-            });
-
-            const totalPocos = new Set(filtered.map(d => d.Poco)).size;
-            const totalManut = filtered.length;
-            const avgProf = totalManut > 0 ? (filtered.reduce((acc, cur) => acc + cur.Profundidade, 0) / totalManut) : 0;
-            const avgVazao = totalManut > 0 ? (filtered.reduce((acc, cur) => acc + cur.VazaoInicial, 0) / totalManut) : 0;
-
-            document.getElementById('kpi6_totalPocos').innerText = `${totalPocos}`;
-            document.getElementById('kpi6_totalManutencao').innerText = `${totalManut}`;
-            document.getElementById('kpi6_avgProfundidade').innerText = `${avgProf.toFixed(1)} m`;
-            document.getElementById('kpi6_avgVazaoInicial').innerText = `${Math.round(avgVazao).toLocaleString('pt-BR')} L/h`;
-
-            renderManutencaoCharts(filtered);
-            populateTab6Table(filtered);
-        }
-
-        function resetFiltersTab6() {
-            document.querySelectorAll('.well-chk-6, .month-chk-6, .resp-chk-6').forEach(c => c.checked = true);
-            const p = document.getElementById('selectAllPocosTab6'); if (p) p.checked = true;
-            const m = document.getElementById('selectAllMonthsTab6'); if (m) m.checked = true;
-            const r = document.getElementById('selectAllRespTab6'); if (r) r.checked = true;
-            applyFiltersTab6();
-        }
-
-        function renderWeeklyFlowChart(data) {
-            let weeks = {};
-            data.forEach(d => {
-                let key = `Semana ${d.SemanaNum}/${d.Ano}`;
-                if (!weeks[key]) weeks[key] = { totalFlow: 0, count: 0 };
-                weeks[key].totalFlow += d.Vazao;
-                weeks[key].count += 1;
-            });
-
-            let labels = Object.keys(weeks);
-            let values = labels.map(k => Math.round(weeks[k].totalFlow / weeks[k].count));
-
-            renderChart('weeklyFlowChart', 'weeklyFlow', 'bar', {
-                labels: labels,
-                datasets: [{
-                    label: 'Vazão Média (L/h)',
-                    data: values,
-                    backgroundColor: 'rgba(37, 99, 235, 0.85)',
-                    borderRadius: 6
-                }]
-            }, {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    datalabels: {
-                        anchor: 'end',
-                        align: 'top',
-                        color: '#1e293b',
-                        font: { weight: 'bold', size: 10 },
-                        formatter: (val) => val > 0 ? `${val.toLocaleString('pt-BR')} L/h` : ''
-                    }
-                },
-                scales: {
-                    y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
-                    x: { grid: { display: false } }
-                }
-            });
-        }
-
-        function renderDailyFlowChart(data) {
-            let days = {};
-            data.forEach(d => {
-                if (!days[d.IsoDate]) days[d.IsoDate] = { totalFlow: 0, count: 0, formatted: d.DataFormatted };
-                days[d.IsoDate].totalFlow += d.Vazao;
-                days[d.IsoDate].count += 1;
-            });
-
-            let sortedDays = Object.keys(days).sort();
-            let labels = sortedDays.map(k => days[k].formatted);
-            let values = sortedDays.map(k => Math.round(days[k].totalFlow / days[k].count));
-
-            renderChart('dailyFlowChart', 'dailyFlow', 'line', {
-                labels: labels,
-                datasets: [{
-                    label: 'Vazão Diária Média (L/h)',
-                    data: values,
-                    borderColor: '#2563eb',
-                    backgroundColor: 'rgba(37, 99, 235, 0.1)',
-                    fill: true,
-                    tension: 0.3,
-                    pointRadius: 4,
-                    pointBackgroundColor: '#1d4ed8'
-                }]
-            }, {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    datalabels: {
-                        anchor: 'top',
-                        align: 'top',
-                        color: '#1e293b',
-                        font: { weight: 'bold', size: 10 },
-                        formatter: (val) => val > 0 ? `${val.toLocaleString('pt-BR')}` : ''
-                    }
-                },
-                scales: {
-                    y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
-                    x: { grid: { display: false } }
-                }
-            });
-        }
-
-        function renderMonthlyVolumeChart(data) {
-            let months = Array.from(new Set(data.map(d => d.MesLabel)));
-            let wells = Array.from(new Set(data.map(d => d.Poco))).sort((a,b) => a.localeCompare(b, undefined, {numeric: true}));
-
-            let colors = ['#2563eb', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#64748b', '#d97706'];
-
-            let datasets = wells.map((well, idx) => {
-                let volData = months.map(m => {
-                    let items = data.filter(d => d.Poco === well && d.MesLabel === m);
-                    return items.reduce((acc, cur) => acc + cur.VolumeCalculado, 0);
+            // Monthly Vol Chart
+            const colors = ['#2563eb', '#059669', '#d97706', '#dc2626', '#8b5cf6', '#06b6d4', '#ec4899', '#f59e0b'];
+            const datasetsVol = wells.map((w, idx) => {
+                const dataMap = {};
+                filtered.filter(d => d.Poco === w).forEach(d => {
+                    dataMap[d.MesLabel] = (dataMap[d.MesLabel] || 0) + d.Volume;
                 });
-
                 return {
-                    label: well,
-                    data: volData,
+                    label: w,
+                    data: months.map(m => dataMap[m] || 0),
                     backgroundColor: colors[idx % colors.length],
                     borderRadius: 4
                 };
@@ -2341,367 +2090,418 @@
 
             renderChart('monthlyVolumeChart', 'monthlyVolume', 'bar', {
                 labels: months,
-                datasets: datasets
+                datasets: datasetsVol
             }, {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
                     datalabels: {
                         anchor: 'end',
-                        align: 'top',
-                        color: '#334155',
-                        font: { weight: 'bold', size: 9 },
-                        formatter: (val) => val > 0 ? `${Math.round(val).toLocaleString('pt-BR')} L` : ''
+                        align: 'end',
+                        formatter: (val) => val > 0 ? Math.round(val).toLocaleString('pt-BR') : '',
+                        font: { size: 9, weight: 'bold' }
                     }
-                },
-                scales: {
-                    y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
-                    x: { grid: { display: false } }
                 }
             });
-        }
 
-        function renderTrendChart(data) {
-            let months = Array.from(new Set(data.map(d => d.MesLabel)));
-            let wells = Array.from(new Set(data.map(d => d.Poco))).sort((a,b) => a.localeCompare(b, undefined, {numeric: true}));
+            // Trend Chart (REGRESSÃO E TENDÊNCIA DA MÉDIA DE VAZÃO POR POÇO COM RÓTULOS DE DIFERENÇA E % SEM CONTORNO)
+            const datasetsTrend = wells.map((w, idx) => {
+                const dataMap = {};
+                const countMap = {};
+                filtered.filter(d => d.Poco === w).forEach(d => {
+                    dataMap[d.MesLabel] = (dataMap[d.MesLabel] || 0) + d.Vazao;
+                    countMap[d.MesLabel] = (countMap[d.MesLabel] || 0) + 1;
+                });
 
-            let palette = ['#1d4ed8', '#059669', '#d97706', '#7c3aed', '#db2777', '#0891b2', '#475569', '#b45309'];
-
-            let datasets = wells.map((well, idx) => {
-                let flowData = months.map(m => {
-                    let items = data.filter(d => d.Poco === well && d.MesLabel === m);
-                    if (items.length === 0) return null;
-                    return Math.round(items.reduce((acc, cur) => acc + cur.Vazao, 0) / items.length);
+                const dataAverages = months.map(m => {
+                    return countMap[m] ? Math.round(dataMap[m] / countMap[m]) : null;
                 });
 
                 return {
-                    label: well,
-                    data: flowData,
-                    borderColor: palette[idx % palette.length],
-                    backgroundColor: palette[idx % palette.length],
-                    tension: 0.2,
-                    borderWidth: 2.5,
-                    pointRadius: 5,
-                    pointHoverRadius: 7,
-                    datalabels: {
-                        display: true,
-                        align: 'top',
-                        anchor: 'end',
-                        offset: 4,
-                        font: { size: 9, weight: 'bold' },
-                        borderWidth: 0,
-                        borderColor: 'transparent',
-                        backgroundColor: 'transparent',
-                        textStrokeWidth: 0,
-                        textStrokeColor: 'transparent',
-                        formatter: function(value, context) {
-                            if (value === null || value === undefined || isNaN(value) || value === 0) return '';
-                            let dataIndex = context.dataIndex;
-                            let dataset = context.dataset;
-                            let valStr = `${value.toLocaleString('pt-BR')} L/h`;
-
-                            if (dataIndex === 0) return valStr;
-
-                            let prevVal = dataset.data[dataIndex - 1];
-                            if (prevVal === null || prevVal === undefined || isNaN(prevVal) || prevVal === 0) return valStr;
-
-                            let diff = value - prevVal;
-                            let pct = (diff / prevVal) * 100;
-                            let statusText = diff > 0 ? 'aumentou' : (diff < 0 ? 'diminuiu' : 'se manteve');
-                            let symbol = diff > 0 ? '▲ +' : (diff < 0 ? '▼ ' : '= ');
-
-                            let diffFormatted = `${Math.round(diff).toLocaleString('pt-BR')} L/h`;
-                            let pctFormatted = `${diff >= 0 ? '+' : ''}${pct.toFixed(1)}%`;
-
-                            return [
-                                valStr,
-                                `${symbol}${diffFormatted} (${pctFormatted}) - ${statusText}`
-                            ];
-                        },
-                        color: function(context) {
-                            let dataIndex = context.dataIndex;
-                            let dataset = context.dataset;
-                            let value = dataset.data[dataIndex];
-                            if (dataIndex > 0) {
-                                let prevVal = dataset.data[dataIndex - 1];
-                                if (prevVal) {
-                                    let diff = value - prevVal;
-                                    if (diff > 0) return '#15803d'; 
-                                    if (diff < 0) return '#b91c1c'; 
-                                }
-                            }
-                            return '#1e293b'; 
-                        }
-                    }
+                    label: w,
+                    data: dataAverages,
+                    borderColor: colors[idx % colors.length],
+                    backgroundColor: colors[idx % colors.length],
+                    tension: 0.1,
+                    spanGaps: true,
+                    pointRadius: 6,
+                    pointHoverRadius: 8
                 };
             });
 
             renderChart('trendChart', 'trend', 'line', {
                 labels: months,
-                datasets: datasets
+                datasets: datasetsTrend
             }, {
                 responsive: true,
                 maintainAspectRatio: false,
-                layout: {
-                    padding: { top: 35, bottom: 15 }
-                },
-                plugins: {
-                    legend: { position: 'top', labels: { boxWidth: 12, font: { size: 11, weight: 'bold' } } }
-                },
-                scales: {
-                    y: { beginAtZero: false, grid: { color: '#f1f5f9' } },
-                    x: { grid: { display: false } }
-                }
-            });
-        }
-
-        function populateTab3Table(data) {
-            const tbody = document.getElementById('tab3TableBody');
-            if (!tbody) return;
-            tbody.innerHTML = '';
-
-            if (data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-400">Nenhum dado encontrado para os filtros selecionados.</td></tr>`;
-                return;
-            }
-
-            let grouped = {};
-            data.forEach(d => {
-                let key = `${d.Poco}__${d.MesLabel}`;
-                if (!grouped[key]) {
-                    grouped[key] = { poco: d.Poco, mes: d.MesLabel, totalFlow: 0, totalVol: 0, count: 0 };
-                }
-                grouped[key].totalFlow += d.Vazao;
-                grouped[key].totalVol += d.VolumeCalculado;
-                grouped[key].count += 1;
-            });
-
-            let sortedKeys = Object.keys(grouped).sort((a,b) => a.localeCompare(b, undefined, {numeric: true}));
-
-            sortedKeys.forEach(k => {
-                let item = grouped[k];
-                let avgFlow = Math.round(item.totalFlow / item.count);
-                let row = document.createElement('tr');
-                row.className = 'hover:bg-slate-50 transition border-b border-slate-100';
-                row.innerHTML = `
-                    <td class="py-2.5 px-4 font-bold text-slate-800">${item.poco}</td>
-                    <td class="py-2.5 px-4 font-semibold text-slate-600">${item.mes}</td>
-                    <td class="py-2.5 px-4 text-right font-semibold text-indigo-700">${avgFlow.toLocaleString('pt-BR')} L/h</td>
-                    <td class="py-2.5 px-4 text-right font-extrabold text-emerald-700">${Math.round(item.totalVol).toLocaleString('pt-BR')} L</td>
-                    <td class="py-2.5 px-4 text-center font-medium text-slate-500">${item.count}</td>
-                `;
-                tbody.appendChild(row);
-            });
-        }
-
-        function renderEntradaAguaChart(data) {
-            let wells = Array.from(new Set(data.map(d => d.Poco))).sort((a,b) => a.localeCompare(b, undefined, {numeric: true}));
-
-            let volData = wells.map(w => {
-                let items = data.filter(d => d.Poco === w);
-                return Math.round(items.reduce((acc, cur) => acc + cur.VolumeCalculado, 0));
-            });
-
-            let maxVol = Math.max(...volData, 100);
-
-            renderChart('entradaAguaChart', 'entradaAgua', 'bar', {
-                labels: wells,
-                datasets: [{
-                    label: 'Volume Total Extraído (L)',
-                    data: volData,
-                    backgroundColor: 'rgba(14, 165, 233, 0.85)',
-                    borderRadius: 6
-                }]
-            }, {
-                responsive: true,
-                maintainAspectRatio: false,
-                layout: {
-                    padding: { top: 25 }
-                },
                 plugins: {
                     datalabels: {
                         display: true,
-                        anchor: 'end',
                         align: 'top',
-                        offset: 4,
-                        font: { size: 10, weight: 'bold' },
-                        color: '#0f172a',
+                        anchor: 'center',
+                        offset: 8,
+                        backgroundColor: null,
                         borderWidth: 0,
-                        backgroundColor: 'transparent',
-                        formatter: (val) => val > 0 ? `${val.toLocaleString('pt-BR')} L` : ''
+                        borderColor: 'transparent',
+                        borderRadius: 0,
+                        padding: 0,
+                        font: {
+                            size: 9,
+                            weight: 'bold'
+                        },
+                        color: function(context) {
+                            const index = context.dataIndex;
+                            if (index === 0) return '#1e293b';
+                            const dataset = context.dataset;
+                            const current = dataset.data[index];
+                            const prev = dataset.data[index - 1];
+                            if (current === null || prev === null || current === undefined || prev === undefined) return '#1e293b';
+                            if (current > prev) return '#059669';
+                            if (current < prev) return '#dc2626';
+                            return '#475569';
+                        },
+                        formatter: function(value, context) {
+                            if (value === null || value === undefined || isNaN(value)) return '';
+                            const index = context.dataIndex;
+                            const valFormatted = Math.round(value).toLocaleString('pt-BR');
+                            
+                            if (index === 0) {
+                                return `${valFormatted} L/h`;
+                            }
+                            
+                            const prevValue = context.dataset.data[index - 1];
+                            if (prevValue === null || prevValue === undefined || isNaN(prevValue) || prevValue === 0) {
+                                return `${valFormatted} L/h`;
+                            }
+                            
+                            const diff = value - prevValue;
+                            const pct = (diff / prevValue) * 100;
+                            const diffStr = Math.abs(Math.round(diff)).toLocaleString('pt-BR');
+                            const pctStr = Math.abs(pct).toFixed(1).replace('.', ',');
+                            
+                            if (diff > 0) {
+                                return `${valFormatted} L/h\n▲ +${diffStr} L/h (+${pctStr}%)\nAumentou`;
+                            } else if (diff < 0) {
+                                return `${valFormatted} L/h\n▼ -${diffStr} L/h (-${pctStr}%)\nDiminuiu`;
+                            } else {
+                                return `${valFormatted} L/h\n▶ 0 L/h (0,0%)\nSe manteve`;
+                            }
+                        }
                     }
-                },
-                scales: {
-                    y: { 
-                        beginAtZero: true, 
-                        max: Math.ceil(maxVol * 1.22),
-                        grid: { color: '#f1f5f9' } 
-                    },
-                    x: { grid: { display: false } }
                 }
             });
         }
 
-        function renderSaidaAguaChart(data) {
-            let blocos = Array.from(new Set(data.map(d => d.Local))).sort((a,b) => a.localeCompare(b, undefined, {numeric: true}));
+        function resetFiltersTab2() {
+            document.querySelectorAll('.well-chk-2').forEach(c => c.checked = true);
+            document.querySelectorAll('.month-chk-2').forEach(c => c.checked = true);
+            const selAllW = document.getElementById('selectAllWellsTab2'); if(selAllW) selAllW.checked = true;
+            const selAllM = document.getElementById('selectAllMonthsTab2'); if(selAllM) selAllM.checked = true;
+            updateWellLabel(2);
+            updateMonthLabel(2);
+            applyFiltersTab2();
+        }
 
-            let volData = blocos.map(b => {
-                let items = data.filter(d => d.Local === b);
-                return Math.round(items.reduce((acc, cur) => acc + cur.VolumeCalculado, 0));
+        function applyFiltersTab3() {
+            const selectedWells = Array.from(document.querySelectorAll('.well-chk-3:checked')).map(c => c.value);
+            const selectedMonths = Array.from(document.querySelectorAll('.month-chk-3:checked')).map(c => c.value);
+
+            let filtered = globalRawData.filter(d => {
+                if (selectedWells.length > 0 && !selectedWells.includes(d.Poco)) return false;
+                if (selectedMonths.length > 0 && !selectedMonths.includes(d.MesLabel)) return false;
+                return true;
+            });
+
+            // KPIs
+            const totalRec = filtered.length;
+            const avgFlow = totalRec > 0 ? (filtered.reduce((acc, curr) => acc + curr.Vazao, 0) / totalRec) : 0;
+            const avgVol = totalRec > 0 ? (filtered.reduce((acc, curr) => acc + curr.Volume, 0) / totalRec) : 0;
+
+            document.getElementById('kpi3_totalRecords').innerText = totalRec.toLocaleString('pt-BR');
+            document.getElementById('kpi3_avgFlow').innerText = `${Math.round(avgFlow).toLocaleString('pt-BR')} L/h`;
+            document.getElementById('kpi3_avgVolPerRecord').innerText = `${Math.round(avgVol).toLocaleString('pt-BR')} L`;
+
+            // Table Summary Grouped by Well & Month
+            const groupMap = {};
+            filtered.forEach(d => {
+                const key = `${d.Poco}___${d.MesLabel}`;
+                if (!groupMap[key]) {
+                    groupMap[key] = { poco: d.Poco, mes: d.MesLabel, totalVol: 0, sumFlow: 0, count: 0 };
+                }
+                groupMap[key].totalVol += d.Volume;
+                groupMap[key].sumFlow += d.Vazao;
+                groupMap[key].count++;
+            });
+
+            const rows = Object.values(groupMap).sort((a,b) => a.poco.localeCompare(b.poco, undefined, {numeric: true, sensitivity: 'base'}));
+            const tbody = document.getElementById('tab3TableBody');
+            
+            if (rows.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-400">Nenhum registro encontrado para os filtros selecionados.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = rows.map(r => `
+                <tr class="hover:bg-slate-50 transition">
+                    <td class="py-2.5 px-4 font-semibold text-slate-800">${r.poco}</td>
+                    <td class="py-2.5 px-4 text-slate-600">${r.mes}</td>
+                    <td class="py-2.5 px-4 text-right font-medium text-blue-600">${Math.round(r.sumFlow / r.count).toLocaleString('pt-BR')} L/h</td>
+                    <td class="py-2.5 px-4 text-right font-bold text-emerald-600">${Math.round(r.totalVol).toLocaleString('pt-BR')} L</td>
+                    <td class="py-2.5 px-4 text-center text-slate-500">${r.count}</td>
+                </tr>
+            `).join('');
+        }
+
+        function resetFiltersTab3() {
+            document.querySelectorAll('.well-chk-3').forEach(c => c.checked = true);
+            document.querySelectorAll('.month-chk-3').forEach(c => c.checked = true);
+            const selAllW = document.getElementById('selectAllWellsTab3'); if(selAllW) selAllW.checked = true;
+            const selAllM = document.getElementById('selectAllMonthsTab3'); if(selAllM) selAllM.checked = true;
+            updateWellLabel(3);
+            updateMonthLabel(3);
+            applyFiltersTab3();
+        }
+
+        function applyFiltersTab4() {
+            const selectedWells = Array.from(document.querySelectorAll('.well-chk-4:checked')).map(c => c.value);
+            const selectedLocais = Array.from(document.querySelectorAll('.local-chk-4:checked')).map(c => c.value);
+            const selectedTipoEmissor = document.getElementById('filterTipoEmissorTab4').value;
+            const startDate = document.getElementById('filterStartDateTab4').value;
+            const endDate = document.getElementById('filterEndDateTab4').value;
+
+            // Filtro Entrada
+            let filteredEntrada = globalRawData.filter(d => {
+                if (selectedWells.length > 0 && !selectedWells.includes(d.Poco)) return false;
+                if (startDate && d.IsoDate < startDate) return false;
+                if (endDate && d.IsoDate > endDate) return false;
+                return true;
+            });
+
+            const totalVolEntrada = filteredEntrada.reduce((acc, curr) => acc + curr.VolumeCalculado, 0);
+            const avgHours = filteredEntrada.length > 0 ? (filteredEntrada.reduce((acc, curr) => acc + curr.Horas, 0) / filteredEntrada.length) : 0;
+            const maxPeakVol = filteredEntrada.length > 0 ? Math.max(...filteredEntrada.map(d => d.VolumeCalculado)) : 0;
+
+            document.getElementById('kpi4_totalVol').innerText = `${Math.round(totalVolEntrada).toLocaleString('pt-BR')} L`;
+            document.getElementById('kpi4_avgHours').innerText = `${avgHours.toFixed(1)} h/dia`;
+            document.getElementById('kpi4_maxPeak').innerText = `${Math.round(maxPeakVol).toLocaleString('pt-BR')} L`;
+
+            // Gráfico Entrada de Água com Rótulos Visíveis no Topo das Barras
+            const wellsEntrada = Array.from(new Set(filteredEntrada.map(d => d.Poco))).sort((a,b) => a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'}));
+            const volByWell = wellsEntrada.map(w => {
+                const sub = filteredEntrada.filter(d => d.Poco === w);
+                return Math.round(sub.reduce((acc, curr) => acc + curr.VolumeCalculado, 0));
+            });
+            const hoursByWell = wellsEntrada.map(w => {
+                const sub = filteredEntrada.filter(d => d.Poco === w);
+                const totalH = sub.reduce((acc, curr) => acc + curr.Horas, 0);
+                return parseFloat(totalH.toFixed(1));
+            });
+
+            renderChart('entradaAguaChart', 'entradaAgua', 'bar', {
+                labels: wellsEntrada,
+                datasets: [
+                    {
+                        type: 'bar',
+                        label: 'Volume Total Jorado (L)',
+                        data: volByWell,
+                        backgroundColor: 'rgba(2, 132, 199, 0.85)',
+                        borderColor: '#0284c7',
+                        borderWidth: 1,
+                        borderRadius: 6,
+                        yAxisID: 'y'
+                    },
+                    {
+                        type: 'line',
+                        label: 'Horas Trabalhadas (h)',
+                        data: hoursByWell,
+                        borderColor: '#f59e0b',
+                        backgroundColor: '#f59e0b',
+                        borderWidth: 2,
+                        tension: 0.2,
+                        yAxisID: 'y1'
+                    }
+                ]
+            }, {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        type: 'linear',
+                        position: 'left',
+                        title: { display: true, text: 'Volume Total (L)' }
+                    },
+                    y1: {
+                        type: 'linear',
+                        position: 'right',
+                        grid: { drawOnChartArea: false },
+                        title: { display: true, text: 'Horas (h)' }
+                    }
+                },
+                plugins: {
+                    datalabels: {
+                        display: function(context) {
+                            return context.dataset.type === 'bar';
+                        },
+                        anchor: 'end',
+                        align: 'end',
+                        offset: 4,
+                        formatter: (val) => val > 0 ? `${val.toLocaleString('pt-BR')} L` : '',
+                        font: { size: 10, weight: 'bold' },
+                        color: '#0369a1'
+                    }
+                }
+            });
+
+            // Filtro Saída
+            let filteredSaida = globalSaidaData.filter(d => {
+                if (selectedWells.length > 0 && d.Poco && !selectedWells.includes(d.Poco)) return false;
+                if (selectedLocais.length > 0 && !selectedLocais.includes(d.Local)) return false;
+                if (selectedTipoEmissor !== 'ALL' && d.TipoEmissor !== selectedTipoEmissor) return false;
+                if (startDate && d.IsoDate < startDate) return false;
+                if (endDate && d.IsoDate > endDate) return false;
+                return true;
+            });
+
+            const totalSaidaVol = filteredSaida.reduce((acc, curr) => acc + curr.VolumeCalculado, 0);
+            const totalSaidaTempo = filteredSaida.reduce((acc, curr) => acc + curr.DiffHours, 0);
+            const uniqueSaidaLocais = new Set(filteredSaida.map(d => d.Local)).size;
+
+            document.getElementById('kpi4_saidaVol').innerText = `${Math.round(totalSaidaVol).toLocaleString('pt-BR')} L`;
+            document.getElementById('kpi4_saidaTempo').innerText = `${totalSaidaTempo.toFixed(1)} h`;
+            document.getElementById('kpi4_saidaLocais').innerText = uniqueSaidaLocais;
+
+            // Gráfico Saída de Água por Bloco
+            const locaisSaida = Array.from(new Set(filteredSaida.map(d => d.Local))).sort((a,b) => a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'}));
+            const volSaidaByLocal = locaisSaida.map(loc => {
+                const sub = filteredSaida.filter(d => d.Local === loc);
+                return Math.round(sub.reduce((acc, curr) => acc + curr.VolumeCalculado, 0));
             });
 
             renderChart('saidaAguaChart', 'saidaAgua', 'bar', {
-                labels: blocos,
+                labels: locaisSaida,
                 datasets: [{
-                    label: 'Volume Irrigado (L)',
-                    data: volData,
+                    label: 'Volume Irrigado por Bloco (L)',
+                    data: volSaidaByLocal,
                     backgroundColor: 'rgba(16, 185, 129, 0.85)',
                     borderRadius: 6
                 }]
             }, {
                 responsive: true,
                 maintainAspectRatio: false,
-                layout: {
-                    padding: { top: 25 }
-                },
                 plugins: {
                     datalabels: {
-                        display: true,
                         anchor: 'end',
-                        align: 'top',
-                        color: '#065f46',
-                        font: { weight: 'bold', size: 10 },
-                        formatter: (val) => val > 0 ? `${val.toLocaleString('pt-BR')} L` : ''
+                        align: 'end',
+                        formatter: (val) => val > 0 ? val.toLocaleString('pt-BR') : '',
+                        font: { size: 10, weight: 'bold' },
+                        color: '#065f46'
                     }
-                },
-                scales: {
-                    y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
-                    x: { grid: { display: false } }
                 }
             });
+
+            // NOVO GRÁFICO E TABELA DE EMISSORES (MICRO E ASPERORES) POR BLOCO
+            renderEmissoresBlockSection(filteredSaida);
         }
 
-        function renderEmissoresSectionTab4() {
-            const selectedLocais = getSelectedLocaisTab4();
-            const startDate = document.getElementById('filterStartDateTab4').value;
-            const endDate = document.getElementById('filterEndDateTab4').value;
-            const filterTipo = document.getElementById('filterTipoEmissorTab4') ? document.getElementById('filterTipoEmissorTab4').value : 'ALL';
+        function renderEmissoresBlockSection(filteredSaida) {
+            // Agrupamento por Bloco em Ordem Alfabética
+            const blockEmissoresMap = {};
+            let globalTotalEmissores = 0;
+            let globalTotalMicro = 0;
+            let globalTotalAspersor = 0;
+            let globalVazaoHoraTotal = 0;
+            let maxDateObj = null;
 
-            let filtered = globalSaidaData.filter(d => {
-                if (!selectedLocais.includes(d.Local)) return false;
-                if (startDate && d.IsoDate < startDate) return false;
-                if (endDate && d.IsoDate > endDate) return false;
-
-                if (filterTipo === 'MICRO' && !d.TipoEmissor.includes('Micro')) return false;
-                if (filterTipo === 'ASPERSOR' && !d.TipoEmissor.includes('Aspersor')) return false;
-
-                return true;
-            });
-
-            // Agrupamento por Bloco (Local)
-            let mapBloco = {};
-            filtered.forEach(d => {
-                let bloco = d.Local;
-                if (!mapBloco[bloco]) {
-                    mapBloco[bloco] = {
-                        bloco: bloco,
-                        qtdMicro: 0,
-                        qtdAspersor: 0,
+            filteredSaida.forEach(d => {
+                const bKey = d.Local;
+                if (!blockEmissoresMap[bKey]) {
+                    blockEmissoresMap[bKey] = {
+                        bloco: bKey,
+                        totalMicro: 0,
+                        totalAspersor: 0,
                         valvulasSet: new Set(),
-                        latestDate: null
+                        latestDate: d.DataObj,
+                        latestDateStr: d.DataFormatted
                     };
                 }
 
-                if (d.TipoEmissor.includes('Micro')) {
-                    mapBloco[bloco].qtdMicro += d.Qtde;
+                if (d.DataObj && (!blockEmissoresMap[bKey].latestDate || d.DataObj > blockEmissoresMap[bKey].latestDate)) {
+                    blockEmissoresMap[bKey].latestDate = d.DataObj;
+                    blockEmissoresMap[bKey].latestDateStr = d.DataFormatted;
+                }
+
+                if (d.DataObj && (!maxDateObj || d.DataObj > maxDateObj)) {
+                    maxDateObj = d.DataObj;
+                }
+
+                if (d.Valvulas) blockEmissoresMap[bKey].valvulasSet.add(d.Valvulas);
+
+                if (d.TipoEmissor === 'MICRO') {
+                    blockEmissoresMap[bKey].totalMicro += d.Qtde;
+                    globalTotalMicro += d.Qtde;
+                    globalVazaoHoraTotal += (d.Qtde * 90);
+                } else if (d.TipoEmissor === 'ASPERSOR') {
+                    blockEmissoresMap[bKey].totalAspersor += d.Qtde;
+                    globalTotalAspersor += d.Qtde;
+                    globalVazaoHoraTotal += (d.Qtde * 520);
                 } else {
-                    mapBloco[bloco].qtdAspersor += d.Qtde;
-                }
-
-                if (d.Valvulas) {
-                    mapBloco[bloco].valvulasSet.add(d.Valvulas);
-                }
-
-                if (d.DataObj) {
-                    if (!mapBloco[bloco].latestDate || d.DataObj > mapBloco[bloco].latestDate) {
-                        mapBloco[bloco].latestDate = d.DataObj;
+                    let flow = d.FlowRate > 0 ? d.FlowRate : 90;
+                    if (flow === 520) {
+                        blockEmissoresMap[bKey].totalAspersor += d.Qtde;
+                        globalTotalAspersor += d.Qtde;
+                    } else {
+                        blockEmissoresMap[bKey].totalMicro += d.Qtde;
+                        globalTotalMicro += d.Qtde;
                     }
+                    globalVazaoHoraTotal += (d.Qtde * flow);
                 }
             });
+
+            globalTotalEmissores = globalTotalMicro + globalTotalAspersor;
+
+            // Atualização dos Campos Gerais (KPIs)
+            document.getElementById('kpi4_totalEmissores').innerText = globalTotalEmissores.toLocaleString('pt-BR');
+            document.getElementById('kpi4_totalMicro').innerText = globalTotalMicro.toLocaleString('pt-BR');
+            document.getElementById('kpi4_totalAspersor').innerText = globalTotalAspersor.toLocaleString('pt-BR');
+            document.getElementById('kpi4_vazaoHoraTotal').innerText = `${Math.round(globalVazaoHoraTotal).toLocaleString('pt-BR')} L/h`;
+            document.getElementById('kpi4_dataAtualizacao').innerText = maxDateObj ? maxDateObj.toLocaleDateString('pt-BR') : '--/--/----';
 
             // Ordenação Alfabética dos Blocos
-            let blocosOrdenados = Object.keys(mapBloco).sort((a,b) => a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'}));
+            const sortedBlocos = Object.keys(blockEmissoresMap).sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
 
-            let totalMicroGeral = 0;
-            let totalAspersorGeral = 0;
-            let vazaoTotalGeral = 0;
-            let maxDateGeral = null;
+            const dataMicroList = [];
+            const dataAspersorList = [];
+            const dataFlowHoraList = [];
 
-            let tableRows = [];
-            let chartMicroData = [];
-            let chartAspersorData = [];
-
-            blocosOrdenados.forEach(b => {
-                let item = mapBloco[b];
-                let totalEmissoresBloco = item.qtdMicro + item.qtdAspersor;
-                let vazaoHoraBloco = (item.qtdMicro * 90) + (item.qtdAspersor * 520);
-
-                totalMicroGeral += item.qtdMicro;
-                totalAspersorGeral += item.qtdAspersor;
-                vazaoTotalGeral += vazaoHoraBloco;
-
-                if (item.latestDate) {
-                    if (!maxDateGeral || item.latestDate > maxDateGeral) maxDateGeral = item.latestDate;
-                }
-
-                chartMicroData.push(item.qtdMicro);
-                chartAspersorData.push(item.qtdAspersor);
-
-                let tipoStr = '';
-                if (item.qtdMicro > 0 && item.qtdAspersor > 0) tipoStr = 'Ambos (Micro + Aspersor)';
-                else if (item.qtdMicro > 0) tipoStr = 'Micro (90 L/h)';
-                else if (item.qtdAspersor > 0) tipoStr = 'Aspersor (520 L/h)';
-                else tipoStr = 'Sem Registro';
-
-                let detStr = [];
-                if (item.qtdMicro > 0) detStr.push(`Micro: ${item.qtdMicro.toLocaleString('pt-BR')}`);
-                if (item.qtdAspersor > 0) detStr.push(`Aspersor: ${item.qtdAspersor.toLocaleString('pt-BR')}`);
-
-                let valvulasList = Array.from(item.valvulasSet).sort((x,y) => x - y);
-                let valvulasStr = valvulasList.length > 0 ? valvulasList.join(' e ') : '1';
-
-                tableRows.push({
-                    bloco: b,
-                    tipo: tipoStr,
-                    totalEmissores: totalEmissoresBloco,
-                    detalhes: detStr.join(' | ') || '-',
-                    valvulas: valvulasStr,
-                    vazaoHora: vazaoHoraBloco,
-                    dataAtualizacao: item.latestDate ? item.latestDate.toLocaleDateString('pt-BR') : '--/--/----'
-                });
+            sortedBlocos.forEach(b => {
+                const item = blockEmissoresMap[b];
+                dataMicroList.push(item.totalMicro);
+                dataAspersorList.push(item.totalAspersor);
+                const flowTotalBloco = (item.totalMicro * 90) + (item.totalAspersor * 520);
+                dataFlowHoraList.push(flowTotalBloco);
             });
 
-            // Atualização dos KPIs Gerais dos Emissores
-            document.getElementById('kpi4_totalEmissores').innerText = (totalMicroGeral + totalAspersorGeral).toLocaleString('pt-BR');
-            document.getElementById('kpi4_totalMicro').innerText = totalMicroGeral.toLocaleString('pt-BR');
-            document.getElementById('kpi4_totalAspersor').innerText = totalAspersorGeral.toLocaleString('pt-BR');
-            document.getElementById('kpi4_vazaoTotalEmissores').innerText = `${Math.round(vazaoTotalGeral).toLocaleString('pt-BR')} L/h`;
-            document.getElementById('kpi4_dataAtualizacao').innerText = maxDateGeral ? maxDateGeral.toLocaleDateString('pt-BR') : '--/--/----';
-
-            // Atualizar Gráfico de Emissores por Bloco
+            // Gráfico de Emissores por Bloco
             renderChart('emissoresBlocoChart', 'emissoresBloco', 'bar', {
-                labels: blocosOrdenados,
+                labels: sortedBlocos,
                 datasets: [
                     {
-                        label: 'Micro (90 L/h)',
-                        data: chartMicroData,
-                        backgroundColor: 'rgba(6, 182, 212, 0.85)',
+                        label: 'Qtd Micro (90 L/h)',
+                        data: dataMicroList,
+                        backgroundColor: '#0284c7',
                         borderRadius: 4
                     },
                     {
-                        label: 'Aspersores (520 L/h)',
-                        data: chartAspersorData,
-                        backgroundColor: 'rgba(16, 185, 129, 0.85)',
+                        label: 'Qtd Aspersor (520 L/h)',
+                        data: dataAspersorList,
+                        backgroundColor: '#6366f1',
+                        borderRadius: 4
+                    },
+                    {
+                        label: 'Vazão Total p/ Hora (L/h)',
+                        data: dataFlowHoraList,
+                        backgroundColor: '#10b981',
                         borderRadius: 4
                     }
                 ]
@@ -2711,96 +2511,187 @@
                 plugins: {
                     datalabels: {
                         anchor: 'end',
-                        align: 'top',
-                        color: '#1e293b',
-                        font: { weight: 'bold', size: 9 },
-                        formatter: (val) => val > 0 ? `${val.toLocaleString('pt-BR')}` : ''
+                        align: 'end',
+                        formatter: (val) => val > 0 ? val.toLocaleString('pt-BR') : '',
+                        font: { size: 9, weight: 'bold' },
+                        color: '#1e293b'
                     }
-                },
-                scales: {
-                    y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
-                    x: { grid: { display: false } }
                 }
             });
 
-            // Atualizar Tabela Detalhada de Emissores
+            // Tabela Detalhada em Ordem Alfabética
             const tbody = document.getElementById('tab4EmissoresTableBody');
-            if (!tbody) return;
-            tbody.innerHTML = '';
-
-            if (tableRows.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" class="py-6 text-center text-slate-400">Nenhum emissor encontrado para os filtros selecionados.</td></tr>`;
+            if (sortedBlocos.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="py-6 text-center text-slate-400">Nenhum bloco encontrado para os filtros selecionados.</td></tr>`;
                 return;
             }
 
-            tableRows.forEach(row => {
-                let tr = document.createElement('tr');
-                tr.className = 'hover:bg-slate-50 transition border-b border-slate-100';
-                tr.innerHTML = `
-                    <td class="table-custom-cell font-bold text-slate-800">${row.bloco}</td>
-                    <td class="table-custom-cell font-semibold text-blue-700">${row.tipo}</td>
-                    <td class="table-custom-cell font-extrabold text-slate-900">${row.totalEmissores.toLocaleString('pt-BR')}</td>
-                    <td class="table-custom-cell text-slate-600">${row.detalhes}</td>
-                    <td class="table-custom-cell font-bold text-amber-700">${row.valvulas}</td>
-                    <td class="table-custom-cell font-extrabold text-emerald-700">${row.vazaoHora.toLocaleString('pt-BR')} L/h</td>
-                    <td class="table-custom-cell text-slate-500">${row.dataAtualizacao}</td>
+            tbody.innerHTML = sortedBlocos.map(bKey => {
+                const item = blockEmissoresMap[bKey];
+                const totalEmissoresBloco = item.totalMicro + item.totalAspersor;
+                const flowTotalBloco = (item.totalMicro * 90) + (item.totalAspersor * 520);
+
+                let tipoEmissorStr = 'Não Informado';
+                let vazaoUnitStr = '-';
+
+                if (item.totalMicro > 0 && item.totalAspersor > 0) {
+                    tipoEmissorStr = `Micro (${item.totalMicro}) e Aspersor (${item.totalAspersor})`;
+                    vazaoUnitStr = `Micro: 90 L/h | Aspersor: 520 L/h`;
+                } else if (item.totalMicro > 0) {
+                    tipoEmissorStr = `Micro (90 L/h)`;
+                    vazaoUnitStr = `90 L/h`;
+                } else if (item.totalAspersor > 0) {
+                    tipoEmissorStr = `Aspersor (520 L/h)`;
+                    vazaoUnitStr = `520 L/h`;
+                }
+
+                let valvulasStr = Array.from(item.valvulasSet).sort().join(' ou ');
+                if (!valvulasStr) valvulasStr = '2 ou 3';
+
+                return `
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="py-2.5 px-3 font-extrabold text-slate-800">${item.bloco}</td>
+                        <td class="py-2.5 px-3 font-bold text-blue-600">${totalEmissoresBloco.toLocaleString('pt-BR')}</td>
+                        <td class="py-2.5 px-3 text-slate-700 font-semibold">${tipoEmissorStr}</td>
+                        <td class="py-2.5 px-3 text-slate-600 font-medium">${valvulasStr}</td>
+                        <td class="py-2.5 px-3 text-slate-600 font-medium">${vazaoUnitStr}</td>
+                        <td class="py-2.5 px-3 font-extrabold text-emerald-600">${Math.round(flowTotalBloco).toLocaleString('pt-BR')} L/h</td>
+                        <td class="py-2.5 px-3 text-slate-500">${item.latestDateStr || '-'}</td>
+                    </tr>
                 `;
-                tbody.appendChild(tr);
-            });
+            }).join('');
         }
 
-        function renderResumoBlocoChart(data) {
-            let sortedData = [...data].sort((a,b) => a.DataObj - b.DataObj);
-            let labels = sortedData.map(d => `${d.Local} (${d.DataFormatted})`);
-            let values = sortedData.map(d => Math.round(d.VolumeCalculado));
+        function resetFiltersTab4() {
+            document.querySelectorAll('.well-chk-4').forEach(c => c.checked = true);
+            document.querySelectorAll('.local-chk-4').forEach(c => c.checked = true);
+            const selAllW = document.getElementById('selectAllWellsTab4'); if(selAllW) selAllW.checked = true;
+            const selAllL = document.getElementById('selectAllLocaisTab4'); if(selAllL) selAllL.checked = true;
+            document.getElementById('filterTipoEmissorTab4').value = 'ALL';
+            document.getElementById('filterStartDateTab4').value = '';
+            document.getElementById('filterEndDateTab4').value = '';
+            updateWellLabel(4);
+            updateLocalLabelTab4();
+            applyFiltersTab4();
+        }
+
+        function applyFiltersTab5() {
+            const selectedBlocos = Array.from(document.querySelectorAll('.bloco-chk-5:checked')).map(c => c.value);
+            const selectedCiclos = Array.from(document.querySelectorAll('.ciclo-chk-5:checked')).map(c => c.value);
+            const startDate = document.getElementById('filterStartDateTab5').value;
+            const endDate = document.getElementById('filterEndDateTab5').value;
+
+            let filtered = globalSaidaData.filter(d => {
+                if (selectedBlocos.length > 0 && !selectedBlocos.includes(d.Local)) return false;
+                if (selectedCiclos.length > 0 && !selectedCiclos.includes(d.Ciclo)) return false;
+                if (startDate && d.IsoDate < startDate) return false;
+                if (endDate && d.IsoDate > endDate) return false;
+                return true;
+            });
+
+            // KPIs
+            const totalVol = filtered.reduce((acc, curr) => acc + curr.VolumeCalculado, 0);
+            const totalPlantas = filtered.reduce((acc, curr) => acc + curr.TotalTransplantio, 0);
+            const uniqueDays = new Set(filtered.map(d => d.IsoDate)).size;
+            const ltrsPlanta = totalPlantas > 0 ? (totalVol / totalPlantas) : 0;
+            const ltrsDiaPlanta = (totalPlantas > 0 && uniqueDays > 0) ? (totalVol / totalPlantas / uniqueDays) : 0;
+
+            let maxColheita = null;
+            filtered.forEach(d => {
+                if (d.DataColheita && (!maxColheita || d.DataColheita > maxColheita)) {
+                    maxColheita = d.DataColheita;
+                }
+            });
+
+            document.getElementById('kpi5_volIrrigado').innerText = `${Math.round(totalVol).toLocaleString('pt-BR')} L`;
+            document.getElementById('kpi5_transplantado').innerText = `${Math.round(totalPlantas).toLocaleString('pt-BR')} plantas`;
+            document.getElementById('kpi5_ltrsPlanta').innerText = `${ltrsPlanta.toFixed(1)} L/planta`;
+            document.getElementById('kpi5_ltrsDiaPlanta').innerText = `${ltrsDiaPlanta.toFixed(2)} L/dia/planta`;
+            document.getElementById('kpi5_diasIrrigados').innerText = `${uniqueDays} dias`;
+            document.getElementById('kpi5_fimColheita').innerText = maxColheita ? maxColheita.toLocaleDateString('pt-BR') : '--/--/----';
+
+            // Chart Volume Irrigado por Dia (Por Bloco)
+            const dates = Array.from(new Set(filtered.map(d => d.DataFormatted)));
+            const blocos = Array.from(new Set(filtered.map(d => d.Local))).sort((a,b) => a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'}));
+            const colors = ['#2563eb', '#059669', '#d97706', '#dc2626', '#8b5cf6', '#06b6d4', '#ec4899', '#f59e0b'];
+
+            const datasetsBloco = blocos.map((b, idx) => {
+                const dataMap = {};
+                filtered.filter(d => d.Local === b).forEach(d => {
+                    dataMap[d.DataFormatted] = (dataMap[d.DataFormatted] || 0) + d.VolumeCalculado;
+                });
+                return {
+                    label: b,
+                    data: dates.map(dt => dataMap[dt] ? Math.round(dataMap[dt]) : 0),
+                    backgroundColor: colors[idx % colors.length],
+                    borderRadius: 4
+                };
+            });
 
             renderChart('resumoBlocoChart', 'resumoBloco', 'bar', {
-                labels: labels,
-                datasets: [{
-                    label: 'Volume Total Irrigado (L)',
-                    data: values,
-                    backgroundColor: 'rgba(37, 99, 235, 0.85)',
-                    borderRadius: 4
-                }]
+                labels: dates,
+                datasets: datasetsBloco
             }, {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
                     datalabels: {
                         anchor: 'end',
-                        align: 'top',
-                        color: '#1d4ed8',
-                        font: { weight: 'bold', size: 9 },
-                        formatter: (val) => val > 0 ? `${val.toLocaleString('pt-BR')} L` : ''
+                        align: 'end',
+                        formatter: (val) => val > 0 ? val.toLocaleString('pt-BR') : '',
+                        font: { size: 9, weight: 'bold' }
                     }
-                },
-                scales: {
-                    y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
-                    x: { grid: { display: false } }
                 }
             });
         }
 
-        function renderManutencaoCharts(data) {
-            let pocos = Array.from(new Set(data.map(d => d.Poco))).sort((a,b) => a.localeCompare(b, undefined, {numeric: true}));
+        function resetFiltersTab5() {
+            document.querySelectorAll('.bloco-chk-5').forEach(c => c.checked = true);
+            document.querySelectorAll('.ciclo-chk-5').forEach(c => c.checked = true);
+            const selAllB = document.getElementById('selectAllBlocosTab5'); if(selAllB) selAllB.checked = true;
+            const selAllC = document.getElementById('selectAllCiclosTab5'); if(selAllC) selAllC.checked = true;
+            document.getElementById('filterStartDateTab5').value = '';
+            document.getElementById('filterEndDateTab5').value = '';
+            updateBlocoLabelTab5();
+            updateCicloLabelTab5();
+            applyFiltersTab5();
+        }
 
-            let vazaoVals = pocos.map(p => {
-                let items = data.filter(d => d.Poco === p);
-                return Math.round(items.reduce((acc, cur) => acc + cur.VazaoInicial, 0) / (items.length || 1));
+        function applyFiltersTab6() {
+            const selectedPocos = Array.from(document.querySelectorAll('.well-chk-6:checked')).map(c => c.value);
+            const selectedMonths = Array.from(document.querySelectorAll('.month-chk-6:checked')).map(c => c.value);
+            const selectedResps = Array.from(document.querySelectorAll('.resp-chk-6:checked')).map(c => c.value);
+
+            let filtered = globalManutencaoData.filter(d => {
+                if (selectedPocos.length > 0 && !selectedPocos.includes(d.Poco)) return false;
+                if (selectedMonths.length > 0 && !selectedMonths.includes(d.MesLabel)) return false;
+                if (selectedResps.length > 0 && !selectedResps.includes(d.ResponsavelTec)) return false;
+                return true;
             });
 
-            let profVals = pocos.map(p => {
-                let items = data.filter(d => d.Poco === p);
-                return Math.round(items.reduce((acc, cur) => acc + cur.Profundidade, 0) / (items.length || 1));
-            });
+            // KPIs
+            const totalPocos = new Set(filtered.map(d => d.Poco)).size;
+            const totalManut = filtered.length;
+            const avgProf = totalManut > 0 ? (filtered.reduce((acc, curr) => acc + curr.Profundidade, 0) / totalManut) : 0;
+            const avgVazao = totalManut > 0 ? (filtered.reduce((acc, curr) => acc + curr.VazaoInicial, 0) / totalManut) : 0;
+
+            document.getElementById('kpi6_totalPocos').innerText = totalPocos;
+            document.getElementById('kpi6_totalManutencao').innerText = totalManut;
+            document.getElementById('kpi6_avgProfundidade').innerText = `${avgProf.toFixed(1)} m`;
+            document.getElementById('kpi6_avgVazaoInicial').innerText = `${Math.round(avgVazao).toLocaleString('pt-BR')} L/h`;
+
+            // Gráficos
+            const pocosList = filtered.map(d => d.Poco);
+            const vazaolist = filtered.map(d => d.VazaoInicial);
+            const profList = filtered.map(d => d.Profundidade);
 
             renderChart('manutencaoVazaoChart', 'manutencaoVazao', 'bar', {
-                labels: pocos,
+                labels: pocosList,
                 datasets: [{
                     label: 'Vazão Inicial (L/h)',
-                    data: vazaoVals,
+                    data: vazaolist,
                     backgroundColor: 'rgba(37, 99, 235, 0.85)',
-                    borderRadius: 4
+                    borderRadius: 6
                 }]
             }, {
                 responsive: true,
@@ -2808,25 +2699,20 @@
                 plugins: {
                     datalabels: {
                         anchor: 'end',
-                        align: 'top',
-                        color: '#1d4ed8',
-                        font: { weight: 'bold', size: 10 },
-                        formatter: (val) => val > 0 ? `${val.toLocaleString('pt-BR')} L/h` : ''
+                        align: 'end',
+                        formatter: (val) => val > 0 ? val.toLocaleString('pt-BR') : '',
+                        font: { size: 10, weight: 'bold' }
                     }
-                },
-                scales: {
-                    y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
-                    x: { grid: { display: false } }
                 }
             });
 
             renderChart('manutencaoProfundidadeChart', 'manutencaoProf', 'bar', {
-                labels: pocos,
+                labels: pocosList,
                 datasets: [{
                     label: 'Profundidade (m)',
-                    data: profVals,
+                    data: profList,
                     backgroundColor: 'rgba(99, 102, 241, 0.85)',
-                    borderRadius: 4
+                    borderRadius: 6
                 }]
             }, {
                 responsive: true,
@@ -2834,47 +2720,52 @@
                 plugins: {
                     datalabels: {
                         anchor: 'end',
-                        align: 'top',
-                        color: '#4338ca',
-                        font: { weight: 'bold', size: 10 },
-                        formatter: (val) => val > 0 ? `${val} m` : ''
+                        align: 'end',
+                        formatter: (val) => val > 0 ? `${val} m` : '',
+                        font: { size: 10, weight: 'bold' }
                     }
-                },
-                scales: {
-                    y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
-                    x: { grid: { display: false } }
                 }
             });
-        }
 
-        function populateTab6Table(data) {
+            // Tabela
             const tbody = document.getElementById('tab6TableBody');
-            if (!tbody) return;
-            tbody.innerHTML = '';
-
-            if (data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="10" class="py-6 text-center text-slate-400">Nenhum dado de manutenção encontrado para os filtros selecionados.</td></tr>`;
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="10" class="py-6 text-center text-slate-400">Nenhuma manutenção encontrada para os filtros selecionados.</td></tr>`;
                 return;
             }
 
-            data.forEach(item => {
-                let tr = document.createElement('tr');
-                tr.className = 'hover:bg-slate-50 transition border-b border-slate-100';
-                tr.innerHTML = `
-                    <td class="table-custom-cell font-bold text-slate-800">${item.Poco}</td>
-                    <td class="table-custom-cell text-slate-600">${item.DataManutStr}</td>
-                    <td class="table-custom-cell font-semibold text-indigo-700">${item.DataNovaManutStr}</td>
-                    <td class="table-custom-cell font-medium text-slate-700">${item.Marca}</td>
-                    <td class="table-custom-cell text-slate-600">${item.Modelo}</td>
-                    <td class="table-custom-cell font-bold text-amber-600">${item.CV > 0 ? item.CV : '-'}</td>
-                    <td class="table-custom-cell font-bold text-indigo-800">${item.Profundidade > 0 ? item.Profundidade + ' m' : '-'}</td>
-                    <td class="table-custom-cell font-extrabold text-emerald-700">${item.VazaoInicial > 0 ? item.VazaoInicial.toLocaleString('pt-BR') + ' L/h' : '-'}</td>
-                    <td class="table-custom-cell text-slate-600">${item.Instalador}</td>
-                    <td class="table-custom-cell font-semibold text-slate-800">${item.ResponsavelTec}</td>
-                `;
-                tbody.appendChild(tr);
-            });
+            tbody.innerHTML = filtered.map(r => `
+                <tr class="hover:bg-slate-50 transition">
+                    <td class="table-custom-cell font-extrabold text-slate-800">${r.Poco}</td>
+                    <td class="table-custom-cell text-slate-600">${r.DataManutStr}</td>
+                    <td class="table-custom-cell text-indigo-600 font-bold">${r.DataNovaManutStr}</td>
+                    <td class="table-custom-cell text-slate-700">${r.Marca}</td>
+                    <td class="table-custom-cell text-slate-600">${r.Modelo}</td>
+                    <td class="table-custom-cell font-semibold text-slate-800">${r.CV ? r.CV + ' CV' : '-'}</td>
+                    <td class="table-custom-cell font-bold text-amber-600">${r.Profundidade ? r.Profundidade + ' m' : '-'}</td>
+                    <td class="table-custom-cell font-bold text-blue-600">${r.VazaoInicial ? Math.round(r.VazaoInicial).toLocaleString('pt-BR') + ' L/h' : '-'}</td>
+                    <td class="table-custom-cell text-slate-600">${r.Instalador}</td>
+                    <td class="table-custom-cell text-slate-700 font-semibold">${r.ResponsavelTec}</td>
+                </tr>
+            `).join('');
         }
+
+        function resetFiltersTab6() {
+            document.querySelectorAll('.well-chk-6').forEach(c => c.checked = true);
+            document.querySelectorAll('.month-chk-6').forEach(c => c.checked = true);
+            document.querySelectorAll('.resp-chk-6').forEach(c => c.checked = true);
+            const selAllP = document.getElementById('selectAllPocosTab6'); if(selAllP) selAllP.checked = true;
+            const selAllM = document.getElementById('selectAllMonthsTab6'); if(selAllM) selAllM.checked = true;
+            const selAllR = document.getElementById('selectAllRespTab6'); if(selAllR) selAllR.checked = true;
+            updatePocoLabelTab6();
+            updateMonthLabelTab6();
+            updateRespLabelTab6();
+            applyFiltersTab6();
+        }
+
+        window.onload = function() {
+            // Pronta para receber interações ou autologin em desenvolvimento
+        };
     </script>
 </body>
 </html>
