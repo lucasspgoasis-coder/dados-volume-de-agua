@@ -971,6 +971,44 @@
                     </div>
                 </div>
 
+                <!-- GRÁFICO 02: COMPARAÇÃO DE IRRIGAÇÃO POR BLOCO E CICLO -->
+                <div class="glass-card p-6 shadow-sm">
+                    <div class="flex justify-between items-center mb-3 flex-wrap gap-3 border-b border-slate-100 pb-3">
+                        <div>
+                            <h3 class="text-lg font-extrabold text-slate-800 flex items-center gap-2">
+                                <i class="fa-solid fa-scale-balanced text-emerald-600"></i> Gráfico 02 — Irrigação por Bloco e por Ciclo
+                            </h3>
+                            <p class="text-xs text-slate-500 mt-0.5">Comparação em ordem alfabética: volume irrigado, litros/planta, litros/dia/planta, transplantado, entrada estimada e rendimento.</p>
+                        </div>
+                        <div class="relative shrink-0">
+                            <label class="block text-[11px] font-semibold text-slate-500 mb-0.5">Ciclo — somente este gráfico</label>
+                            <button type="button" onclick="toggleDropdown('dropdownGrafico02Ciclo')" class="bg-white border border-slate-300 rounded-lg text-xs px-3 py-1.5 shadow-sm w-48 flex justify-between items-center font-medium">
+                                <span id="labelGrafico02Ciclo">Todos os Ciclos</span>
+                                <i class="fa-solid fa-chevron-down text-slate-400 text-xs"></i>
+                            </button>
+                            <div id="dropdownGrafico02Ciclo" class="hidden absolute right-0 z-50 mt-1 w-60 bg-white border border-slate-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+                                <div class="p-2 border-b border-slate-200 bg-slate-50 sticky top-0 z-10">
+                                    <label class="flex items-center gap-2 px-1 py-1 hover:bg-slate-100 rounded cursor-pointer text-xs font-bold text-emerald-600">
+                                        <input type="checkbox" id="selectAllGrafico02Ciclo" checked onchange="toggleSelectAllGrafico02Ciclo(this)" class="w-3.5 h-3.5 text-emerald-600 rounded">
+                                        Selecionar Todos
+                                    </label>
+                                </div>
+                                <div class="p-2 flex flex-col gap-1" id="grafico02CicloCheckboxes"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chart-scroll-wrapper mt-3">
+                        <div id="chart-container-grafico02" class="chart-container-large" style="height:720px; min-width:1200px;">
+                            <canvas id="blocoCicloComparacaoChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="mt-3 text-[11px] text-slate-500 grid grid-cols-1 md:grid-cols-3 gap-2">
+                        <div class="bg-slate-50 rounded-lg px-3 py-2"><b>Entrada estimada:</b> soma de vazão média × tempo de funcionamento dos poços no período do ciclo.</div>
+                        <div class="bg-slate-50 rounded-lg px-3 py-2"><b>Rendimento:</b> volume irrigado do ciclo ÷ entrada estimada × 100.</div>
+                        <div class="bg-slate-50 rounded-lg px-3 py-2"><b>Participação:</b> volume do bloco ÷ volume irrigado total do ciclo × 100.</div>
+                    </div>
+                </div>
+
             </div>
 
             <!-- TAB 6: MANUTENÇÃO DAS BOMBAS -->
@@ -1092,6 +1130,44 @@
                     </div>
                 </div>
 
+                <!-- REGISTRO DE POÇOS PARADOS -->
+                <div class="glass-card p-5">
+                    <div class="mb-4">
+                        <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                            <i class="fa-solid fa-power-off text-rose-600"></i> Registro de Poço Parado
+                        </h3>
+                        <p class="text-xs text-slate-500">Dados da aba “Análise” da planilha DADOS POÇOS FAZ. OASIS, ordenados alfabeticamente por poço.</p>
+                    </div>
+                    <div class="w-full overflow-x-auto">
+                        <table class="w-full border-collapse text-xs">
+                            <thead><tr class="bg-slate-100/90 text-slate-700 uppercase tracking-wider border-b border-slate-200">
+                                <th class="table-custom-header">Poço</th>
+                                <th class="table-custom-header">Data de início</th>
+                                <th class="table-custom-header">Última data parado / Fim</th>
+                                <th class="table-custom-header">Total dias parado</th>
+                            </tr></thead>
+                            <tbody id="pocosParadosTableBody" class="divide-y divide-slate-100 text-slate-700 font-medium">
+                                <tr><td colspan="4" class="py-6 text-center text-slate-400">Aguardando dados da aba Análise...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- MEDIDORES R2 / R3 -->
+                <div class="glass-card p-5">
+                    <div class="mb-4">
+                        <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                            <i class="fa-solid fa-code-branch text-indigo-600"></i> Poços ligados aos Medidores R2 e R3
+                        </h3>
+                        <p class="text-xs text-slate-500">Linhas horizontais fixas para identificar claramente quais poços estão associados a cada medidor.</p>
+                    </div>
+                    <div class="chart-scroll-wrapper">
+                        <div class="chart-container-large" style="height:430px; min-width:1100px;">
+                            <canvas id="medidoresR2R3Chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div class="glass-card p-5">
                         <div class="mb-3">
@@ -1171,10 +1247,14 @@
         const SAIDA_SHEET = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSLCR4Ft4rx-g3QUa7onNWhiwHBHXbf07wLAkY3dmYxoYFHdz3meI5yBPXOeaLoIELTylglqAklMDKb/pub?output=csv";
 
         const MANUTENCAO_SHEET = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQzVEGWOj1yLfJ6R5T_c07PxKhoLLinFnLyziQwMYIIXQKUVPL7T1qwhMjkoCKrkBaas8dmw7DUXPeV/pub?output=csv";
+        // Fonte específica para os registros de poços parados e associação R2/R3.
+        // Preencha com a URL CSV pública da planilha DADOS POÇOS FAZ. OASIS, aba Análise.
+        const POCOS_ANALISE_SHEET = "";
 
         let globalRawData = [];
         let globalSaidaData = [];
         let globalManutencaoData = [];
+        let globalPocosAnaliseData = [];
 
         const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
 
@@ -1188,7 +1268,10 @@
             emissoresBloco: null,
             resumoBloco: null,
             manutencaoVazao: null,
-            manutencaoProf: null
+            manutencaoProf: null,
+            blocoCicloComparacao: null,
+            pocosParados: null,
+            medidoresR2R3: null
         };
 
         function handleLogin() {
@@ -1416,9 +1499,10 @@
             const pEntrada = Promise.all(ENTRADA_SHEETS.map(url => fetchSingleSheet(url)));
             const pSaida = fetchSingleSheet(SAIDA_SHEET);
             const pManutencao = fetchSingleSheet(MANUTENCAO_SHEET);
+            const pPocosAnalise = fetchSingleSheet(POCOS_ANALISE_SHEET);
 
-            Promise.all([pEntrada, pSaida, pManutencao])
-                .then(([resultsEntrada, resultsSaida, resultsManutencao]) => {
+            Promise.all([pEntrada, pSaida, pManutencao, pPocosAnalise])
+                .then(([resultsEntrada, resultsSaida, resultsManutencao, resultsPocosAnalise]) => {
                     let combinedEntrada = [];
                     resultsEntrada.forEach(data => {
                         if (Array.isArray(data)) combinedEntrada = combinedEntrada.concat(data);
@@ -1439,6 +1523,7 @@
                         } else {
                             globalManutencaoData = [];
                         }
+                        globalPocosAnaliseData = Array.isArray(resultsPocosAnalise) ? resultsPocosAnalise : [];
 
                         loadingIcon.className = "fa-solid fa-circle-check text-emerald-400";
                         
@@ -1455,6 +1540,9 @@
                         applyFiltersTab4();
                         applyFiltersTab5();
                         applyFiltersTab6();
+                         populateGrafico02CicloSelector();
+                         renderGrafico02Comparacao();
+                         renderPocosParados();
                     } catch (e) {
                         console.error("Erro ao processar dados:", e);
                         loadingIcon.className = "fa-solid fa-triangle-exclamation text-rose-400";
@@ -2643,6 +2731,8 @@
                     }
                 }
             });
+            populateGrafico02CicloSelector();
+            renderGrafico02Comparacao();
         }
 
         function resetFiltersTab5() {
@@ -2657,7 +2747,162 @@
             applyFiltersTab5();
         }
 
-        function applyFiltersTab6() {
+        function populateGrafico02CicloSelector() {
+            const ciclos = Array.from(new Set(globalSaidaData.map(d => d.Ciclo).filter(Boolean))).sort((a,b) => String(a).localeCompare(String(b), undefined, {numeric:true, sensitivity:'base'}));
+            const container = document.getElementById('grafico02CicloCheckboxes');
+            if (!container) return;
+            const previous = new Set(Array.from(document.querySelectorAll('.grafico02-ciclo-chk:checked')).map(c => c.value));
+            container.innerHTML = '';
+            ciclos.forEach(c => {
+                const checked = previous.size ? previous.has(c) : true;
+                const lbl = document.createElement('label');
+                lbl.className = 'flex items-center gap-2 px-1 py-0.5 hover:bg-slate-100 rounded cursor-pointer text-xs text-slate-700';
+                lbl.innerHTML = `<input type="checkbox" value="${String(c).replace(/"/g,'&quot;')}" ${checked ? 'checked' : ''} class="grafico02-ciclo-chk w-3.5 h-3.5 text-emerald-600 rounded" onchange="updateGrafico02CicloLabel(); renderGrafico02Comparacao();"> ${c}`;
+                container.appendChild(lbl);
+            });
+            updateGrafico02CicloLabel();
+        }
+
+        function updateGrafico02CicloLabel() {
+            const checked = document.querySelectorAll('.grafico02-ciclo-chk:checked');
+            const total = document.querySelectorAll('.grafico02-ciclo-chk');
+            const lbl = document.getElementById('labelGrafico02Ciclo');
+            if (!lbl) return;
+            if (checked.length === total.length) lbl.innerText = 'Todos os Ciclos';
+            else if (!checked.length) lbl.innerText = 'Nenhum Ciclo';
+            else lbl.innerText = `${checked.length} de ${total.length} Ciclos`;
+            const master = document.getElementById('selectAllGrafico02Ciclo');
+            if (master) master.checked = checked.length === total.length;
+        }
+
+        function toggleSelectAllGrafico02Ciclo(master) {
+            document.querySelectorAll('.grafico02-ciclo-chk').forEach(c => c.checked = master.checked);
+            updateGrafico02CicloLabel();
+            renderGrafico02Comparacao();
+        }
+
+        function renderGrafico02Comparacao() {
+            const selected = Array.from(document.querySelectorAll('.grafico02-ciclo-chk:checked')).map(c => c.value);
+            const cicloRows = globalSaidaData.filter(d => selected.length === 0 || selected.includes(d.Ciclo));
+            const cycleNames = Array.from(new Set(cicloRows.map(d => d.Ciclo).filter(Boolean)));
+            if (!cycleNames.length) {
+                renderChart('blocoCicloComparacaoChart', 'blocoCicloComparacao', 'bar', {labels:[],datasets:[]}, {responsive:true,maintainAspectRatio:false});
+                return;
+            }
+
+            // Entrada de água por ciclo: vazão média × tempo de funcionamento dos poços,
+            // usando as datas de irrigação que compõem cada ciclo.
+            const cycleInfo = {};
+            cycleNames.forEach(c => {
+                const rows = globalSaidaData.filter(d => d.Ciclo === c && d.DataObj);
+                const dates = rows.map(d => d.DataObj.getTime());
+                if (dates.length) cycleInfo[c] = {min:new Date(Math.min(...dates)), max:new Date(Math.max(...dates))};
+            });
+
+            const rowsByBlock = {};
+            cicloRows.forEach(d => {
+                const key = `${d.Ciclo}|||${d.Local}`;
+                if (!rowsByBlock[key]) rowsByBlock[key] = {ciclo:d.Ciclo, bloco:d.Local, volume:0, plantas:0, dates:new Set()};
+                rowsByBlock[key].volume += d.VolumeCalculado || 0;
+                rowsByBlock[key].plantas = Math.max(rowsByBlock[key].plantas, d.TotalTransplantio || 0);
+                if (d.IsoDate) rowsByBlock[key].dates.add(d.IsoDate);
+            });
+
+            const entries = Object.values(rowsByBlock).sort((a,b) => {
+                const c = String(a.ciclo).localeCompare(String(b.ciclo), undefined, {numeric:true, sensitivity:'base'});
+                return c || String(a.bloco).localeCompare(String(b.bloco), undefined, {numeric:true, sensitivity:'base'});
+            });
+            const cycleTotalVolume = {};
+            entries.forEach(r => cycleTotalVolume[r.ciclo] = (cycleTotalVolume[r.ciclo] || 0) + r.volume);
+
+            entries.forEach(r => {
+                const ci = cycleInfo[r.ciclo];
+                let entrada = 0;
+                if (ci) {
+                    entrada = globalRawData.filter(d => d.DataObj >= ci.min && d.DataObj <= ci.max)
+                        .reduce((acc,d) => acc + ((d.Vazao || 0) * (d.Horas || 0)), 0);
+                }
+                r.entrada = entrada;
+                r.ltrsPlanta = r.plantas > 0 ? r.volume / r.plantas : 0;
+                r.dias = r.dates.size;
+                r.ltrsDia = r.plantas > 0 && r.dias > 0 ? r.volume / r.plantas / r.dias : 0;
+                r.participacao = cycleTotalVolume[r.ciclo] > 0 ? (r.volume / cycleTotalVolume[r.ciclo]) * 100 : 0;
+                r.rendimento = entrada > 0 ? (r.volume / entrada) * 100 : 0;
+            });
+
+            const labels = entries.map(r => `${r.bloco} — ${r.ciclo}`);
+            renderChart('blocoCicloComparacaoChart', 'blocoCicloComparacao', 'bar', {
+                labels,
+                datasets: [
+                    {label:'Total irrigado (L)', data:entries.map(r=>Math.round(r.volume)), backgroundColor:'rgba(37,99,235,.82)', borderRadius:5, yAxisID:'y'},
+                    {label:'Entrada estimada (L)', data:entries.map(r=>Math.round(r.entrada)), backgroundColor:'rgba(245,158,11,.72)', borderRadius:5, yAxisID:'y'},
+                    {label:'Rendimento (%)', data:entries.map(r=>Number(r.rendimento.toFixed(1))), backgroundColor:'rgba(16,185,129,.78)', borderRadius:5, yAxisID:'yPct'}
+                ]
+            }, {
+                indexAxis:'y', responsive:true, maintainAspectRatio:false,
+                scales:{
+                    y:{ticks:{font:{size:10,weight:'600'}}},
+                    yPct:{position:'right',beginAtZero:true,grid:{drawOnChartArea:false},title:{display:true,text:'Rendimento (%)'}}
+                },
+                plugins:{
+                    legend:{position:'top'},
+                    datalabels:{display:true,anchor:'end',align:'right',clamp:true,font:{size:8,weight:'bold'},formatter:(v,ctx)=>{
+                        const r=entries[ctx.dataIndex];
+                        if(ctx.datasetIndex===0) return `${Math.round(r.volume).toLocaleString('pt-BR')} L\n${r.ltrsPlanta.toFixed(1)} L/pl\n${r.ltrsDia.toFixed(2)} L/d/pl\n${Math.round(r.plantas).toLocaleString('pt-BR')} pl\nPart. ${r.participacao.toFixed(1)}%`;
+                        if(ctx.datasetIndex===1) return r.entrada>0?`${Math.round(r.entrada).toLocaleString('pt-BR')} L`:'--';
+                        return r.entrada>0?`${r.rendimento.toFixed(1)}%`:'--';
+                    }}
+                }
+            });
+        }
+
+        function normalizeAnaliseRow(row) {
+            const keys = Object.keys(row || {});
+            const find = terms => keys.find(k => terms.some(t => k.toLowerCase().trim() === t || k.toLowerCase().includes(t)));
+            const pocoK = find(['poços parados','poço parado','poco parado','poço','poco']);
+            const inicioK = find(['inicio','início']);
+            const fimK = find(['fim','final','ultima','última']);
+            const medK = find(['medidor']);
+            const r2K = find(['r2']);
+            const r3K = find(['r3']);
+            return {poco:pocoK ? formatWellName(row[pocoK]) || String(row[pocoK]).trim() : null, inicio:inicioK ? parsePortugueseDate(row[inicioK]) : null, fim:fimK ? parsePortugueseDate(row[fimK]) : null, medidor:medK ? String(row[medK]||'').trim() : '', r2:r2K ? String(row[r2K]||'').trim() : '', r3:r3K ? String(row[r3K]||'').trim() : ''};
+        }
+
+        function renderPocosParados() {
+            const tbody = document.getElementById('pocosParadosTableBody');
+            if (!tbody) return;
+            if (!globalPocosAnaliseData.length) {
+                tbody.innerHTML = `<tr><td colspan="4" class="py-6 text-center text-slate-400">Fonte “DADOS POÇOS FAZ. OASIS — Análise” ainda não conectada. Informe a URL CSV pública para preencher este registro.</td></tr>`;
+                renderMedidoresR2R3([]);
+                return;
+            }
+            const rows = globalPocosAnaliseData.map(normalizeAnaliseRow).filter(r => r.poco);
+            rows.sort((a,b)=>String(a.poco).localeCompare(String(b.poco),undefined,{numeric:true,sensitivity:'base'}));
+            tbody.innerHTML = rows.map(r => {
+                const dias = r.inicio && r.fim ? Math.max(0, Math.round((r.fim-r.inicio)/86400000)+1) : null;
+                return `<tr class="hover:bg-slate-50 transition"><td class="py-2.5 px-3 font-extrabold text-slate-800">${r.poco}</td><td class="py-2.5 px-3">${r.inicio?r.inicio.toLocaleDateString('pt-BR'):'-'}</td><td class="py-2.5 px-3">${r.fim?r.fim.toLocaleDateString('pt-BR'):'-'}</td><td class="py-2.5 px-3 font-bold text-rose-600">${dias===null?'-':dias+' dias'}</td></tr>`;
+            }).join('');
+            renderMedidoresR2R3(rows);
+        }
+
+        function renderMedidoresR2R3(rows) {
+            const r2 = rows.filter(r=>/r2/i.test(`${r.medidor} ${r.r2}`)).map(r=>r.poco);
+            const r3 = rows.filter(r=>/r3/i.test(`${r.medidor} ${r.r3}`)).map(r=>r.poco);
+            const all = Array.from(new Set([...r2,...r3])).sort((a,b)=>String(a).localeCompare(String(b),undefined,{numeric:true,sensitivity:'base'}));
+            if (!all.length) {
+                renderChart('medidoresR2R3Chart','medidoresR2R3','line',{labels:['R2','R3'],datasets:[{label:'R2',data:[0,0],borderColor:'#16a34a',backgroundColor:'#16a34a',pointRadius:5},{label:'R3',data:[1,1],borderColor:'#dc2626',backgroundColor:'#dc2626',pointRadius:5}]},{responsive:true,maintainAspectRatio:false,scales:{y:{min:-.5,max:1.5,ticks:{stepSize:1,callback:v=>v===1?'R3':'R2'}}},plugins:{datalabels:{display:false}}});
+                return;
+            }
+            const labels = all;
+            const dataR2 = labels.map(p=>r2.includes(p)?1:null);
+            const dataR3 = labels.map(p=>r3.includes(p)?0:null);
+            renderChart('medidoresR2R3Chart','medidoresR2R3','line',{labels,datasets:[
+                {label:'R2',data:dataR2,borderColor:'#16a34a',backgroundColor:'#16a34a',pointRadius:6,pointHoverRadius:7,tension:0,spanGaps:false},
+                {label:'R3',data:dataR3,borderColor:'#dc2626',backgroundColor:'#dc2626',pointRadius:6,pointHoverRadius:7,tension:0,spanGaps:false}
+            ]},{responsive:true,maintainAspectRatio:false,scales:{y:{min:-.5,max:1.5,ticks:{stepSize:1,callback:v=>v===1?'R2':v===0?'R3':''},title:{display:true,text:'Medidor'}}},plugins:{legend:{position:'top'},datalabels:{display:true,align:'top',font:{size:9,weight:'bold'},formatter:(v,ctx)=>v===null?'':ctx.dataset.label}}});
+        }
+
+                function applyFiltersTab6() {
             const selectedPocos = Array.from(document.querySelectorAll('.well-chk-6:checked')).map(c => c.value);
             const selectedMonths = Array.from(document.querySelectorAll('.month-chk-6:checked')).map(c => c.value);
             const selectedResps = Array.from(document.querySelectorAll('.resp-chk-6:checked')).map(c => c.value);
@@ -2748,6 +2993,7 @@
                     <td class="table-custom-cell text-slate-700 font-semibold">${r.ResponsavelTec}</td>
                 </tr>
             `).join('');
+            renderPocosParados();
         }
 
         function resetFiltersTab6() {
