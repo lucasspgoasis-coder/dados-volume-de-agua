@@ -724,12 +724,12 @@
                     </div>
                 </div>
 
-                <!-- Gráfico Entrada de Água com Rótulos Visíveis -->
+                <!-- Gráfico Entrada de Água — tempo trabalhado no topo das barras -->
                 <div class="glass-card p-5">
                     <div class="flex justify-between items-center mb-1 flex-wrap gap-2">
                         <div>
                             <h3 class="text-base font-bold text-slate-800">Volume Total e Horas Trabalhadas por Poço (Entrada)</h3>
-                            <p class="text-xs text-slate-500">Exibe o volume total jorado (em barras com valores no topo da média vazão × tempo) e as horas trabalhadas.</p>
+                            <p class="text-xs text-slate-500">Exibe o volume total por poço; no topo de cada barra aparece somente o tempo trabalhado.</p>
                         </div>
                     </div>
                     <div id="nivelTanqueRegua" class="mt-3 mb-3 ml-auto max-w-[420px] rounded-lg border border-blue-100 bg-blue-50/40 p-3">
@@ -2445,8 +2445,9 @@
                 // Registros sem data de manutenção ainda devem aparecer no relatório.
                 // O filtro por mês só deve restringir registros que realmente possuem mês.
                 if (selectedMonths.length > 0 && d.MesLabel !== 'N/I' && !selectedMonths.includes(d.MesLabel)) return false;
-                if (startDate && d.IsoDate < startDate) return false;
-                if (endDate && d.IsoDate > endDate) return false;
+                const dia = String(d.IsoDate || d.DataFormatted || '').slice(0,10);
+                if (startDate && dia < startDate) return false;
+                if (endDate && dia > endDate) return false;
                 return true;
             });
 
@@ -2834,17 +2835,12 @@ function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
         function applySpecificVazaoDiaFilterTab4() {
             const start = document.getElementById('vazaoDiaStartDateTab4')?.value || '';
             const end = document.getElementById('vazaoDiaEndDateTab4')?.value || '';
-            const selectedWells = Array.from(document.querySelectorAll('.well-chk-4:checked')).map(c => c.value);
-            const generalStart = document.getElementById('filterStartDateTab4')?.value || '';
-            const generalEnd = document.getElementById('filterEndDateTab4')?.value || '';
-            const effectiveStart = start || generalStart;
-            const effectiveEnd = end || generalEnd;
             const base = globalVazaoDiaData.length ? globalVazaoDiaData : globalRawData;
             const filtered = base.filter(d => {
-                if (selectedWells.length > 0 && !selectedWells.includes(d.Poco)) return false;
-                const iso = String(d.IsoDate || '').slice(0, 10);
-                if (effectiveStart && iso < effectiveStart) return false;
-                if (effectiveEnd && iso > effectiveEnd) return false;
+                const iso = String(d.IsoDate || d.DataFormatted || '').slice(0, 10);
+                if (!iso) return false;
+                if (start && iso < start) return false;
+                if (end && iso > end) return false;
                 return true;
             });
             renderVazaoMediaDiaPocosTab4(filtered);
@@ -2868,8 +2864,9 @@ function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
             // Filtro Entrada
             let filteredEntrada = globalRawData.filter(d => {
                 if (selectedWells.length > 0 && !selectedWells.includes(d.Poco)) return false;
-                if (startDate && d.IsoDate < startDate) return false;
-                if (endDate && d.IsoDate > endDate) return false;
+                const dia = String(d.IsoDate || d.DataFormatted || '').slice(0,10);
+                if (startDate && dia < startDate) return false;
+                if (endDate && dia > endDate) return false;
                 return true;
             });
 
@@ -2884,7 +2881,7 @@ function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
             document.getElementById('kpi4_avgHours').innerText = `${avgHours.toFixed(1)} h/dia`;
             document.getElementById('kpi4_maxPeak').innerText = `${Math.round(maxPeakVol).toLocaleString('pt-BR')} L`;
 
-            // Gráfico Entrada de Água com Rótulos Visíveis no Topo das Barras
+            // Gráfico Entrada de Água — tempo trabalhado no topo das barras
             const wellsEntrada = Array.from(new Set(filteredEntrada.map(d => d.Poco))).sort((a,b) => a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'}));
             const volByWell = wellsEntrada.map(w => {
                 const sub = filteredEntrada.filter(d => d.Poco === w);
@@ -2900,28 +2897,16 @@ function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
 
             renderChart('entradaAguaChart', 'entradaAgua', 'bar', {
                 labels: wellsEntrada,
-                datasets: [
-                    {
-                        type: 'bar',
-                        label: 'Volume Total Jorado (L)',
-                        data: volByWell,
-                        backgroundColor: 'rgba(2, 132, 199, 0.85)',
-                        borderColor: '#0284c7',
-                        borderWidth: 1,
-                        borderRadius: 6,
-                        yAxisID: 'y'
-                    },
-                    {
-                        type: 'line',
-                        label: 'Horas Trabalhadas (h)',
-                        data: hoursByWell,
-                        borderColor: '#f59e0b',
-                        backgroundColor: '#f59e0b',
-                        borderWidth: 2,
-                        tension: 0.2,
-                        yAxisID: 'y1'
-                    }
-                ]
+                datasets: [{
+                    type: 'bar',
+                    label: 'Volume Total (L)',
+                    data: volByWell,
+                    backgroundColor: 'rgba(2, 132, 199, 0.85)',
+                    borderColor: '#0284c7',
+                    borderWidth: 1,
+                    borderRadius: 6,
+                    yAxisID: 'y'
+                }]
             }, {
                 responsive: true,
                 maintainAspectRatio: false,
@@ -2930,12 +2915,6 @@ function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
                         type: 'linear',
                         position: 'left',
                         title: { display: true, text: 'Volume Total (L)' }
-                    },
-                    y1: {
-                        type: 'linear',
-                        position: 'right',
-                        grid: { drawOnChartArea: false },
-                        title: { display: true, text: 'Horas (h)' }
                     }
                 },
                 plugins: {
@@ -2945,19 +2924,13 @@ function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
                         align: 'top',
                         offset: 6,
                         formatter: function(val, context) {
-                            if (!val || val <= 0) return '';
-                            if (context.dataset.type === 'line') {
-                                return allWells24h && context.dataIndex === 0 ? '24 h' : '';
-                            }
-                            if (allWells24h) {
-                                return context.dataIndex === 0 ? `Entrada total: ${totalEntradaSelecionado.toLocaleString('pt-BR')} L · 24 h` : '';
-                            }
-                            return `${Number(val).toLocaleString('pt-BR')} L`;
+                            const h = hoursByWell[context.dataIndex];
+                            if (!Number.isFinite(h) || h <= 0) return '';
+                            if (allWells24h) return '24 h';
+                            return `${Number(h).toLocaleString('pt-BR', {maximumFractionDigits: 1})} h`;
                         },
                         font: { size: 11, weight: 'bold' },
-                        color: function(context) {
-                            return context.dataset.type === 'line' ? '#d97706' : '#0369a1';
-                        },
+                        color: '#334155',
                         backgroundColor: 'rgba(255,255,255,0.92)',
                         borderRadius: 4,
                         padding: {top: 2, bottom: 2, left: 4, right: 4}
@@ -2970,8 +2943,9 @@ function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
                 if (selectedWells.length > 0 && d.Poco && !selectedWells.includes(d.Poco)) return false;
                 if (selectedLocais.length > 0 && !selectedLocais.includes(d.Local)) return false;
                 if (selectedTipoEmissor !== 'ALL' && d.TipoEmissor !== selectedTipoEmissor) return false;
-                if (startDate && d.IsoDate < startDate) return false;
-                if (endDate && d.IsoDate > endDate) return false;
+                const dia = String(d.IsoDate || d.DataFormatted || '').slice(0,10);
+                if (startDate && dia < startDate) return false;
+                if (endDate && dia > endDate) return false;
                 return true;
             });
 
@@ -3196,8 +3170,9 @@ function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
             let filtered = globalSaidaData.filter(d => {
                 if (selectedBlocos.length > 0 && !selectedBlocos.includes(d.Local)) return false;
                 if (selectedCiclos.length > 0 && !selectedCiclos.includes(d.Ciclo)) return false;
-                if (startDate && d.IsoDate < startDate) return false;
-                if (endDate && d.IsoDate > endDate) return false;
+                const dia = String(d.IsoDate || d.DataFormatted || '').slice(0,10);
+                if (startDate && dia < startDate) return false;
+                if (endDate && dia > endDate) return false;
                 return true;
             });
 
