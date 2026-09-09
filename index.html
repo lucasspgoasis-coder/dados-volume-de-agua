@@ -729,7 +729,7 @@
                     <div class="flex justify-between items-center mb-1 flex-wrap gap-2">
                         <div>
                             <h3 class="text-base font-bold text-slate-800">Volume Total e Horas Trabalhadas por Poço (Entrada)</h3>
-                            <p class="text-xs text-slate-500">Exibe o volume total por poço; no topo de cada barra aparece somente o tempo trabalhado.</p>
+                            <p class="text-xs text-slate-500">Volume total por poço nas barras e horas trabalhadas em linha. O volume aparece acima de cada barra.</p>
                         </div>
                     </div>
                     <div id="nivelTanqueRegua" class="mt-3 mb-3 ml-auto max-w-[420px] rounded-lg border border-blue-100 bg-blue-50/40 p-3">
@@ -744,7 +744,7 @@
                     <div class="flex justify-between items-start gap-3 flex-wrap mb-2">
                         <div>
                             <h3 class="text-sm font-bold text-slate-800">Vazão Média dos Poços por Dia</h3>
-                            <p class="text-[10px] text-slate-500">Vazão média calculada por poço: volume ÷ horas trabalhadas.</p>
+                            <p class="text-[10px] text-slate-500">Vazão (L/H) por poço e por dia, conforme a planilha de Vazão Média.</p>
                         </div>
                         <div class="flex items-end gap-2 flex-wrap bg-slate-50 border border-slate-200 rounded-lg p-2">
                             <div>
@@ -1374,7 +1374,7 @@
     <script>
         Chart.register(ChartDataLabels);
 
-        const VAZAO_DIA_SHEET = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQAcr8_XCwnJWwn5DMCKsb3-03ZogzTgiJ9qtCtnEp9fnLMtEuTcCXpxeslsvQGzJ81nDkLy7DYBX8d/pub?output=csv";
+        const VAZAO_DIA_SHEET = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSafB5fd5osyELyMS1T-pVO-WbL25l53ICs1dmVMgByrAlQsqSHT2YscIE-ClYrJvzPS-dGZSp25ysi/pub?output=csv";
 
         const ENTRADA_SHEETS = [
             "https://docs.google.com/spreadsheets/d/e/2PACX-1vSafB5fd5osyELyMS1T-pVO-WbL25l53ICs1dmVMgByrAlQsqSHT2YscIE-ClYrJvzPS-dGZSp25ysi/pub?output=csv",
@@ -1876,7 +1876,7 @@
 
                     try {
                         if (Array.isArray(resultsVazaoDia) && resultsVazaoDia.length) {
-                            globalVazaoDiaData = cleanAndNormalizeData(resultsVazaoDia);
+                            globalVazaoDiaData = normalizeVazaoDiaSheetData(resultsVazaoDia);
                         } else {
                             globalVazaoDiaData = [];
                         }
@@ -2187,6 +2187,25 @@
             }
             let d = new Date(cleaned);
             return isNaN(d.getTime()) ? null : d;
+        }
+
+        function normalizeVazaoDiaSheetData(data) {
+            const out = [];
+            (Array.isArray(data) ? data : []).forEach(row => {
+                const keys = Object.keys(row || {});
+                const norm = k => String(k || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+                const dateKey = keys.find(k => { const nk = norm(k); return nk === 'data' || nk === 'date' || nk.startsWith('data '); }) || keys.find(k => norm(k).includes('data'));
+                const wellKey = keys.find(k => { const nk = norm(k); return nk.includes('poco') || nk.includes('well'); });
+                const vazaoKey = keys.find(k => norm(k).replace(/\s+/g,'') === 'vazao(l/h)') || keys.find(k => { const nk = norm(k); return nk.includes('vazao') && (nk.includes('l/h') || nk.includes('litros/h')); });
+                if (!dateKey || !wellKey || !vazaoKey) return;
+                const parsedDate = parsePortugueseDate(row[dateKey]);
+                const vazao = parseBrazilianNumber(row[vazaoKey]);
+                const well = formatWellName(row[wellKey]);
+                if (!parsedDate || !well || !Number.isFinite(vazao) || vazao <= 0) return;
+                const iso = `${parsedDate.getFullYear()}-${String(parsedDate.getMonth()+1).padStart(2,'0')}-${String(parsedDate.getDate()).padStart(2,'0')}`;
+                out.push({ DataObj: parsedDate, IsoDate: iso, DataFormatted: parsedDate.toLocaleDateString('pt-BR'), Poco: well, VazaoMediaDia: vazao });
+            });
+            return out.sort((a,b) => a.DataObj - b.DataObj || a.Poco.localeCompare(b.Poco, undefined, {numeric:true, sensitivity:'base'}));
         }
 
         function toggleSelectAll(tab, type, masterCheckbox) {
@@ -2860,7 +2879,19 @@ function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
                     borderColor: '#0284c7',
                     borderWidth: 1,
                     borderRadius: 6,
-                    yAxisID: 'y'
+                    yAxisID: 'y',
+                    order: 2
+                }, {
+                    type: 'line',
+                    label: 'Horas Trabalhadas',
+                    data: hoursByWell,
+                    yAxisID: 'y1',
+                    borderWidth: 2.5,
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    tension: 0.25,
+                    fill: false,
+                    order: 1
                 }]
             }, {
                 responsive: true,
@@ -2870,33 +2901,29 @@ function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
                         type: 'linear',
                         position: 'left',
                         title: { display: true, text: 'Volume Total (L)' }
+                    },
+                    y1: {
+                        type: 'linear',
+                        position: 'right',
+                        title: { display: true, text: 'Horas' },
+                        beginAtZero: true,
+                        grid: { drawOnChartArea: false }
                     }
                 },
                 plugins: {
                     datalabels: {
-                        labels: {
-                            volume: {
-                                display: true, anchor: 'end', align: 'top', offset: 4,
-                                formatter: function(val) { return `${Number(val).toLocaleString('pt-BR')} L`; },
-                                font: { size: 10, weight: 'bold' }, color: '#0f172a',
-                                backgroundColor: 'rgba(255,255,255,0.92)', borderRadius: 4,
-                                padding: {top: 2, bottom: 2, left: 4, right: 4}
-                            },
-                            hours: {
-                                display: function(context) { return context.dataIndex === 0; },
-                                anchor: 'end', align: 'top', offset: 6,
-                                formatter: function() {
-                                    if (!hoursByWell.length) return '';
-                                    if (allWells24h) return '24 h';
-                                    const totalHoras = hoursByWell.reduce((acc, h) => acc + (Number(h) || 0), 0);
-                                    return `${Number(totalHoras).toLocaleString('pt-BR', {maximumFractionDigits: 1})} h`;
-                                },
-                                font: { size: 11, weight: 'bold' }, color: '#334155',
-                                backgroundColor: 'rgba(255,255,255,0.92)', borderRadius: 4,
-                                padding: {top: 2, bottom: 2, left: 4, right: 4}
-                            }
-                        }
-                    }
+                        display: function(context) { return context.dataset.type === 'bar'; },
+                        anchor: 'end',
+                        align: 'top',
+                        offset: 4,
+                        formatter: function(val) { return `${Number(val).toLocaleString('pt-BR')} L`; },
+                        font: { size: 10, weight: 'bold' },
+                        color: '#0f172a',
+                        backgroundColor: 'rgba(255,255,255,0.92)',
+                        borderRadius: 4,
+                        padding: {top: 2, bottom: 2, left: 4, right: 4}
+                    },
+                    legend: { position: 'top' }
                 }
             });
 
