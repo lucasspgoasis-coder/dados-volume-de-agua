@@ -135,6 +135,58 @@
             white-space: nowrap;
             font-weight: 700;
         }
+
+        /* Ajustes específicos para exportação (Captura PNG e PDF) */
+        .export-mode {
+            box-sizing: border-box !important;
+            overflow: visible !important;
+        }
+        .export-mode .overflow-x-auto,
+        .export-mode .overflow-y-auto,
+        .export-mode .chart-scroll-wrapper {
+            overflow: visible !important;
+        }
+        .export-mode table {
+            border-collapse: collapse !important;
+            width: 100% !important;
+        }
+        .export-mode th,
+        .export-mode td {
+            vertical-align: middle !important;
+            text-align: center !important;
+            line-height: 1.2 !important;
+            padding-top: 0.55rem !important;
+            padding-bottom: 0.55rem !important;
+            box-sizing: border-box !important;
+        }
+        .export-mode input,
+        .export-mode select,
+        .export-mode button {
+            box-sizing: border-box !important;
+            line-height: 1.2 !important;
+        }
+        .export-mode .kpi-compact-card {
+            align-items: center !important;
+        }
+        .export-mode .kpi-compact-card > div:last-child {
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: center !important;
+            min-height: 42px !important;
+            transform: translateY(-1px);
+        }
+        .export-mode .kpi-compact-card h3,
+        .export-mode .kpi-compact-card p {
+            margin-top: 0 !important;
+            margin-bottom: 0 !important;
+            line-height: 1.2 !important;
+        }
+        .export-mode .glass-card {
+            overflow: visible !important;
+        }
+        .export-mode canvas {
+            display: block !important;
+        }
     </style>
 </head>
 <body class="text-slate-800 min-h-screen flex flex-col antialiased">
@@ -1159,7 +1211,7 @@
                         <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
                             <i class="fa-solid fa-code-branch text-indigo-600"></i> Poços ligados aos Medidores R2 e R3
                         </h3>
-                        <p class="text-xs text-slate-500">Linhas horizontais fixas para identificar claramente quais poços estão associados a cada medidor.</p>
+                        <p class="text-xs text-slate-500">R2 — Poços conectados acima. R3 — Poços conectados abaixo.</p>
                     </div>
                     <div class="chart-scroll-wrapper">
                         <div class="chart-container-large" style="height:430px; min-width:1100px;">
@@ -1314,16 +1366,45 @@
             globalManutencaoData = [];
         }
 
+        async function prepareExportElement(el) {
+            const rect = el.getBoundingClientRect();
+            const exportWidth = Math.max(el.scrollWidth, Math.ceil(rect.width));
+            const exportHeight = Math.max(el.scrollHeight, Math.ceil(rect.height));
+
+            el.classList.add('export-mode');
+            el.style.width = exportWidth + 'px';
+            el.style.maxWidth = 'none';
+            el.style.overflow = 'visible';
+
+            // Aguarda o navegador recalcular dimensões e o Chart.js terminar de desenhar.
+            await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
+            return { exportWidth, exportHeight };
+        }
+
+        function restoreExportElement(el, originalStyle) {
+            el.classList.remove('export-mode');
+            el.style.width = originalStyle.width;
+            el.style.maxWidth = originalStyle.maxWidth;
+            el.style.overflow = originalStyle.overflow;
+        }
+
         async function captureTab(tabId, tabName, btn) {
             const tabEl = document.getElementById(tabId);
             if (!tabEl) return;
 
             const originalContent = btn.innerHTML;
+            const originalStyle = {
+                width: tabEl.style.width,
+                maxWidth: tabEl.style.maxWidth,
+                overflow: tabEl.style.overflow
+            };
             btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Processando Imagem...`;
             btn.disabled = true;
 
             try {
                 window.scrollTo(0, 0);
+                const { exportWidth, exportHeight } = await prepareExportElement(tabEl);
                 const canvas = await html2canvas(tabEl, {
                     scale: 2,
                     useCORS: true,
@@ -1332,7 +1413,21 @@
                     logging: false,
                     scrollX: 0,
                     scrollY: 0,
-                    windowWidth: tabEl.scrollWidth + 40
+                    x: 0,
+                    y: 0,
+                    width: exportWidth,
+                    height: exportHeight,
+                    windowWidth: exportWidth + 80,
+                    windowHeight: exportHeight + 80,
+                    onclone: (doc) => {
+                        const cloned = doc.getElementById(tabId);
+                        if (cloned) {
+                            cloned.classList.add('export-mode');
+                            cloned.style.width = exportWidth + 'px';
+                            cloned.style.maxWidth = 'none';
+                            cloned.style.overflow = 'visible';
+                        }
+                    }
                 });
 
                 const image = canvas.toDataURL('image/png', 1.0);
@@ -1344,6 +1439,7 @@
                 console.error('Erro ao capturar imagem:', err);
                 alert('Ocorreu um erro ao realizar a captura da tela.');
             } finally {
+                restoreExportElement(tabEl, originalStyle);
                 btn.innerHTML = originalContent;
                 btn.disabled = false;
             }
@@ -1354,11 +1450,17 @@
             if (!el) return;
 
             const origText = btn.innerHTML;
+            const originalStyle = {
+                width: el.style.width,
+                maxWidth: el.style.maxWidth,
+                overflow: el.style.overflow
+            };
             btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Gerando PDF...`;
             btn.disabled = true;
 
             try {
                 window.scrollTo(0, 0);
+                const { exportWidth, exportHeight } = await prepareExportElement(el);
                 const canvas = await html2canvas(el, {
                     scale: 2,
                     useCORS: true,
@@ -1367,28 +1469,44 @@
                     logging: false,
                     scrollX: 0,
                     scrollY: 0,
-                    windowWidth: el.scrollWidth + 40
+                    x: 0,
+                    y: 0,
+                    width: exportWidth,
+                    height: exportHeight,
+                    windowWidth: exportWidth + 80,
+                    windowHeight: exportHeight + 80,
+                    onclone: (doc) => {
+                        const cloned = doc.getElementById(elementId);
+                        if (cloned) {
+                            cloned.classList.add('export-mode');
+                            cloned.style.width = exportWidth + 'px';
+                            cloned.style.maxWidth = 'none';
+                            cloned.style.overflow = 'visible';
+                        }
+                    }
                 });
 
-                const imgData = canvas.toDataURL('image/png');
+                const imgData = canvas.toDataURL('image/png', 1.0);
                 const { jsPDF } = window.jspdf;
-
                 const imgWidth = canvas.width;
                 const imgHeight = canvas.height;
-                const orientation = imgWidth > imgHeight ? 'l' : 'p';
 
+                // Mantém toda a aba no PDF sem cortar as extremidades.
+                const orientation = imgWidth >= imgHeight ? 'l' : 'p';
                 const pdf = new jsPDF({
                     orientation: orientation,
                     unit: 'px',
-                    format: [imgWidth, imgHeight]
+                    format: [imgWidth, imgHeight],
+                    compress: true
                 });
 
-                pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+                pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight, undefined, 'FAST');
                 pdf.save(`${fileName}_${new Date().toISOString().split('T')[0]}.pdf`);
             } catch (e) {
                 console.error('Erro ao baixar PDF:', e);
                 alert('Não foi possível gerar o arquivo PDF.');
             } finally {
+                restoreExportElement(el, originalStyle);
                 btn.innerHTML = origText;
                 btn.disabled = false;
             }
@@ -2465,14 +2583,17 @@
                 plugins: {
                     datalabels: {
                         display: function(context) {
-                            return context.dataset.type === 'bar';
+                            return context.dataset.type === 'line';
                         },
                         anchor: 'end',
-                        align: 'end',
-                        offset: 4,
-                        formatter: (val) => val > 0 ? `${val.toLocaleString('pt-BR')} L` : '',
-                        font: { size: 10, weight: 'bold' },
-                        color: '#0369a1'
+                        align: 'top',
+                        offset: 6,
+                        formatter: (val) => val > 0 ? `${Number(val).toLocaleString('pt-BR', {minimumFractionDigits: 0, maximumFractionDigits: 1})} h` : '',
+                        font: { size: 11, weight: 'bold' },
+                        color: '#d97706',
+                        backgroundColor: 'rgba(255,255,255,0.9)',
+                        borderRadius: 4,
+                        padding: {top: 2, bottom: 2, left: 4, right: 4}
                     }
                 }
             });
