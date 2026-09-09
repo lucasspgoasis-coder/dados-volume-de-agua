@@ -1602,17 +1602,27 @@
             clone.classList.add('export-mode');
             const rect = card.getBoundingClientRect();
             const width = targetWidth || Math.max(card.scrollWidth || 0, rect.width || 0, 300);
-            const height = targetHeight || Math.max(card.scrollHeight || 0, rect.height || 0, 180);
+            const height = targetHeight || Math.max(card.scrollHeight || 0, rect.height || 0, 500);
 
-            clone.style.cssText += `;box-sizing:border-box;width:${width}px!important;min-width:${width}px!important;max-width:${width}px!important;height:${height}px!important;min-height:${height}px!important;max-height:none!important;margin:0!important;padding:28px!important;overflow:visible!important;visibility:visible!important;position:relative!important;background:#fff!important;`;
+            clone.style.cssText += `;box-sizing:border-box;width:${width}px!important;min-width:${width}px!important;max-width:${width}px!important;height:${height}px!important;min-height:${height}px!important;max-height:none!important;margin:0!important;padding:22px!important;overflow:visible!important;visibility:visible!important;position:relative!important;background:#fff!important;`;
 
-            // No export, o gráfico precisa ocupar TODA a largura disponível.
+            const titleText = (card.querySelector('h2,h3,h4')?.textContent || '').toLowerCase();
+            const isTank = titleText.includes('nível') && titleText.includes('tanque');
+            const chartH = isTank ? 690 : 760;
+
             clone.querySelectorAll('.chart-container-no-scroll, .chart-container').forEach(el => {
-                el.style.cssText += ';width:100%!important;max-width:none!important;min-width:0!important;box-sizing:border-box!important;overflow:visible!important;';
+                el.style.cssText += `;width:100%!important;max-width:none!important;min-width:0!important;height:${chartH}px!important;min-height:${chartH}px!important;box-sizing:border-box!important;overflow:visible!important;`;
+            });
+
+            // Aumenta também a tipografia HTML da exportação.
+            clone.querySelectorAll('h2,h3,h4').forEach(el => {
+                el.style.setProperty('font-size', '24px', 'important');
+                el.style.setProperty('line-height', '1.25', 'important');
+            });
+            clone.querySelectorAll('p, label, th, td, span').forEach(el => {
                 const cs = getComputedStyle(el);
-                const h = Math.max(520, parseFloat(cs.height) || 520);
-                el.style.height = h + 'px';
-                el.style.minHeight = h + 'px';
+                const fs = parseFloat(cs.fontSize) || 12;
+                if (fs < 15) el.style.setProperty('font-size', Math.max(15, fs * 1.35) + 'px', 'important');
             });
 
             const sourceCanvases = Array.from(card.querySelectorAll('canvas'));
@@ -1620,14 +1630,23 @@
             sourceCanvases.forEach((sourceCanvas, i) => {
                 const target = clonedCanvases[i];
                 if (!target) return;
-                // Mantém a resolução original, mas estica visualmente o canvas para a largura total.
-                target.width = Math.max(1600, sourceCanvas.width || 1600);
-                target.height = Math.max(700, sourceCanvas.height || 700);
-                target.style.cssText += ';display:block!important;width:100%!important;max-width:none!important;height:100%!important;min-width:0!important;box-sizing:border-box!important;';
+                // Canvas de alta resolução e proporção controlada para deixar textos/rótulos realmente legíveis.
+                const targetW = Math.max(2600, width - 44);
+                const targetH = chartH;
+                target.width = targetW;
+                target.height = targetH;
+                target.style.cssText += `;display:block!important;width:100%!important;max-width:none!important;height:${targetH}px!important;min-width:0!important;box-sizing:border-box!important;`;
                 const ctx = target.getContext('2d');
                 if (ctx) {
-                    ctx.clearRect(0, 0, target.width, target.height);
-                    ctx.drawImage(sourceCanvas, 0, 0, target.width, target.height);
+                    ctx.setTransform(1,0,0,1,0,0);
+                    ctx.clearRect(0,0,target.width,target.height);
+                    ctx.imageSmoothingEnabled = true;
+                    ctx.imageSmoothingQuality = 'high';
+                    const sw = sourceCanvas.width || 1, sh = sourceCanvas.height || 1;
+                    const scale = Math.min(targetW / sw, targetH / sh);
+                    const dw = sw * scale, dh = sh * scale;
+                    const dx = (targetW - dw) / 2, dy = (targetH - dh) / 2;
+                    ctx.drawImage(sourceCanvas, dx, dy, dw, dh);
                 }
             });
             return clone;
@@ -1639,8 +1658,9 @@
             }
             const rect = card.getBoundingClientRect();
             const sourceWidth = widthOverride || Math.max(card.scrollWidth || 0, rect.width || 0, 300);
-            // Altura fixa generosa: evita que o Chart.js seja comprimido no export.
-            const sourceHeight = heightOverride || Math.max(card.scrollHeight || 0, rect.height || 0, 900);
+            const titleText = (card.querySelector('h2,h3,h4')?.textContent || '').toLowerCase();
+            const isTank = titleText.includes('nível') && titleText.includes('tanque');
+            const sourceHeight = heightOverride || (isTank ? 780 : 850);
 
             const stage = document.createElement('div');
             stage.style.cssText = `position:fixed;left:-20000px;top:0;width:${sourceWidth}px;height:${sourceHeight}px;background:#fff;padding:0;margin:0;overflow:visible;box-sizing:border-box;pointer-events:none;`;
@@ -1652,7 +1672,7 @@
                 await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
                 return await window.htmlToImage.toCanvas(clone, {
                     backgroundColor: '#ffffff',
-                    pixelRatio: 2,
+                    pixelRatio: 1.5,
                     cacheBust: true,
                     skipFonts: false,
                     width: sourceWidth,
@@ -1702,45 +1722,49 @@
 
         async function composeTab4SectionCanvas(item, width = 3000) {
             const meta = getTab4ExportMeta(item.title);
-            const chart = await captureExportCard(item.card, width, 1250);
-            const headH = meta.items.length ? 300 : 205;
+            const title = String(item.title || '').toLowerCase();
+            const isTank = title.includes('nível') && title.includes('tanque');
+            const isVazao = title.includes('vazão média');
+            const isSaida = title.includes('saída de água') || title.includes('saida de agua');
+            const captureH = isTank ? 820 : (isVazao ? 900 : (isSaida ? 900 : 880));
+            const chart = await captureExportCard(item.card, width, captureH);
+            const headH = meta.items.length ? 245 : 165;
+            const bottom = 18;
             const out = document.createElement('canvas');
             out.width = width;
-            out.height = headH + chart.height + 60;
+            out.height = headH + chart.height + bottom;
             const ctx = out.getContext('2d');
             ctx.fillStyle = '#ffffff'; ctx.fillRect(0,0,out.width,out.height);
-
-            // Cabeçalho profissional e limpo.
-            ctx.fillStyle = '#166534'; ctx.fillRect(0,0,18,out.height);
-            ctx.fillStyle = '#0f172a'; ctx.font = '700 50px Arial'; ctx.fillText(meta.section,55,65);
+            ctx.fillStyle = '#166534'; ctx.fillRect(0,0,14,out.height);
+            ctx.fillStyle = '#0f172a'; ctx.font = '700 46px Arial'; ctx.fillText(meta.section,48,55);
             const range = getExportDateRange('content-entrada');
-            if(range){ctx.fillStyle='#64748b';ctx.font='600 24px Arial';ctx.fillText(`Período: ${range}`,55,105);}
-            ctx.fillStyle='#dbe3ec';ctx.fillRect(55,135,width-110,3);
+            if(range){ctx.fillStyle='#64748b';ctx.font='600 21px Arial';ctx.fillText(`Período: ${range}`,48,91);}
+            ctx.fillStyle='#dbe3ec';ctx.fillRect(48,112,width-96,2);
             if(meta.items.length){
-                const gap=26, top=165, boxH=105, boxW=(width-110-gap*(meta.items.length-1))/meta.items.length;
+                const gap=22, top=135, boxH=92, boxW=(width-96-gap*(meta.items.length-1))/meta.items.length;
                 meta.items.forEach((it,i)=>{
-                    const x=55+i*(boxW+gap);
+                    const x=48+i*(boxW+gap);
                     ctx.fillStyle='#f8fafc';ctx.strokeStyle='#cbd5e1';ctx.lineWidth=2;
-                    roundRect(ctx,x,top,boxW,boxH,14);ctx.stroke();
-                    ctx.fillStyle='#64748b';ctx.font='700 18px Arial';ctx.fillText(it[1].toUpperCase(),x+22,top+34);
-                    ctx.fillStyle='#0f172a';ctx.font='700 40px Arial';ctx.fillText(getTab4ExportValue(it[0]),x+22,top+82);
+                    ctx.beginPath();ctx.roundRect(x,top,boxW,boxH,12);ctx.fill();ctx.stroke();
+                    ctx.fillStyle='#64748b';ctx.font='700 17px Arial';ctx.fillText(it[1].toUpperCase(),x+18,top+29);
+                    ctx.fillStyle='#0f172a';ctx.font='700 34px Arial';ctx.fillText(getTab4ExportValue(it[0]),x+18,top+68);
                 });
             }
-            // A imagem do gráfico ocupa 100% da largura da seção.
+            // Sem espaço morto: o gráfico começa logo após o cabeçalho e termina próximo ao limite da seção.
             ctx.drawImage(chart,0,headH,width,chart.height);
             return out;
         }
 
         async function composeExportJPEG(selected, tabId, tabName) {
             const isTab4 = isTab4Export(tabName);
-            const outW = isTab4 ? 3400 : 3000;
-            const margin = isTab4 ? 35 : 45;
-            const gap = isTab4 ? 55 : 40;
+            const outW = isTab4 ? 3600 : 3200;
+            const margin = isTab4 ? 28 : 40;
+            const gap = isTab4 ? 24 : 30;
             const cards=[];
             for(const item of selected){
                 cards.push({item,canvas:isTab4 ? await composeTab4SectionCanvas(item,outW-margin*2) : await captureExportCard(item,outW-margin*2,1250)});
             }
-            const headerH=isTab4?235:220;
+            const headerH=isTab4?185:200;
             const totalH=margin+headerH+gap+cards.reduce((sum,c)=>sum+c.canvas.height,0)+gap*Math.max(0,cards.length-1)+margin;
             const out=document.createElement('canvas');out.width=outW;out.height=totalH;
             const ctx=out.getContext('2d');ctx.fillStyle='#eef2f7';ctx.fillRect(0,0,outW,totalH);
@@ -1771,7 +1795,7 @@
                 const sections=[];
                 for(const item of selected) sections.push(isTab4?await composeTab4SectionCanvas(item,3400):await captureExportCard(item.card,3200,1250));
                 const heights=sections.map(c=>contentW*c.height/c.width);
-                const titleH=22;
+                const titleH=18;
                 const pdfH=Math.max(297,margin*2+titleH+gapMm+heights.reduce((a,b)=>a+b,0)+gapMm*Math.max(0,sections.length-1));
                 const pdf=new jsPDF({orientation:'portrait',unit:'mm',format:[pdfW,pdfH],compress:true});
                 pdf.setFillColor(245,247,250);pdf.rect(0,0,pdfW,pdfH,'F');
