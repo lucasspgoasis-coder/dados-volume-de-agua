@@ -729,10 +729,10 @@
                     <div class="flex justify-between items-center mb-1 flex-wrap gap-2">
                         <div>
                             <h3 class="text-base font-bold text-slate-800">Volume Total e Horas Trabalhadas por Poço (Entrada)</h3>
-                            <p class="text-xs text-slate-500">Volume total por poço nas barras e horas trabalhadas em linha. O volume aparece acima de cada barra.</p>
+                            <p class="text-xs text-slate-500">Volume total por poço nas barras. O horário trabalhado aparece no topo de cada poço, com cor conforme a duração.</p>
                         </div>
                     </div>
-                    <div id="nivelTanqueRegua" class="mt-3 mb-3 ml-auto max-w-[420px] rounded-lg border border-blue-100 bg-blue-50/40 p-3">
+                    <div id="nivelTanqueRegua" class="mt-3 mb-3 ml-auto max-w-[420px] bg-blue-50/40 p-3">
 <div class="flex items-center justify-between gap-2 mb-2"><div class="text-[11px] font-extrabold uppercase tracking-wide text-slate-700">Nível do Tanque 03</div><div id="nivelTanqueReguaValor" class="text-xs font-extrabold text-blue-800">-- m · --%</div></div>
 <div class="relative px-1"><div class="h-3 rounded-full bg-slate-200 overflow-hidden border border-blue-100"><div id="nivelTanqueReguaFill" class="h-full rounded-full bg-blue-600 transition-all" style="width:0%"></div></div><div id="nivelTanqueReguaTicks" class="relative mt-1 h-5 text-[9px] font-semibold text-slate-600"></div></div>
 <div id="nivelTanqueReguaInfo" class="mt-1 text-[10px] text-slate-500 text-right">Sem leitura de nível no período selecionado.</div></div>
@@ -1675,67 +1675,97 @@
             link.remove();
         }
 
+        function getTab4ExportMeta(title) {
+            const t = String(title || '').toLowerCase();
+            if (t.includes('volume total e horas') || t.includes('entrada')) {
+                return {
+                    section: 'ENTRADA DE ÁGUA',
+                    items: [
+                        ['kpi4_totalVol', 'Volume de Entrada'],
+                        ['kpi4_avgHours', 'Média de Horas Ligadas'],
+                        ['kpi4_maxPeak', 'Pico de Volume em 1 Dia']
+                    ]
+                };
+            }
+            if (t.includes('nível água tanque') || t.includes('nivel água tanque')) {
+                return { section: 'NÍVEL DO TANQUE', items: [['nivelTanqueReguaValor', 'Nível do Tanque']] };
+            }
+            if (t.includes('vazão média')) {
+                return { section: 'VAZÃO MÉDIA DOS POÇOS POR DIA', items: [] };
+            }
+            if (t.includes('saída de água') || t.includes('saida de agua')) {
+                return {
+                    section: 'SAÍDA DE ÁGUA',
+                    items: [
+                        ['kpi4_saidaVol', 'Volume de Saída'],
+                        ['kpi4_saidaLocais', 'Locais/Blocos Irrigados'],
+                        ['kpi4_saidaTempo', 'Tempo de Irrigação']
+                    ]
+                };
+            }
+            return { section: String(title || 'DADOS'), items: [] };
+        }
+
+        function getTab4ExportValue(id) {
+            const el = document.getElementById(id);
+            return el ? (el.textContent || '--').trim() : '--';
+        }
+
+        async function composeTab4SectionCanvas(item, width = 860) {
+            const meta = getTab4ExportMeta(item.title);
+            const chart = await captureExportCard(item.card, width, 420);
+            const headH = meta.items.length ? 112 : 72;
+            const out = document.createElement('canvas');
+            out.width = width;
+            out.height = headH + chart.height + 18;
+            const ctx = out.getContext('2d');
+            ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, out.width, out.height);
+            ctx.fillStyle = '#0f172a'; ctx.font = '700 22px Arial';
+            ctx.fillText(meta.section, 22, 30);
+            const range = getExportDateRange('content-entrada');
+            if (range) { ctx.fillStyle = '#64748b'; ctx.font = '600 12px Arial'; ctx.fillText(`Período: ${range}`, 22, 51); }
+            if (meta.items.length) {
+                const gap = 8, top = 63, boxH = 38;
+                const boxW = (width - 44 - gap * (meta.items.length - 1)) / meta.items.length;
+                meta.items.forEach((it, i) => {
+                    const x = 22 + i * (boxW + gap);
+                    ctx.fillStyle = '#f8fafc'; ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 1;
+                    ctx.beginPath(); ctx.roundRect(x, top, boxW, boxH, 7); ctx.fill(); ctx.stroke();
+                    ctx.fillStyle = '#64748b'; ctx.font = '700 9px Arial'; ctx.fillText(it[1].toUpperCase(), x + 8, top + 13);
+                    ctx.fillStyle = '#0f172a'; ctx.font = '700 14px Arial'; ctx.fillText(getTab4ExportValue(it[0]), x + 8, top + 29);
+                });
+            }
+            ctx.drawImage(chart, 0, headH + 2, width, chart.height);
+            return out;
+        }
+
         async function composeExportJPEG(selected, tabId, tabName) {
             const isTab4 = isTab4Export(tabName);
-            const outW = isTab4 ? 1800 : 1600;
-            const margin = 28;
-            const gap = 22;
-            const summaryH = isTab4 ? 180 : 150;
-            const cards = [];
-
-            for (const item of selected) {
-                const canvas = await captureExportCard(item.card);
-                cards.push({ item, canvas });
-            }
-
-            if (isTab4) {
-                // JPEG da Aba 04: mesma lógica do PDF, em grade 2x2, para manter leitura.
-                const ordem = ['Volume Total e Horas Trabalhadas por Poço (Entrada)', 'Nível Água Tanque', 'Vazão Média dos Poços por Dia', 'Saída de Água'];
-                cards.sort((a,b) => {
-                    const ta = a.item.title.toLowerCase(), tb = b.item.title.toLowerCase();
-                    const ia = ordem.findIndex(x => ta.includes(x.toLowerCase().slice(0,18)));
-                    const ib = ordem.findIndex(x => tb.includes(x.toLowerCase().slice(0,18)));
-                    return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
-                });
-                const innerW = outW - margin * 2;
-                const headerH = summaryH;
-                const gridTop = margin + headerH + gap;
-                const colGap = 22, rowGap = 22;
-                const colW = (innerW - colGap) / 2;
-                const rowH = 390;
-                const rows = Math.ceil(cards.length / 2);
-                const out = document.createElement('canvas');
-                out.width = outW; out.height = gridTop + rows * rowH + Math.max(0, rows - 1) * rowGap + margin;
-                const ctx = out.getContext('2d');
-                ctx.fillStyle = '#f8fafc'; ctx.fillRect(0,0,out.width,out.height);
-                drawExportSummary(ctx, outW, tabId, tabName, false);
-                cards.forEach(({ canvas }, i) => {
-                    const row = Math.floor(i/2), col = i%2;
-                    const ratio = canvas.height / canvas.width;
-                    const h = Math.min(rowH, Math.max(240, Math.round(colW * ratio)));
-                    const x = margin + col * (colW + colGap);
-                    const y = gridTop + row * (rowH + rowGap) + Math.max(0,(rowH-h)/2);
-                    ctx.drawImage(canvas, x, y, colW, h);
-                });
+            if (!isTab4) {
+                const outW = 1600, margin = 28, gap = 22, summaryH = 150, cards = [];
+                for (const item of selected) cards.push({ item, canvas: await captureExportCard(item.card) });
+                const colW = Math.floor((outW - margin * 2 - gap) / 2);
+                const data = cards.map(({canvas}) => ({canvas, h: Math.max(220, Math.min(480, Math.round(colW * canvas.height / canvas.width)))}));
+                const rows=[]; for(let i=0;i<data.length;i+=2) rows.push(data.slice(i,i+2));
+                const rowHeights=rows.map(r=>Math.max(...r.map(x=>x.h)));
+                const totalH=margin+summaryH+gap+rowHeights.reduce((a,b)=>a+b,0)+gap*Math.max(0,rows.length-1)+margin;
+                const out=document.createElement('canvas'); out.width=outW; out.height=totalH; const ctx=out.getContext('2d');
+                ctx.fillStyle='#f8fafc';ctx.fillRect(0,0,out.width,out.height); drawExportSummary(ctx,outW,tabId,tabName,false);
+                let y=margin+summaryH+gap; rows.forEach((row,r)=>{row.forEach((item,c)=>ctx.drawImage(item.canvas,margin+c*(colW+gap),y,colW,item.h));y+=rowHeights[r]+gap;});
                 return out;
             }
-
-            const colW = Math.floor((outW - margin * 2 - gap) / 2);
-            const data = cards.map(({canvas}) => ({canvas, h: Math.max(220, Math.min(480, Math.round(colW * canvas.height / canvas.width)))}));
-            const rows = [];
-            for (let i=0;i<data.length;i+=2) rows.push(data.slice(i,i+2));
-            const rowHeights = rows.map(row => Math.max(...row.map(x=>x.h)));
-            const totalH = margin + summaryH + gap + rowHeights.reduce((a,b)=>a+b,0) + gap * Math.max(0, rows.length-1) + margin;
-            const out = document.createElement('canvas'); out.width=outW; out.height=totalH;
-            const ctx = out.getContext('2d'); drawExportSummary(ctx, outW, tabId, tabName, false);
-            let y = margin + summaryH + gap;
-            rows.forEach((row,r)=>{
-                row.forEach((item,c)=>{
-                    const x = margin + c * (colW + gap);
-                    ctx.drawImage(item.canvas, x, y, colW, item.h);
-                });
-                y += rowHeights[r] + gap;
-            });
+            const outW = 1800, margin = 28, gap = 22, colW = (outW - margin*2 - gap)/2;
+            const sections = [];
+            for (const item of selected) sections.push({item, canvas: await composeTab4SectionCanvas(item, Math.round(colW))});
+            const rows=[]; for(let i=0;i<sections.length;i+=2) rows.push(sections.slice(i,i+2));
+            const rowHeights=rows.map(r=>Math.max(...r.map(x=>x.canvas.height)));
+            const headerH=78, totalH=margin+headerH+gap+rowHeights.reduce((a,b)=>a+b,0)+gap*Math.max(0,rows.length-1)+margin;
+            const out=document.createElement('canvas'); out.width=outW; out.height=totalH; const ctx=out.getContext('2d');
+            ctx.fillStyle='#f8fafc';ctx.fillRect(0,0,out.width,out.height);
+            ctx.fillStyle='#0f172a';ctx.font='700 30px Arial';ctx.fillText('RELATÓRIO — ENTRADA E SAÍDA DE ÁGUA',margin,40);
+            const range=getExportDateRange(tabId); if(range){ctx.fillStyle='#64748b';ctx.font='600 16px Arial';ctx.fillText(`Período: ${range}`,margin,64);}
+            let y=margin+headerH+gap;
+            rows.forEach((row,r)=>{row.forEach((item,c)=>{const x=margin+c*(colW+gap);ctx.drawImage(item.canvas,x,y,colW,item.canvas.height);});y+=rowHeights[r]+gap;});
             return out;
         }
 
@@ -1771,28 +1801,27 @@
                 // Aba 04: uma única página A4, com resumo geral e os gráficos escolhidos.
                 // A altura de cada gráfico é calculada para caber sem virar uma faixa única.
                 if (isTab4) {
-                    // Aba 04: uma única folha A4 paisagem, com os gráficos em 2x2.
-                    // Isso evita que quatro gráficos fiquem achatados em uma coluna.
-                    const headerH = 24;
+                    // Aba 04: cada gráfico recebe seus próprios campos gerais imediatamente acima.
                     const contentW = pageW - margin * 2;
-                    const contentH = pageH - margin * 2 - headerH - gap;
-                    const colGap = 5, rowGap = 5;
-                    const colW = (contentW - colGap) / 2;
-                    const rowH = (contentH - rowGap) / 2;
-
-                    const header = document.createElement('canvas');
-                    header.width = 1800; header.height = 150;
-                    drawExportSummary(header.getContext('2d'), header.width, tabId, tabName, true);
-                    pdf.addImage(header.toDataURL('image/jpeg', 0.94), 'JPEG', margin, margin, contentW, headerH, undefined, 'FAST');
-
-                    for (let i = 0; i < selected.length; i++) {
-                        const canvas = await captureExportCard(selected[i].card);
-                        const row = Math.floor(i / 2), col = i % 2;
-                        const ratio = canvas.height / canvas.width;
-                        const h = Math.min(rowH, Math.max(38, colW * ratio));
-                        const x = margin + col * (colW + colGap);
-                        const y = margin + headerH + gap + row * (rowH + rowGap) + Math.max(0, (rowH - h) / 2);
-                        pdf.addImage(canvas.toDataURL('image/jpeg', 0.93), 'JPEG', x, y, colW, h, undefined, 'FAST');
+                    const colGap = 5, rowGap = 5, colW = (contentW - colGap) / 2;
+                    const sections = [];
+                    for (const item of selected) sections.push({item, canvas: await composeTab4SectionCanvas(item, 900)});
+                    const rows=[]; for(let i=0;i<sections.length;i+=2) rows.push(sections.slice(i,i+2));
+                    const rowH = (pageH - margin*2 - rowGap) / 2;
+                    let idx=0, page=0;
+                    while(idx<sections.length){
+                        if(page>0) pdf.addPage('a4','landscape');
+                        for(let r=0;r<2 && idx<sections.length;r++){
+                            for(let c=0;c<2 && idx<sections.length;c++){
+                                const item=sections[idx++];
+                                const ratio=item.canvas.height/item.canvas.width;
+                                const h=Math.min(rowH, colW*ratio);
+                                const x=margin+c*(colW+colGap);
+                                const y=margin+r*(rowH+rowGap)+(rowH-h)/2;
+                                pdf.addImage(item.canvas.toDataURL('image/jpeg',0.93),'JPEG',x,y,colW,h,undefined,'FAST');
+                            }
+                        }
+                        page++;
                     }
                 } else {
                     // Demais abas: 2 gráficos por linha e até 2 linhas por página.
@@ -3222,30 +3251,6 @@ function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
                     borderWidth: 1,
                     borderRadius: 6,
                     yAxisID: 'y'
-                }, {
-                    type: 'line',
-                    label: 'Horas Trabalhadas',
-                    data: hoursByWell,
-                    yAxisID: 'y1',
-                    borderWidth: 3,
-                    tension: 0.25,
-                    fill: false,
-                    pointRadius: 4,
-                    pointHoverRadius: 6,
-                    datalabels: {
-                        display: true,
-                        anchor: 'end',
-                        align: function(ctx) { return Number(ctx.dataset.data[ctx.dataIndex]) >= 22 ? 'bottom' : 'top'; },
-                        offset: 4,
-                        clamp: true,
-                        clip: false,
-                        formatter: function(val) { return `${Math.min(24, Number(val)).toLocaleString('pt-BR', {maximumFractionDigits: 1})} h`; },
-                        font: { size: 10, weight: 'bold' },
-                        color: '#334155',
-                        backgroundColor: 'rgba(255,255,255,0.92)',
-                        borderRadius: 4,
-                        padding: {top: 2, bottom: 2, left: 4, right: 4}
-                    }
                 }]
             }, {
                 responsive: true,
@@ -3256,24 +3261,28 @@ function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
                         type: 'linear', position: 'left', beginAtZero: true,
                         title: { display: true, text: 'Volume Total (L)' }
                     },
-                    y1: {
-                        type: 'linear', position: 'right', beginAtZero: true,
-                        title: { display: true, text: 'Horas Trabalhadas (h)' },
-                        max: 24,
-                        ticks: { stepSize: 4, callback: value => `${value} h` },
-                        grid: { drawOnChartArea: false }
-                    }
                 },
                 plugins: {
                     datalabels: {
                         display: function(context) { return context.dataset.type === 'bar'; },
                         anchor: 'end', align: 'top', offset: 4,
-                        formatter: function(val) { return `${Number(val).toLocaleString('pt-BR')} L`; },
-                        font: { size: 10, weight: 'bold' }, color: '#0f172a',
-                        backgroundColor: 'rgba(255,255,255,0.92)', borderRadius: 4,
+                        formatter: function(val, context) {
+                            const h = Math.min(24, Number(hoursByWell[context.dataIndex] || 0));
+                            return `${Number(val).toLocaleString('pt-BR')} L\n${h.toLocaleString('pt-BR', {maximumFractionDigits: 1})} h`;
+                        },
+                        color: function(context) {
+                            const h = Math.min(24, Number(hoursByWell[context.dataIndex] || 0));
+                            if (h >= 23.5) return '#15803d';
+                            if (h >= 17.5) return '#2563eb';
+                            if (h >= 11.5) return '#d97706';
+                            if (h >= 5.5) return '#dc2626';
+                            return '#64748b';
+                        },
+                        font: { size: 10, weight: 'bold' },
+                        backgroundColor: 'rgba(255,255,255,0.94)', borderRadius: 4,
                         padding: {top: 2, bottom: 2, left: 4, right: 4}
                     },
-                    legend: { display: true, position: 'bottom', labels: { boxWidth: 12, font: { size: 9 } } }
+                    legend: { display: false }
                 }
             });
 
