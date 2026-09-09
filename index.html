@@ -1501,9 +1501,99 @@
                     .filter(c => c.checked).map(c => sections[Number(c.dataset.index)]);
                 if (!selected.length) { alert('Selecione pelo menos um gráfico ou quadro.'); return; }
                 close();
-                if (format === 'jpeg') await exportSelectedSectionsJPEG(selected, tabName, btn);
-                else await exportSelectedSectionsPDF(selected, tabName, btn);
+                if (format === 'jpeg') await exportSelectedSectionsJPEG(selected, tabId, tabName, btn);
+                else await exportSelectedSectionsPDF(selected, tabId, tabName, btn);
             };
+        }
+
+        function getExportDateRange(tabId) {
+            const tab = document.getElementById(tabId);
+            if (!tab) return '';
+            const dates = Array.from(tab.querySelectorAll('input[type="date"]'))
+                .map(el => el.value).filter(Boolean).sort();
+            if (!dates.length) return '';
+            const fmt = d => {
+                const p = d.split('-');
+                return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : d;
+            };
+            return dates.length === 1 || dates[0] === dates[dates.length - 1]
+                ? fmt(dates[0])
+                : `${fmt(dates[0])} a ${fmt(dates[dates.length - 1])}`;
+        }
+
+        function getExportSummaryItems(tabId, tabName) {
+            const tab = document.getElementById(tabId);
+            if (!tab) return [];
+
+            // Na Aba 04 usamos os campos gerais principais, no mesmo conceito do
+            // relatório de referência enviado pelo usuário: entrada, horas, pico,
+            // nível do tanque e saída.
+            if (isTab4Export(tabName)) {
+                const ids = [
+                    ['kpi4_totalVol', 'Volume de Entrada'],
+                    ['kpi4_avgHours', 'Média de Horas Ligadas'],
+                    ['kpi4_maxPeak', 'Pico de Volume em 1 Dia'],
+                    ['nivelTanqueReguaValor', 'Nível do Tanque'],
+                    ['kpi4_saidaVol', 'Volume de Saída'],
+                    ['kpi4_saidaLocais', 'Locais/Blocos Irrigados'],
+                    ['kpi4_saidaTempo', 'Tempo de Irrigação']
+                ];
+                return ids.map(([id, label]) => {
+                    const el = document.getElementById(id);
+                    return el ? { label, value: (el.textContent || '--').trim() } : null;
+                }).filter(Boolean);
+            }
+
+            return Array.from(tab.querySelectorAll('.kpi-compact-card')).map(card => {
+                const label = card.querySelector('p')?.textContent?.trim();
+                const value = card.querySelector('h3')?.textContent?.trim();
+                return label && value ? { label, value } : null;
+            }).filter(Boolean).slice(0, 10);
+        }
+
+        function drawExportSummary(ctx, width, tabId, tabName, compact = false) {
+            const items = getExportSummaryItems(tabId, tabName);
+            const dateRange = getExportDateRange(tabId);
+            const title = isTab4Export(tabName) ? 'RELATÓRIO — ENTRADA E SAÍDA DE ÁGUA' : String(tabName || 'RELATÓRIO').replace(/[_-]+/g, ' ').toUpperCase();
+            const height = compact ? 180 : 150;
+
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, width, height);
+            ctx.fillStyle = '#0f172a';
+            ctx.font = `700 ${compact ? 26 : 30}px Arial`;
+            ctx.fillText(title, 24, compact ? 31 : 36);
+            if (dateRange) {
+                ctx.fillStyle = '#64748b';
+                ctx.font = `600 ${compact ? 15 : 17}px Arial`;
+                ctx.fillText(`Período: ${dateRange}`, 24, compact ? 54 : 61);
+            }
+
+            const cols = Math.min(4, Math.max(1, items.length));
+            const rows = Math.ceil(items.length / cols);
+            const top = compact ? 66 : 75;
+            const gap = 8;
+            const boxW = (width - 48 - gap * (cols - 1)) / cols;
+            const boxH = rows > 1 ? 42 : 48;
+
+            items.forEach((item, i) => {
+                const col = i % cols;
+                const row = Math.floor(i / cols);
+                const x = 24 + col * (boxW + gap);
+                const y = top + row * (boxH + gap);
+                ctx.fillStyle = '#f8fafc';
+                ctx.strokeStyle = '#dbe3ec';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.roundRect(x, y, boxW, boxH, 7);
+                ctx.fill(); ctx.stroke();
+                ctx.fillStyle = '#64748b';
+                ctx.font = `600 ${compact ? 10 : 11}px Arial`;
+                ctx.fillText(item.label, x + 9, y + 15);
+                ctx.fillStyle = '#0f172a';
+                ctx.font = `700 ${compact ? 15 : 17}px Arial`;
+                ctx.fillText(item.value, x + 9, y + 35);
+            });
+            return top + rows * (boxH + gap) + 8;
         }
 
         function cloneForExport(card, targetWidth = null, targetHeight = null) {
@@ -1525,8 +1615,6 @@
             clone.style.visibility = 'visible';
             clone.style.position = 'relative';
 
-            // Copia os pixels dos canvases para o clone. Isso evita que Chart.js
-            // apareça vazio durante a exportação.
             const sourceCanvases = Array.from(card.querySelectorAll('canvas'));
             const clonedCanvases = Array.from(clone.querySelectorAll('canvas'));
             sourceCanvases.forEach((sourceCanvas, i) => {
@@ -1545,35 +1633,25 @@
             return clone;
         }
 
-        async function captureExportCard(card) {
+        async function captureExportCard(card, widthOverride = null, heightOverride = null) {
             if (!window.htmlToImage || typeof window.htmlToImage.toCanvas !== 'function') {
                 throw new Error('Biblioteca html-to-image não carregada.');
             }
-
             const rect = card.getBoundingClientRect();
-            const sourceWidth = Math.max(card.scrollWidth || 0, rect.width || 0, 300);
-            const sourceHeight = Math.max(card.scrollHeight || 0, rect.height || 0, 180);
+            const sourceWidth = widthOverride || Math.max(card.scrollWidth || 0, rect.width || 0, 300);
+            const sourceHeight = heightOverride || Math.max(card.scrollHeight || 0, rect.height || 0, 180);
 
             const stage = document.createElement('div');
-            stage.style.cssText = [
-                'position:fixed', 'left:-20000px', 'top:0',
-                'width:' + sourceWidth + 'px', 'height:' + sourceHeight + 'px',
-                'background:#ffffff', 'padding:0', 'margin:0',
-                'overflow:visible', 'z-index:-1', 'box-sizing:border-box'
-            ].join(';');
-
+            stage.style.cssText = `position:fixed;left:-12000px;top:0;width:${sourceWidth}px;height:${sourceHeight}px;background:#fff;padding:0;margin:0;overflow:visible;box-sizing:border-box;pointer-events:none;`;
             const clone = cloneForExport(card, sourceWidth, sourceHeight);
             stage.appendChild(clone);
             document.body.appendChild(stage);
-
             try {
-                if (document.fonts && document.fonts.ready) {
-                    try { await document.fonts.ready; } catch (e) {}
-                }
+                if (document.fonts?.ready) { try { await document.fonts.ready; } catch (e) {} }
                 await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
                 return await window.htmlToImage.toCanvas(clone, {
                     backgroundColor: '#ffffff',
-                    pixelRatio: 1.5,
+                    pixelRatio: 1.25,
                     cacheBust: true,
                     skipFonts: false,
                     style: { margin: '0', transform: 'none' }
@@ -1581,6 +1659,10 @@
             } finally {
                 stage.remove();
             }
+        }
+
+        function isTab4Export(tabName) {
+            return /aba[_ -]?4|entrada[_ -]?saida/i.test(String(tabName || ''));
         }
 
         function downloadCanvasAsJPEG(canvas, fileName) {
@@ -1593,68 +1675,59 @@
             link.remove();
         }
 
-        function isTab4Export(tabName) {
-            return /aba[_ -]?4|entrada[_ -]?saida/i.test(String(tabName || ''));
-        }
-
-        async function composeExportJPEG(selected, tabName) {
+        async function composeExportJPEG(selected, tabId, tabName) {
             const isTab4 = isTab4Export(tabName);
-            const targetWidth = isTab4 ? 1600 : 1500;
-            const gap = isTab4 ? 18 : 22;
-            const margin = isTab4 ? 24 : 30;
+            const outW = isTab4 ? 1800 : 1600;
+            const margin = 28;
+            const gap = 22;
+            const summaryH = isTab4 ? 180 : 150;
             const cards = [];
 
             for (const item of selected) {
-                cards.push({ item, canvas: await captureExportCard(item.card) });
+                const canvas = await captureExportCard(item.card);
+                cards.push({ item, canvas });
             }
 
-            if (!cards.length) throw new Error('Nenhum conteúdo selecionado.');
-
-            // Aba 04: formato de relatório, igual ao exemplo enviado pelo usuário:
-            // quatro gráficos largos, organizados verticalmente em uma única folha.
             if (isTab4) {
-                const usableW = targetWidth - margin * 2;
-                const cardHeights = cards.map(({ canvas }) => {
-                    const ratio = canvas.height / canvas.width;
-                    return Math.max(150, Math.min(225, Math.round(usableW * ratio)));
+                // Uma folha visual única: resumo no topo + gráficos largos em sequência.
+                // Mantém a ordem lógica do relatório: Entrada -> Tanque -> Vazão diária -> Saída.
+                const ordem = ['Volume Total e Horas Trabalhadas por Poço (Entrada)', 'Nível Água Tanque', 'Vazão Média dos Poços por Dia', 'Saída de Água'];
+                cards.sort((a,b) => {
+                    const ta = a.item.title.toLowerCase(), tb = b.item.title.toLowerCase();
+                    const ia = ordem.findIndex(x => ta.includes(x.toLowerCase().slice(0,18)));
+                    const ib = ordem.findIndex(x => tb.includes(x.toLowerCase().slice(0,18)));
+                    return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
                 });
-                const totalH = margin * 2 + cardHeights.reduce((a,b) => a+b, 0) + gap * (cards.length - 1);
+                const innerW = outW - margin * 2;
+                const targetHeights = cards.map(({ canvas }) => {
+                    const ratio = canvas.height / canvas.width;
+                    return Math.max(210, Math.min(300, Math.round(innerW * ratio)));
+                });
+                const totalH = margin + summaryH + gap + targetHeights.reduce((a,b)=>a+b,0) + gap * Math.max(0, cards.length - 1) + margin;
                 const out = document.createElement('canvas');
-                out.width = targetWidth;
-                out.height = totalH;
+                out.width = outW; out.height = totalH;
                 const ctx = out.getContext('2d');
-                ctx.fillStyle = '#ffffff';
-                ctx.fillRect(0, 0, out.width, out.height);
-                let y = margin;
+                drawExportSummary(ctx, outW, tabId, tabName, false);
+                let y = margin + summaryH + gap;
                 cards.forEach(({ canvas }, i) => {
-                    const h = cardHeights[i];
-                    ctx.drawImage(canvas, margin, y, usableW, h);
+                    const h = targetHeights[i];
+                    ctx.drawImage(canvas, margin, y, innerW, h);
                     y += h + gap;
                 });
                 return out;
             }
 
-            // Demais abas: duas colunas, várias linhas, mantendo os gráficos grandes.
-            const colW = Math.floor((targetWidth - margin * 2 - gap) / 2);
-            const cardData = cards.map(({ canvas }) => {
-                const ratio = canvas.height / canvas.width;
-                return { canvas, h: Math.max(190, Math.min(430, Math.round(colW * ratio))) };
-            });
+            const colW = Math.floor((outW - margin * 2 - gap) / 2);
+            const data = cards.map(({canvas}) => ({canvas, h: Math.max(220, Math.min(480, Math.round(colW * canvas.height / canvas.width)))}));
             const rows = [];
-            for (let i = 0; i < cardData.length; i += 2) {
-                rows.push(cardData.slice(i, i + 2));
-            }
-            const rowHeights = rows.map(row => Math.max(...row.map(x => x.h)));
-            const totalH = margin * 2 + rowHeights.reduce((a,b) => a+b, 0) + gap * (rows.length - 1);
-            const out = document.createElement('canvas');
-            out.width = targetWidth;
-            out.height = totalH;
-            const ctx = out.getContext('2d');
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(0, 0, out.width, out.height);
-            let y = margin;
-            rows.forEach((row, r) => {
-                row.forEach((item, c) => {
+            for (let i=0;i<data.length;i+=2) rows.push(data.slice(i,i+2));
+            const rowHeights = rows.map(row => Math.max(...row.map(x=>x.h)));
+            const totalH = margin + summaryH + gap + rowHeights.reduce((a,b)=>a+b,0) + gap * Math.max(0, rows.length-1) + margin;
+            const out = document.createElement('canvas'); out.width=outW; out.height=totalH;
+            const ctx = out.getContext('2d'); drawExportSummary(ctx, outW, tabId, tabName, false);
+            let y = margin + summaryH + gap;
+            rows.forEach((row,r)=>{
+                row.forEach((item,c)=>{
                     const x = margin + c * (colW + gap);
                     ctx.drawImage(item.canvas, x, y, colW, item.h);
                 });
@@ -1663,23 +1736,23 @@
             return out;
         }
 
-        async function exportSelectedSectionsJPEG(selected, tabName, btn) {
+        async function exportSelectedSectionsJPEG(selected, tabId, tabName, btn) {
             const original = btn.innerHTML;
             btn.disabled = true;
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Gerando JPEG...';
             try {
-                const canvas = await composeExportJPEG(selected, tabName);
+                const canvas = await composeExportJPEG(selected, tabId, tabName);
                 downloadCanvasAsJPEG(canvas, `${tabName}_${new Date().toISOString().split('T')[0]}.jpeg`);
             } catch (e) {
                 console.error('Erro ao gerar JPEG:', e);
-                alert('Não foi possível gerar o JPEG. Aguarde os gráficos carregarem e tente novamente.');
+                alert(`Não foi possível gerar o JPEG. ${e?.message || 'Tente novamente após os gráficos carregarem.'}`);
             } finally {
                 btn.innerHTML = original;
                 btn.disabled = false;
             }
         }
 
-        async function exportSelectedSectionsPDF(selected, tabName, btn) {
+        async function exportSelectedSectionsPDF(selected, tabId, tabName, btn) {
             const original = btn.innerHTML;
             btn.disabled = true;
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Gerando PDF...';
@@ -1688,58 +1761,57 @@
                 if (!jsPDF) throw new Error('Biblioteca jsPDF não carregada.');
 
                 const isTab4 = isTab4Export(tabName);
-                const pageW = 297, pageH = 210;
-                const margin = isTab4 ? 6 : 8;
-                const gap = isTab4 ? 4 : 7;
-                const usableW = pageW - margin * 2;
-                const cards = [];
-
-                for (const item of selected) {
-                    cards.push({ item, canvas: await captureExportCard(item.card) });
-                }
-                if (!cards.length) throw new Error('Nenhum conteúdo selecionado.');
-
+                const pageW = 297, pageH = 210, margin = isTab4 ? 5 : 8;
+                const gap = isTab4 ? 4 : 6;
                 const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4', compress: true });
 
+                // Aba 04: uma única página A4, com resumo geral e os gráficos escolhidos.
+                // A altura de cada gráfico é calculada para caber sem virar uma faixa única.
                 if (isTab4) {
-                    // Aba 04: tudo em UMA página A4 paisagem, em quatro faixas largas,
-                    // preservando títulos, gráficos, tabelas e rótulos.
-                    const availableH = pageH - margin * 2 - gap * (cards.length - 1);
-                    const eachH = availableH / cards.length;
-                    cards.forEach(({ canvas }, i) => {
-                        if (i > 0) pdf.addPage('a4', 'landscape');
-                        // Só adiciona página extra se a quantidade ultrapassar 4.
-                    });
-                    // A lógica acima não deve criar páginas extras para a Aba 04.
-                    while (pdf.getNumberOfPages() > 1) pdf.deletePage(pdf.getNumberOfPages());
-                    cards.forEach(({ canvas }, i) => {
+                    const headerH = 27;
+                    const availableH = pageH - margin * 2 - headerH - gap - gap * Math.max(0, selected.length - 1);
+                    const eachH = availableH / Math.max(1, selected.length);
+                    const contentW = pageW - margin * 2;
+
+                    // Cabeçalho com os campos gerais.
+                    const header = document.createElement('canvas');
+                    header.width = 1800; header.height = 180;
+                    const hctx = header.getContext('2d');
+                    drawExportSummary(hctx, header.width, tabId, tabName, true);
+                    const headerImg = header.toDataURL('image/jpeg', 0.94);
+                    pdf.addImage(headerImg, 'JPEG', margin, margin, contentW, headerH, undefined, 'FAST');
+
+                    let y = margin + headerH + gap;
+                    for (const item of selected) {
+                        const canvas = await captureExportCard(item.card);
                         const ratio = canvas.height / canvas.width;
-                        const naturalH = usableW * ratio;
-                        const h = Math.min(eachH, naturalH);
-                        const y = margin + i * (eachH + gap) + (eachH - h) / 2;
-                        const img = canvas.toDataURL('image/jpeg', 0.92);
-                        pdf.addImage(img, 'JPEG', margin, y, usableW, h, undefined, 'FAST');
-                    });
+                        const naturalH = contentW * ratio;
+                        const h = Math.min(eachH, Math.max(24, naturalH));
+                        const yy = y + Math.max(0, (eachH - h) / 2);
+                        const img = canvas.toDataURL('image/jpeg', 0.93);
+                        pdf.addImage(img, 'JPEG', margin, yy, contentW, h, undefined, 'FAST');
+                        y += eachH + gap;
+                    }
                 } else {
-                    // Demais abas: 2 gráficos por linha, 2 linhas por página quando possível.
-                    const colGap = 6;
-                    const colW = (usableW - colGap) / 2;
-                    const rowGap = 6;
-                    const usableH = pageH - margin * 2;
-                    const rowH = (usableH - rowGap) / 2;
-                    let index = 0;
-                    while (index < cards.length) {
-                        if (index > 0) pdf.addPage('a4', 'landscape');
-                        for (let row = 0; row < 2 && index < cards.length; row++) {
-                            for (let col = 0; col < 2 && index < cards.length; col++) {
-                                const { canvas } = cards[index++];
+                    // Demais abas: 2 gráficos por linha e até 2 linhas por página.
+                    const contentW = pageW - margin * 2;
+                    const colGap = 6, rowGap = 6;
+                    const colW = (contentW - colGap) / 2;
+                    const rowH = (pageH - margin * 2 - rowGap) / 2;
+                    let idx = 0;
+                    let firstPage = true;
+                    while (idx < selected.length) {
+                        if (!firstPage) pdf.addPage('a4', 'landscape');
+                        firstPage = false;
+                        for (let row=0; row<2 && idx<selected.length; row++) {
+                            for (let col=0; col<2 && idx<selected.length; col++) {
+                                const canvas = await captureExportCard(selected[idx].card);
                                 const ratio = canvas.height / canvas.width;
-                                const naturalH = colW * ratio;
-                                const h = Math.min(rowH, Math.max(30, naturalH));
+                                const h = Math.min(rowH, Math.max(25, colW * ratio));
                                 const x = margin + col * (colW + colGap);
-                                const y = margin + row * (rowH + rowGap) + (rowH - h) / 2;
-                                const img = canvas.toDataURL('image/jpeg', 0.92);
-                                pdf.addImage(img, 'JPEG', x, y, colW, h, undefined, 'FAST');
+                                const y = margin + row * (rowH + rowGap) + Math.max(0, (rowH-h)/2);
+                                pdf.addImage(canvas.toDataURL('image/jpeg',0.93), 'JPEG', x, y, colW, h, undefined, 'FAST');
+                                idx++;
                             }
                         }
                     }
@@ -1748,7 +1820,7 @@
                 pdf.save(`${tabName}_${new Date().toISOString().split('T')[0]}.pdf`);
             } catch (e) {
                 console.error('Erro ao gerar PDF:', e);
-                alert('Não foi possível gerar o PDF. Aguarde os gráficos carregarem e tente novamente.');
+                alert(`Não foi possível gerar o PDF. ${e?.message || 'Tente novamente após os gráficos carregarem.'}`);
             } finally {
                 btn.innerHTML = original;
                 btn.disabled = false;
@@ -1759,8 +1831,6 @@
             showExportSelector(tabId, tabName, 'jpeg', btn);
         }
 
-        // Compatibilidade com os botões "Baixar JPEG" da dashboard.
-        // Alguns botões chamam openImageExportMenu; manter este alias evita o clique sem ação.
         function openImageExportMenu(tabId, tabName, btn) {
             captureTab(tabId, tabName, btn);
         }
@@ -2139,7 +2209,7 @@
                 const wellFormatted = formatWellName(row[wellKey]);
                 const vazaoVal = parseBrazilianNumber(row[flowKey]);
                 const volumeVal = parseBrazilianNumber(row[volKey]);
-                const horasVal = parseHours(row[hourKey]); 
+                const horasVal = Math.min(24, Math.max(0, parseHours(row[hourKey]))); 
 
                 let volCalculado = (vazaoVal > 0 && horasVal > 0) ? (vazaoVal * horasVal) : volumeVal;
 
@@ -3108,7 +3178,7 @@ function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
             });
 
             const totalVolEntrada = filteredEntrada.reduce((acc, curr) => acc + curr.VolumeCalculado, 0);
-            const avgHours = filteredEntrada.length > 0 ? (filteredEntrada.reduce((acc, curr) => acc + curr.Horas, 0) / filteredEntrada.length) : 0;
+            const avgHours = filteredEntrada.length > 0 ? Math.min(24, filteredEntrada.reduce((acc, curr) => acc + Math.min(24, Number(curr.Horas) || 0), 0) / filteredEntrada.length) : 0;
             const maxPeakVol = filteredEntrada.length > 0 ? Math.max(...filteredEntrada.map(d => d.VolumeCalculado)) : 0;
 
             atualizarReguaNivelTanqueTab4(filteredEntrada);
@@ -3126,8 +3196,14 @@ function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
             });
             const hoursByWell = wellsEntrada.map(w => {
                 const sub = filteredEntrada.filter(d => d.Poco === w);
-                const totalH = sub.reduce((acc, curr) => acc + curr.Horas, 0);
-                return parseFloat(totalH.toFixed(1));
+                const byDay = {};
+                sub.forEach(d => {
+                    const day = String(d.IsoDate || d.DataFormatted || '').slice(0,10);
+                    byDay[day] = (byDay[day] || 0) + Math.min(24, Number(d.Horas) || 0);
+                });
+                const daily = Object.values(byDay);
+                const avgDailyH = daily.length ? daily.reduce((a,v) => a + Math.min(24, v), 0) / daily.length : 0;
+                return parseFloat(Math.min(24, avgDailyH).toFixed(1));
             });
 
             renderChart('entradaAguaChart', 'entradaAgua', 'bar', {
@@ -3176,6 +3252,8 @@ function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
                     y1: {
                         type: 'linear', position: 'right', beginAtZero: true,
                         title: { display: true, text: 'Horas Trabalhadas (h)' },
+                        max: 24,
+                        ticks: { stepSize: 4, callback: value => `${value} h` },
                         grid: { drawOnChartArea: false }
                     }
                 },
