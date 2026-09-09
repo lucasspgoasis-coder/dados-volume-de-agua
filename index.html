@@ -1712,74 +1712,57 @@
             return el ? (el.textContent || '--').trim() : '--';
         }
 
-        async function composeTab4SectionCanvas(item, width = 860) {
+        async function composeTab4SectionCanvas(item, width = 2100) {
             const meta = getTab4ExportMeta(item.title);
-            const chart = await captureExportCard(item.card, width, 600);
-            const headH = meta.items.length ? 112 : 72;
+            const chart = await captureExportCard(item.card, width, 760);
+            const headH = meta.items.length ? 185 : 105;
             const out = document.createElement('canvas');
             out.width = width;
-            out.height = headH + chart.height + 18;
+            out.height = headH + chart.height + 28;
             const ctx = out.getContext('2d');
             ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, out.width, out.height);
-            ctx.fillStyle = '#0f172a'; ctx.font = '700 22px Arial';
-            ctx.fillText(meta.section, 22, 30);
+            ctx.fillStyle = '#0f172a'; ctx.font = '700 34px Arial';
+            ctx.fillText(meta.section, 34, 46);
             const range = getExportDateRange('content-entrada');
-            if (range) { ctx.fillStyle = '#64748b'; ctx.font = '600 12px Arial'; ctx.fillText(`Período: ${range}`, 22, 51); }
+            if (range) { ctx.fillStyle = '#64748b'; ctx.font = '600 18px Arial'; ctx.fillText(`Período: ${range}`, 34, 76); }
             if (meta.items.length) {
-                const gap = 8, top = 63, boxH = 38;
-                const boxW = (width - 44 - gap * (meta.items.length - 1)) / meta.items.length;
+                const gap = 18, top = 98, boxH = 68;
+                const boxW = (width - 68 - gap * (meta.items.length - 1)) / meta.items.length;
                 meta.items.forEach((it, i) => {
-                    const x = 22 + i * (boxW + gap);
-                    ctx.fillStyle = '#f8fafc'; ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 1;
-                    ctx.beginPath(); ctx.roundRect(x, top, boxW, boxH, 7); ctx.fill(); ctx.stroke();
-                    ctx.fillStyle = '#64748b'; ctx.font = '700 9px Arial'; ctx.fillText(it[1].toUpperCase(), x + 8, top + 13);
-                    ctx.fillStyle = '#0f172a'; ctx.font = '700 14px Arial'; ctx.fillText(getTab4ExportValue(it[0]), x + 8, top + 29);
+                    const x = 34 + i * (boxW + gap);
+                    ctx.fillStyle = '#f8fafc'; ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 2;
+                    ctx.beginPath(); ctx.roundRect(x, top, boxW, boxH, 10); ctx.fill(); ctx.stroke();
+                    ctx.fillStyle = '#64748b'; ctx.font = '700 14px Arial'; ctx.fillText(it[1].toUpperCase(), x + 14, top + 24);
+                    ctx.fillStyle = '#0f172a'; ctx.font = '700 25px Arial'; ctx.fillText(getTab4ExportValue(it[0]), x + 14, top + 53);
                 });
             }
-            ctx.drawImage(chart, 0, headH + 2, width, chart.height);
+            ctx.drawImage(chart, 0, headH + 4, width, chart.height);
             return out;
         }
 
         async function composeExportJPEG(selected, tabId, tabName) {
             const isTab4 = isTab4Export(tabName);
-            const outW = isTab4 ? 2200 : 1800;
-            const margin = isTab4 ? 44 : 28;
-            const gap = isTab4 ? 34 : 22;
+            const outW = isTab4 ? 2400 : 2000;
+            const margin = isTab4 ? 50 : 36;
+            const gap = isTab4 ? 34 : 26;
             const cards = [];
-
             if (isTab4) {
-                // Aba 04: cada seção fica em uma linha, ocupando toda a largura.
-                // Isso evita gráficos lado a lado e aumenta a área útil para números/datalabels.
-                for (const item of selected) {
-                    cards.push({ item, canvas: await composeTab4SectionCanvas(item, outW - margin * 2) });
-                }
-                const headerH = 96;
+                for (const item of selected) cards.push({ item, canvas: await composeTab4SectionCanvas(item, outW - margin * 2) });
+                const headerH = 125;
                 const totalH = margin + headerH + gap + cards.reduce((sum, c) => sum + c.canvas.height, 0) + gap * Math.max(0, cards.length - 1) + margin;
-                const out = document.createElement('canvas');
-                out.width = outW;
-                out.height = totalH;
-                const ctx = out.getContext('2d');
-                ctx.fillStyle = '#f8fafc'; ctx.fillRect(0, 0, out.width, out.height);
-                ctx.fillStyle = '#0f172a'; ctx.font = '700 34px Arial';
-                ctx.fillText('RELATÓRIO — ENTRADA E SAÍDA DE ÁGUA', margin, 48);
-                const range = getExportDateRange(tabId);
-                if (range) { ctx.fillStyle = '#64748b'; ctx.font = '600 18px Arial'; ctx.fillText(`Período: ${range}`, margin, 77); }
-                let y = margin + headerH + gap;
-                cards.forEach(({canvas}) => {
-                    ctx.drawImage(canvas, margin, y, outW - margin * 2, canvas.height);
-                    y += canvas.height + gap;
-                });
+                const out = document.createElement('canvas'); out.width = outW; out.height = totalH;
+                const ctx = out.getContext('2d'); ctx.fillStyle = '#f1f5f9'; ctx.fillRect(0, 0, out.width, out.height);
+                ctx.fillStyle = '#0f172a'; ctx.font = '700 42px Arial'; ctx.fillText('RELATÓRIO — ENTRADA E SAÍDA DE ÁGUA', margin, 55);
+                const range = getExportDateRange(tabId); if (range) { ctx.fillStyle = '#64748b'; ctx.font = '600 22px Arial'; ctx.fillText(`Período: ${range}`, margin, 92); }
+                let y = margin + headerH + gap; cards.forEach(({canvas}) => { ctx.drawImage(canvas, margin, y, outW - margin * 2, canvas.height); y += canvas.height + gap; });
                 return out;
             }
-
             for (const item of selected) cards.push({ item, canvas: await captureExportCard(item.card) });
             const colW = outW - margin * 2;
-            const data = cards.map(({canvas}) => ({canvas, h: Math.max(260, Math.min(620, Math.round(colW * canvas.height / canvas.width)))}));
-            const totalH = margin + 120 + gap + data.reduce((a,b)=>a+b.h,0) + gap*Math.max(0,data.length-1) + margin;
-            const out=document.createElement('canvas'); out.width=outW; out.height=totalH; const ctx=out.getContext('2d');
-            ctx.fillStyle='#f8fafc';ctx.fillRect(0,0,out.width,out.height); drawExportSummary(ctx,outW,tabId,tabName,false);
-            let y=margin+120+gap; data.forEach(({canvas,h})=>{ctx.drawImage(canvas,margin,y,colW,h);y+=h+gap;});
-            return out;
+            const data = cards.map(({canvas}) => ({canvas, h: Math.max(300, Math.round(colW * canvas.height / canvas.width))}));
+            const totalH = margin + 150 + gap + data.reduce((a,b)=>a+b.h,0) + gap*Math.max(0,data.length-1) + margin;
+            const out=document.createElement('canvas'); out.width=outW; out.height=totalH; const ctx=out.getContext('2d'); ctx.fillStyle='#f8fafc';ctx.fillRect(0,0,out.width,out.height); drawExportSummary(ctx,outW,tabId,tabName,false);
+            let y=margin+150+gap; data.forEach(({canvas,h})=>{ctx.drawImage(canvas,margin,y,colW,h);y+=h+gap;}); return out;
         }
 
         async function exportSelectedSectionsJPEG(selected, tabId, tabName, btn) {
@@ -1799,71 +1782,26 @@
         }
 
         async function exportSelectedSectionsPDF(selected, tabId, tabName, btn) {
-            const original = btn.innerHTML;
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Gerando PDF...';
+            const original = btn.innerHTML; btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Gerando PDF...';
             try {
-                const { jsPDF } = window.jspdf || {};
-                if (!jsPDF) throw new Error('Biblioteca jsPDF não carregada.');
-
+                const { jsPDF } = window.jspdf || {}; if (!jsPDF) throw new Error('Biblioteca jsPDF não carregada.');
                 const isTab4 = isTab4Export(tabName);
-                const pageW = 297, pageH = 210, margin = isTab4 ? 5 : 8;
-                const gap = isTab4 ? 4 : 6;
-                const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4', compress: true });
-
-                // Aba 04: uma única página A4, com resumo geral e os gráficos escolhidos.
-                // A altura de cada gráfico é calculada para caber sem virar uma faixa única.
-                if (isTab4) {
-                    // Aba 04: uma seção por faixa, nunca lado a lado.
-                    // Cada seção recebe seus próprios KPIs e gráfico, com largura máxima da página.
-                    const contentW = pageW - margin * 2;
-                    const sections = [];
-                    for (const item of selected) sections.push({item, canvas: await composeTab4SectionCanvas(item, 1800)});
-
-                    let idx = 0;
-                    while (idx < sections.length) {
-                        if (idx > 0) pdf.addPage('a4', 'landscape');
-                        const item = sections[idx++];
-                        const ratio = item.canvas.height / item.canvas.width;
-                        const availableH = pageH - margin * 2;
-                        const h = Math.min(availableH, contentW * ratio);
-                        const x = margin;
-                        const y = margin + Math.max(0, (availableH - h) / 2);
-                        pdf.addImage(item.canvas.toDataURL('image/jpeg', 0.96), 'JPEG', x, y, contentW, h, undefined, 'FAST');
-                    }
-                } else {
-                    // Demais abas: 2 gráficos por linha e até 2 linhas por página.
-                    const contentW = pageW - margin * 2;
-                    const colGap = 6, rowGap = 6;
-                    const colW = (contentW - colGap) / 2;
-                    const rowH = (pageH - margin * 2 - rowGap) / 2;
-                    let idx = 0;
-                    let firstPage = true;
-                    while (idx < selected.length) {
-                        if (!firstPage) pdf.addPage('a4', 'landscape');
-                        firstPage = false;
-                        for (let row=0; row<2 && idx<selected.length; row++) {
-                            for (let col=0; col<2 && idx<selected.length; col++) {
-                                const canvas = await captureExportCard(selected[idx].card);
-                                const ratio = canvas.height / canvas.width;
-                                const h = Math.min(rowH, Math.max(25, colW * ratio));
-                                const x = margin + col * (colW + colGap);
-                                const y = margin + row * (rowH + rowGap) + Math.max(0, (rowH-h)/2);
-                                pdf.addImage(canvas.toDataURL('image/jpeg',0.93), 'JPEG', x, y, colW, h, undefined, 'FAST');
-                                idx++;
-                            }
-                        }
-                    }
-                }
-
+                const pdfW = 297, margin = 5, contentW = pdfW - margin * 2, gapMm = 6;
+                const sections = [];
+                if (isTab4) { for (const item of selected) sections.push(await composeTab4SectionCanvas(item, 2100)); }
+                else { for (const item of selected) sections.push(await captureExportCard(item.card, 2100, 760)); }
+                const titleH = isTab4 ? 18 : 25;
+                const heights = sections.map(c => contentW * c.height / c.width);
+                const pdfH = Math.max(210, margin * 2 + titleH + gapMm + heights.reduce((a,b)=>a+b,0) + gapMm * Math.max(0, sections.length - 1));
+                const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [pdfW, pdfH], compress: true });
+                pdf.setFillColor(248,250,252); pdf.rect(0,0,pdfW,pdfH,'F');
+                pdf.setTextColor(15,23,42); pdf.setFont('helvetica','bold'); pdf.setFontSize(16); pdf.text(isTab4 ? 'RELATÓRIO — ENTRADA E SAÍDA DE ÁGUA' : String(tabName || 'RELATÓRIO').toUpperCase(), margin, margin+7);
+                const range = getExportDateRange(tabId); if (range) { pdf.setTextColor(100,116,139); pdf.setFont('helvetica','normal'); pdf.setFontSize(9); pdf.text(`Período: ${range}`, margin, margin+13); }
+                let y = margin + titleH + gapMm;
+                sections.forEach((c,i)=>{ const h=heights[i]; pdf.addImage(c.toDataURL('image/jpeg',0.98),'JPEG',margin,y,contentW,h,undefined,'FAST'); y += h + gapMm; });
                 pdf.save(`${tabName}_${new Date().toISOString().split('T')[0]}.pdf`);
-            } catch (e) {
-                console.error('Erro ao gerar PDF:', e);
-                alert(`Não foi possível gerar o PDF. ${e?.message || 'Tente novamente após os gráficos carregarem.'}`);
-            } finally {
-                btn.innerHTML = original;
-                btn.disabled = false;
-            }
+            } catch (e) { console.error('Erro ao gerar PDF:',e); alert(`Não foi possível gerar o PDF. ${e?.message || 'Tente novamente após os gráficos carregarem.'}`); }
+            finally { btn.innerHTML=original; btn.disabled=false; }
         }
 
         function captureTab(tabId, tabName, btn) {
