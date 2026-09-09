@@ -2797,7 +2797,7 @@
             // Daily Chart
             const dates = Array.from(new Set(filtered.map(d => d.DataFormatted)));
             const wells = Array.from(new Set(filtered.map(d => d.Poco))).sort((a,b) => a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'}));
-            const colors = ['#2563eb', '#059669', '#d97706', '#dc2626', '#8b5cf6', '#06b6d4', '#ec4899', '#f59e0b'];
+            const colors = ['#166534', '#2563eb', '#d97706', '#64748b', '#7c3aed', '#0891b2', '#be185d', '#854d0e'];
 
             const datasetsDaily = wells.map((w, idx) => {
                 const dataMap = {};
@@ -2859,7 +2859,7 @@
             document.getElementById('kpi2_maxVolumeWell').innerText = wells.length > 0 ? `${wells.length} Poços` : '--';
 
             // Monthly Vol Chart
-            const colors = ['#2563eb', '#059669', '#d97706', '#dc2626', '#8b5cf6', '#06b6d4', '#ec4899', '#f59e0b'];
+            const colors = ['#166534', '#2563eb', '#d97706', '#64748b', '#7c3aed', '#0891b2', '#be185d', '#854d0e'];
             const datasetsVol = wells.map((w, idx) => {
                 const dataMap = {};
                 filtered.filter(d => d.Poco === w).forEach(d => {
@@ -3613,7 +3613,7 @@ function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
             // Chart Volume Irrigado por Dia (Por Bloco)
             const dates = Array.from(new Set(filtered.map(d => d.DataFormatted)));
             const blocos = Array.from(new Set(filtered.map(d => d.Local))).sort((a,b) => a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'}));
-            const colors = ['#2563eb', '#059669', '#d97706', '#dc2626', '#8b5cf6', '#06b6d4', '#ec4899', '#f59e0b'];
+            const colors = ['#166534', '#2563eb', '#d97706', '#64748b', '#7c3aed', '#0891b2', '#be185d', '#854d0e'];
 
             const datasetsBloco = blocos.map((b, idx) => {
                 const dataMap = {};
