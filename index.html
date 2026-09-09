@@ -803,7 +803,7 @@
                             </p>
                         </div>
                     </div>
-                    <div class="chart-container-no-scroll mt-3"><canvas id="saidaAguaChart"></canvas></div>
+                    <div class="chart-container-no-scroll mt-3" style="height:520px; min-height:520px;"><canvas id="saidaAguaChart"></canvas></div>
                 </div>
 
                 <!-- Mini gráfico: Nível Atual do Tanque -->
@@ -1714,7 +1714,7 @@
 
         async function composeTab4SectionCanvas(item, width = 860) {
             const meta = getTab4ExportMeta(item.title);
-            const chart = await captureExportCard(item.card, width, 420);
+            const chart = await captureExportCard(item.card, width, 600);
             const headH = meta.items.length ? 112 : 72;
             const out = document.createElement('canvas');
             out.width = width;
@@ -1742,31 +1742,43 @@
 
         async function composeExportJPEG(selected, tabId, tabName) {
             const isTab4 = isTab4Export(tabName);
-            if (!isTab4) {
-                const outW = 1600, margin = 28, gap = 22, summaryH = 150, cards = [];
-                for (const item of selected) cards.push({ item, canvas: await captureExportCard(item.card) });
-                const colW = Math.floor((outW - margin * 2 - gap) / 2);
-                const data = cards.map(({canvas}) => ({canvas, h: Math.max(220, Math.min(480, Math.round(colW * canvas.height / canvas.width)))}));
-                const rows=[]; for(let i=0;i<data.length;i+=2) rows.push(data.slice(i,i+2));
-                const rowHeights=rows.map(r=>Math.max(...r.map(x=>x.h)));
-                const totalH=margin+summaryH+gap+rowHeights.reduce((a,b)=>a+b,0)+gap*Math.max(0,rows.length-1)+margin;
-                const out=document.createElement('canvas'); out.width=outW; out.height=totalH; const ctx=out.getContext('2d');
-                ctx.fillStyle='#f8fafc';ctx.fillRect(0,0,out.width,out.height); drawExportSummary(ctx,outW,tabId,tabName,false);
-                let y=margin+summaryH+gap; rows.forEach((row,r)=>{row.forEach((item,c)=>ctx.drawImage(item.canvas,margin+c*(colW+gap),y,colW,item.h));y+=rowHeights[r]+gap;});
+            const outW = isTab4 ? 2200 : 1800;
+            const margin = isTab4 ? 44 : 28;
+            const gap = isTab4 ? 34 : 22;
+            const cards = [];
+
+            if (isTab4) {
+                // Aba 04: cada seção fica em uma linha, ocupando toda a largura.
+                // Isso evita gráficos lado a lado e aumenta a área útil para números/datalabels.
+                for (const item of selected) {
+                    cards.push({ item, canvas: await composeTab4SectionCanvas(item, outW - margin * 2) });
+                }
+                const headerH = 96;
+                const totalH = margin + headerH + gap + cards.reduce((sum, c) => sum + c.canvas.height, 0) + gap * Math.max(0, cards.length - 1) + margin;
+                const out = document.createElement('canvas');
+                out.width = outW;
+                out.height = totalH;
+                const ctx = out.getContext('2d');
+                ctx.fillStyle = '#f8fafc'; ctx.fillRect(0, 0, out.width, out.height);
+                ctx.fillStyle = '#0f172a'; ctx.font = '700 34px Arial';
+                ctx.fillText('RELATÓRIO — ENTRADA E SAÍDA DE ÁGUA', margin, 48);
+                const range = getExportDateRange(tabId);
+                if (range) { ctx.fillStyle = '#64748b'; ctx.font = '600 18px Arial'; ctx.fillText(`Período: ${range}`, margin, 77); }
+                let y = margin + headerH + gap;
+                cards.forEach(({canvas}) => {
+                    ctx.drawImage(canvas, margin, y, outW - margin * 2, canvas.height);
+                    y += canvas.height + gap;
+                });
                 return out;
             }
-            const outW = 1800, margin = 28, gap = 22, colW = (outW - margin*2 - gap)/2;
-            const sections = [];
-            for (const item of selected) sections.push({item, canvas: await composeTab4SectionCanvas(item, Math.round(colW))});
-            const rows=[]; for(let i=0;i<sections.length;i+=2) rows.push(sections.slice(i,i+2));
-            const rowHeights=rows.map(r=>Math.max(...r.map(x=>x.canvas.height)));
-            const headerH=78, totalH=margin+headerH+gap+rowHeights.reduce((a,b)=>a+b,0)+gap*Math.max(0,rows.length-1)+margin;
+
+            for (const item of selected) cards.push({ item, canvas: await captureExportCard(item.card) });
+            const colW = outW - margin * 2;
+            const data = cards.map(({canvas}) => ({canvas, h: Math.max(260, Math.min(620, Math.round(colW * canvas.height / canvas.width)))}));
+            const totalH = margin + 120 + gap + data.reduce((a,b)=>a+b.h,0) + gap*Math.max(0,data.length-1) + margin;
             const out=document.createElement('canvas'); out.width=outW; out.height=totalH; const ctx=out.getContext('2d');
-            ctx.fillStyle='#f8fafc';ctx.fillRect(0,0,out.width,out.height);
-            ctx.fillStyle='#0f172a';ctx.font='700 30px Arial';ctx.fillText('RELATÓRIO — ENTRADA E SAÍDA DE ÁGUA',margin,40);
-            const range=getExportDateRange(tabId); if(range){ctx.fillStyle='#64748b';ctx.font='600 16px Arial';ctx.fillText(`Período: ${range}`,margin,64);}
-            let y=margin+headerH+gap;
-            rows.forEach((row,r)=>{row.forEach((item,c)=>{const x=margin+c*(colW+gap);ctx.drawImage(item.canvas,x,y,colW,item.canvas.height);});y+=rowHeights[r]+gap;});
+            ctx.fillStyle='#f8fafc';ctx.fillRect(0,0,out.width,out.height); drawExportSummary(ctx,outW,tabId,tabName,false);
+            let y=margin+120+gap; data.forEach(({canvas,h})=>{ctx.drawImage(canvas,margin,y,colW,h);y+=h+gap;});
             return out;
         }
 
@@ -1802,27 +1814,22 @@
                 // Aba 04: uma única página A4, com resumo geral e os gráficos escolhidos.
                 // A altura de cada gráfico é calculada para caber sem virar uma faixa única.
                 if (isTab4) {
-                    // Aba 04: cada gráfico recebe seus próprios campos gerais imediatamente acima.
+                    // Aba 04: uma seção por faixa, nunca lado a lado.
+                    // Cada seção recebe seus próprios KPIs e gráfico, com largura máxima da página.
                     const contentW = pageW - margin * 2;
-                    const colGap = 5, rowGap = 5, colW = (contentW - colGap) / 2;
                     const sections = [];
-                    for (const item of selected) sections.push({item, canvas: await composeTab4SectionCanvas(item, 900)});
-                    const rows=[]; for(let i=0;i<sections.length;i+=2) rows.push(sections.slice(i,i+2));
-                    const rowH = (pageH - margin*2 - rowGap) / 2;
-                    let idx=0, page=0;
-                    while(idx<sections.length){
-                        if(page>0) pdf.addPage('a4','landscape');
-                        for(let r=0;r<2 && idx<sections.length;r++){
-                            for(let c=0;c<2 && idx<sections.length;c++){
-                                const item=sections[idx++];
-                                const ratio=item.canvas.height/item.canvas.width;
-                                const h=Math.min(rowH, colW*ratio);
-                                const x=margin+c*(colW+colGap);
-                                const y=margin+r*(rowH+rowGap)+(rowH-h)/2;
-                                pdf.addImage(item.canvas.toDataURL('image/jpeg',0.93),'JPEG',x,y,colW,h,undefined,'FAST');
-                            }
-                        }
-                        page++;
+                    for (const item of selected) sections.push({item, canvas: await composeTab4SectionCanvas(item, 1800)});
+
+                    let idx = 0;
+                    while (idx < sections.length) {
+                        if (idx > 0) pdf.addPage('a4', 'landscape');
+                        const item = sections[idx++];
+                        const ratio = item.canvas.height / item.canvas.width;
+                        const availableH = pageH - margin * 2;
+                        const h = Math.min(availableH, contentW * ratio);
+                        const x = margin;
+                        const y = margin + Math.max(0, (availableH - h) / 2);
+                        pdf.addImage(item.canvas.toDataURL('image/jpeg', 0.96), 'JPEG', x, y, contentW, h, undefined, 'FAST');
                     }
                 } else {
                     // Demais abas: 2 gráficos por linha e até 2 linhas por página.
@@ -3328,7 +3335,7 @@ function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
             };
             const culturaCor = (nome) => {
                 const n = normalizarCultura(nome);
-                if (n.includes('brocol')) return { bg: 'rgba(134, 239, 172, 0.68)', border: '#86efac', text: '#166534' };
+                if (n.includes('brocol')) return { bg: 'rgba(22, 101, 52, 0.82)', border: '#14532d', text: '#14532d' };
                 if (n.includes('tamar')) return { bg: 'rgba(147, 197, 253, 0.68)', border: '#93c5fd', text: '#1e40af' };
                 if (n.includes('fita') || n.includes('gotej')) return { bg: 'rgba(253, 224, 71, 0.62)', border: '#facc15', text: '#854d0e' };
                 return { bg: 'rgba(203, 213, 225, 0.65)', border: '#cbd5e1', text: '#475569' };
@@ -3354,16 +3361,23 @@ function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
                 responsive: true,
                 maintainAspectRatio: false,
                 scales: {
-                    x: { stacked: false },
-                    y: { beginAtZero: true, title: { display: true, text: 'Volume Irrigado (L)' } }
+                    x: { stacked: false, ticks: { autoSkip: false, maxRotation: 45, minRotation: 0, font: { size: 11, weight: '600' } } },
+                    y: { beginAtZero: true, grace: '12%', title: { display: true, text: 'Volume Irrigado (L)' } }
                 },
+                layout: { padding: { top: 34, right: 18, left: 12, bottom: 18 } },
                 plugins: {
                     datalabels: {
                         anchor: 'end',
-                        align: 'end',
+                        align: 'top',
+                        offset: 6,
+                        clamp: true,
+                        clip: false,
                         formatter: (val) => val > 0 ? val.toLocaleString('pt-BR') : '',
-                        font: { size: 9, weight: 'bold' },
-                        color: '#475569'
+                        font: { size: 10, weight: 'bold' },
+                        color: '#334155',
+                        backgroundColor: 'rgba(255,255,255,0.94)',
+                        borderRadius: 4,
+                        padding: { top: 3, right: 5, bottom: 3, left: 5 }
                     },
                     legend: { display: true, position: 'bottom', labels: { boxWidth: 14, font: { size: 10 } } }
                 }
