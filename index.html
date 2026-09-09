@@ -1588,6 +1588,12 @@
             showExportSelector(tabId, tabName, 'jpeg', btn);
         }
 
+        // Compatibilidade com os botões "Baixar JPEG" da dashboard.
+        // Alguns botões chamam openImageExportMenu; manter este alias evita o clique sem ação.
+        function openImageExportMenu(tabId, tabName, btn) {
+            captureTab(tabId, tabName, btn);
+        }
+
         function downloadPDF(elementId, fileName, btn) {
             showExportSelector(elementId, fileName, 'pdf', btn);
         }
@@ -2788,32 +2794,112 @@
 }
 
 function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
-            const fonte = Array.isArray(filteredEntrada) ? filteredEntrada : globalVazaoDiaData;
-            const rows = fonte.filter(d => d && d.IsoDate && d.Poco && Number.isFinite(Number(d.VazaoMediaDia)) && Number(d.VazaoMediaDia) > 0);
-            const dates = Array.from(new Set(rows.map(d => String(d.IsoDate).slice(0,10)))).sort();
-            const wells = Array.from(new Set(rows.map(d => d.Poco))).sort((a,b) => a.localeCompare(b, undefined, {numeric:true, sensitivity:'base'}));
-            const byDateWell = {};
-            rows.forEach(d => { byDateWell[`${String(d.IsoDate).slice(0,10)}___${d.Poco}`] = Number(d.VazaoMediaDia); });
-            const datasets = wells.map(well => ({
-                label: well,
-                data: dates.map(date => { const v = byDateWell[`${date}___${well}`]; return Number.isFinite(v) ? v : null; }),
-                borderWidth: 2, tension: 0.2, spanGaps: false, pointRadius: 2, pointHoverRadius: 5, fill: false
-            }));
-            renderChart('vazaoMediaDiaPocosChart', 'vazaoMediaDiaPocos', 'line', {
-                labels: dates.map(d => { const parts = d.split('-'); return parts.length === 3 ? `${parts[2]}/${parts[1]}` : d; }),
-                datasets
-            }, {
-                responsive: true, maintainAspectRatio: false,
-                scales: {
-                    y: { title: { display: true, text: 'Vazão (L/h)' }, beginAtZero: false },
-                    x: { ticks: { autoSkip: true, maxRotation: 45, minRotation: 0 } }
-                },
-                plugins: {
-                    datalabels: { display: false },
-                    legend: { display: true, position: 'bottom', labels: { boxWidth: 12, font: { size: 9 } } }
+    const fonte = Array.isArray(filteredEntrada) ? filteredEntrada : (Array.isArray(globalVazaoDiaData) ? globalVazaoDiaData : []);
+    const rows = fonte.filter(d => d && d.IsoDate && d.Poco && Number.isFinite(Number(d.VazaoMediaDia)) && Number(d.VazaoMediaDia) > 0);
+
+    // Consolida por DIA + POÇO. Se houver mais de um lançamento para o mesmo poço no dia,
+    // o gráfico mostra a média real daquele dia.
+    const agrupado = {};
+    rows.forEach(d => {
+        const date = String(d.IsoDate).slice(0, 10);
+        const key = `${date}___${d.Poco}`;
+        if (!agrupado[key]) agrupado[key] = { soma: 0, qtd: 0 };
+        agrupado[key].soma += Number(d.VazaoMediaDia);
+        agrupado[key].qtd += 1;
+    });
+
+    const dates = Array.from(new Set(rows.map(d => String(d.IsoDate).slice(0, 10)))).sort();
+    const wells = Array.from(new Set(rows.map(d => d.Poco)))
+        .sort((a,b) => a.localeCompare(b, undefined, {numeric:true, sensitivity:'base'}));
+
+    const byDateWell = {};
+    Object.keys(agrupado).forEach(key => {
+        byDateWell[key] = agrupado[key].soma / agrupado[key].qtd;
+    });
+
+    let chartData;
+    let xTitle = 'Data';
+
+    if (dates.length === 1) {
+        // Quando o usuário seleciona, por exemplo, 08/09 a 08/09,
+        // o eixo X passa a mostrar TODOS OS POÇOS, para comparar as vazões daquele dia.
+        xTitle = 'Poços';
+        chartData = {
+            labels: wells,
+            datasets: [{
+                label: `Vazão média em ${dates[0].split('-').reverse().join('/')}`,
+                data: wells.map(well => {
+                    const v = byDateWell[`${dates[0]}___${well}`];
+                    return Number.isFinite(v) ? Number(v.toFixed(0)) : null;
+                }),
+                borderWidth: 3,
+                tension: 0.25,
+                spanGaps: false,
+                pointRadius: 4,
+                pointHoverRadius: 6,
+                fill: false,
+                datalabels: {
+                    display: true,
+                    anchor: 'end',
+                    align: 'top',
+                    offset: 4,
+                    formatter: v => Number.isFinite(Number(v)) ? `${Number(v).toLocaleString('pt-BR')} L/h` : '',
+                    font: { size: 10, weight: 'bold' }
                 }
-            });
+            }]
+        };
+    } else {
+        // Para vários dias, mantém uma linha para cada poço e o eixo X em ordem cronológica.
+        chartData = {
+            labels: dates.map(d => {
+                const parts = d.split('-');
+                return parts.length === 3 ? `${parts[2]}/${parts[1]}` : d;
+            }),
+            datasets: wells.map(well => ({
+                label: well,
+                data: dates.map(date => {
+                    const v = byDateWell[`${date}___${well}`];
+                    return Number.isFinite(v) ? Number(v.toFixed(0)) : null;
+                }),
+                borderWidth: 2.5,
+                tension: 0.2,
+                spanGaps: false,
+                pointRadius: 3,
+                pointHoverRadius: 6,
+                fill: false,
+                datalabels: { display: false }
+            }))
+        };
+    }
+
+    renderChart('vazaoMediaDiaPocosChart', 'vazaoMediaDiaPocos', 'line', chartData, {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        scales: {
+            y: {
+                title: { display: true, text: 'Vazão média (L/h)' },
+                beginAtZero: false,
+                ticks: {
+                    callback: value => Number(value).toLocaleString('pt-BR')
+                }
+            },
+            x: {
+                title: { display: true, text: xTitle },
+                ticks: { autoSkip: dates.length > 1, maxRotation: 45, minRotation: 0 }
+            }
+        },
+        plugins: {
+            legend: { display: true, position: 'bottom', labels: { boxWidth: 12, font: { size: 9 } } },
+            tooltip: {
+                callbacks: {
+                    label: context => `${context.dataset.label}: ${Number(context.parsed.y).toLocaleString('pt-BR')} L/h`
+                }
+            },
+            datalabels: { display: false }
         }
+    });
+}
 
         function applySpecificVazaoDiaFilterTab4() {
             const start = document.getElementById('vazaoDiaStartDateTab4')?.value || '';
