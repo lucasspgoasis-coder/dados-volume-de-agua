@@ -321,9 +321,7 @@
                             <span class="text-slate-700 font-bold text-xs uppercase tracking-wide flex items-center gap-1.5">
                                 <i class="fa-solid fa-filter text-blue-600"></i> Filtros da Aba 1:
                             </span>
-                            <button onclick="captureTab('content-diario', 'aba_1_diario', this)" title="Capturar imagem da aba" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
-                                <i class="fa-solid fa-camera text-blue-600"></i> Capturar Aba
-                            </button>
+                            <button onclick="openImageExportMenu('content-diario', 'aba_1_diario', this)" title="Escolher gráfico para baixar em JPEG" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm"><i class="fa-solid fa-file-image text-emerald-600"></i> Baixar JPEG</button>
                             <button onclick="downloadPDF('content-diario', 'aba_1_diario', this)" title="Baixar aba em PDF" class="bg-rose-600 hover:bg-rose-700 text-white px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
                                 <i class="fa-solid fa-file-pdf"></i> Baixar em PDF
                             </button>
@@ -431,9 +429,7 @@
                             <span class="text-slate-700 font-bold text-xs uppercase tracking-wide flex items-center gap-1.5">
                                 <i class="fa-solid fa-filter text-indigo-600"></i> Filtros da Aba 2:
                             </span>
-                            <button onclick="captureTab('content-mensal', 'aba_2_mensal', this)" title="Capturar imagem da aba" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
-                                <i class="fa-solid fa-camera text-indigo-600"></i> Capturar Aba
-                            </button>
+                            <button onclick="openImageExportMenu('content-mensal', 'aba_2_mensal', this)" title="Escolher gráfico para baixar em JPEG" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm"><i class="fa-solid fa-file-image text-emerald-600"></i> Baixar JPEG</button>
                             <button onclick="downloadPDF('content-mensal', 'aba_2_volumes_tendencia', this)" title="Baixar aba em PDF" class="bg-rose-600 hover:bg-rose-700 text-white px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
                                 <i class="fa-solid fa-file-pdf"></i> Baixar em PDF
                             </button>
@@ -540,9 +536,7 @@
                             <span class="text-slate-700 font-bold text-xs uppercase tracking-wide flex items-center gap-1.5">
                                 <i class="fa-solid fa-filter text-orange-600"></i> Filtros de Consulta:
                             </span>
-                            <button onclick="captureTab('content-comparacao', 'aba_3_dados_tabulares', this)" title="Capturar imagem da aba" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
-                                <i class="fa-solid fa-camera text-orange-600"></i> Capturar Aba
-                            </button>
+                            <button onclick="openImageExportMenu('content-comparacao', 'aba_3_dados_tabulares', this)" title="Escolher gráfico para baixar em JPEG" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm"><i class="fa-solid fa-file-image text-emerald-600"></i> Baixar JPEG</button>
                             <button onclick="downloadPDF('content-comparacao', 'aba_3_dados_tabulares', this)" title="Baixar aba em PDF" class="bg-rose-600 hover:bg-rose-700 text-white px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
                                 <i class="fa-solid fa-file-pdf"></i> Baixar em PDF
                             </button>
@@ -655,9 +649,7 @@
                             <span class="text-slate-700 font-bold text-xs uppercase tracking-wide flex items-center gap-1.5">
                                 <i class="fa-solid fa-filter text-sky-600"></i> Filtros da Aba 4:
                             </span>
-                            <button onclick="captureTab('content-entrada', 'aba_4_entrada_saida', this)" title="Capturar imagem da aba" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
-                                <i class="fa-solid fa-camera text-sky-600"></i> Capturar Aba
-                            </button>
+                            <button onclick="openImageExportMenu('content-entrada', 'aba_4_entrada_saida', this)" title="Escolher gráfico para baixar em JPEG" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm"><i class="fa-solid fa-file-image text-emerald-600"></i> Baixar JPEG</button>
                             <button onclick="downloadPDF('content-entrada', 'aba_4_entrada_saida', this)" title="Baixar aba em PDF" class="bg-rose-600 hover:bg-rose-700 text-white px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
                                 <i class="fa-solid fa-file-pdf"></i> Baixar em PDF
                             </button>
@@ -733,6 +725,19 @@
                         </div>
                     </div>
                     <div class="chart-container-no-scroll mt-3"><canvas id="entradaAguaChart"></canvas></div>
+                </div>
+
+                <!-- Mini gráfico: vazão média usada no cálculo da entrada -->
+                <div class="glass-card p-4 mt-4">
+                    <div class="flex justify-between items-center mb-1 flex-wrap gap-2">
+                        <div>
+                            <h3 class="text-sm font-extrabold text-slate-800 flex items-center gap-2">
+                                <i class="fa-solid fa-faucet-drip text-sky-600"></i> Vazão Média dos Poços por Dia
+                            </h3>
+                            <p class="text-[11px] text-slate-500">Vazão média registrada e utilizada no cálculo do volume de entrada, com os poços em ordem alfabética.</p>
+                        </div>
+                    </div>
+                    <div class="chart-container-no-scroll mt-2" style="height: 210px;"><canvas id="vazaoMediaDiaPocosChart"></canvas></div>
                 </div>
 
                 <!-- KPIs Saída -->
@@ -973,9 +978,7 @@
                             <span class="text-slate-700 font-bold text-xs uppercase tracking-wide flex items-center gap-1.5">
                                 <i class="fa-solid fa-filter text-blue-600"></i> Filtros de Bloco, Ciclo e Período:
                             </span>
-                            <button onclick="captureTab('content-bloco', 'aba_5_resumo_bloco', this)" title="Capturar imagem da aba" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
-                                <i class="fa-solid fa-camera text-blue-600"></i> Capturar Aba
-                            </button>
+                            <button onclick="openImageExportMenu('content-bloco', 'aba_5_resumo_bloco', this)" title="Escolher gráfico para baixar em JPEG" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm"><i class="fa-solid fa-file-image text-emerald-600"></i> Baixar JPEG</button>
                             <button onclick="downloadPDF('content-bloco', 'aba_5_resumo_bloco', this)" title="Baixar aba em PDF" class="bg-rose-600 hover:bg-rose-700 text-white px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
                                 <i class="fa-solid fa-file-pdf"></i> Baixar em PDF
                             </button>
@@ -1159,9 +1162,7 @@
                             <span class="text-slate-700 font-bold text-xs uppercase tracking-wide flex items-center gap-1.5">
                                 <i class="fa-solid fa-filter text-indigo-600"></i> Filtros de Manutenção:
                             </span>
-                            <button onclick="captureTab('content-manutencao', 'aba_6_manutencao_bombas', this)" title="Capturar imagem da aba" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
-                                <i class="fa-solid fa-camera text-indigo-600"></i> Capturar Aba
-                            </button>
+                            <button onclick="openImageExportMenu('content-manutencao', 'aba_6_manutencao_bombas', this)" title="Escolher gráfico para baixar em JPEG" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm"><i class="fa-solid fa-file-image text-emerald-600"></i> Baixar JPEG</button>
                             <button onclick="downloadPDF('content-manutencao', 'aba_6_manutencao_bombas', this)" title="Baixar aba em PDF" class="bg-rose-600 hover:bg-rose-700 text-white px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
                                 <i class="fa-solid fa-file-pdf"></i> Baixar em PDF
                             </button>
@@ -1448,59 +1449,65 @@
             el.style.overflow = originalStyle.overflow;
         }
 
-        async function captureTab(tabId, tabName, btn) {
+        function openImageExportMenu(tabId, tabName) {
             const tabEl = document.getElementById(tabId);
-            if (!tabEl) return;
+            const optionsEl = document.getElementById('imageExportOptions');
+            const modal = document.getElementById('imageExportModal');
+            if (!tabEl || !optionsEl || !modal) return;
 
-            const originalContent = btn.innerHTML;
-            const originalStyle = {
-                width: tabEl.style.width,
-                maxWidth: tabEl.style.maxWidth,
-                overflow: tabEl.style.overflow
-            };
-            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Processando Imagem...`;
-            btn.disabled = true;
+            const canvases = Array.from(tabEl.querySelectorAll('canvas')).filter(c => c.id);
+            if (!canvases.length) {
+                alert('Nenhum gráfico disponível nesta aba.');
+                return;
+            }
 
+            optionsEl.innerHTML = canvases.map((canvas, index) => {
+                const card = canvas.closest('.glass-card') || canvas.parentElement;
+                const titleEl = card ? card.querySelector('h3, h2, h4') : null;
+                const title = titleEl ? titleEl.textContent.trim() : `Gráfico ${index + 1}`;
+                return `<button type="button" onclick="exportChartAsJPEG('${canvas.id}', '${tabName.replace(/'/g, "\\'")}')" class="w-full text-left p-3 rounded-xl border border-slate-200 hover:border-emerald-400 hover:bg-emerald-50 transition flex items-center gap-3">
+                    <span class="w-9 h-9 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0"><i class="fa-solid fa-chart-line"></i></span>
+                    <span><span class="block text-sm font-bold text-slate-800">${title.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</span><span class="block text-[10px] text-slate-500 mt-0.5">Baixar somente este gráfico em JPEG</span></span>
+                </button>`;
+            }).join('');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeImageExportMenu() {
+            const modal = document.getElementById('imageExportModal');
+            if (!modal) return;
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        async function exportChartAsJPEG(canvasId, tabName) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+            const card = canvas.closest('.glass-card') || canvas.parentElement;
+            if (!card) return;
+            closeImageExportMenu();
+            const titleEl = card.querySelector('h3, h2, h4');
+            const title = titleEl ? titleEl.textContent.trim() : canvasId;
+            const safeTitle = title.replace(/[^a-z0-9À-ÿ]+/gi,'_').replace(/^_+|_+$/g,'').slice(0,80);
+            const originalStyle = { width:card.style.width, maxWidth:card.style.maxWidth, overflow:card.style.overflow };
             try {
-                window.scrollTo(0, 0);
-                const { exportWidth, exportHeight } = await prepareExportElement(tabEl);
-                const canvas = await html2canvas(tabEl, {
-                    scale: 2,
-                    useCORS: true,
-                    allowTaint: true,
-                    backgroundColor: '#f8fafc',
-                    logging: false,
-                    scrollX: 0,
-                    scrollY: 0,
-                    x: 0,
-                    y: 0,
-                    width: exportWidth,
-                    height: exportHeight,
-                    windowWidth: exportWidth + 80,
-                    windowHeight: exportHeight + 80,
-                    onclone: (doc) => {
-                        const cloned = doc.getElementById(tabId);
-                        if (cloned) {
-                            cloned.classList.add('export-mode');
-                            cloned.style.width = exportWidth + 'px';
-                            cloned.style.maxWidth = 'none';
-                            cloned.style.overflow = 'visible';
-                        }
-                    }
+                const { exportWidth, exportHeight } = await prepareExportElement(card);
+                const imageCanvas = await html2canvas(card, {
+                    scale: 2, useCORS:true, allowTaint:true, backgroundColor:'#ffffff', logging:false,
+                    scrollX:0, scrollY:0, x:0, y:0, width:exportWidth, height:exportHeight,
+                    windowWidth:exportWidth + 80, windowHeight:exportHeight + 80,
+                    onclone: doc => { const cloned=doc.querySelector('#'+CSS.escape(canvasId)); if(cloned){ const clonedCard=cloned.closest('.glass-card') || cloned.parentElement; if(clonedCard){ clonedCard.classList.add('export-mode'); clonedCard.style.width=exportWidth+'px'; clonedCard.style.maxWidth='none'; clonedCard.style.overflow='visible'; } } }
                 });
-
-                const image = canvas.toDataURL('image/png', 1.0);
-                const link = document.createElement('a');
-                link.download = `${tabName}_Captura_${new Date().toISOString().split('T')[0]}.png`;
-                link.href = image;
+                const link=document.createElement('a');
+                link.download=`${tabName}_${safeTitle}_${new Date().toISOString().split('T')[0]}.jpeg`;
+                link.href=imageCanvas.toDataURL('image/jpeg',0.95);
                 link.click();
-            } catch (err) {
-                console.error('Erro ao capturar imagem:', err);
-                alert('Ocorreu um erro ao realizar a captura da tela.');
+            } catch(err) {
+                console.error('Erro ao baixar JPEG:',err);
+                alert('Ocorreu um erro ao gerar o JPEG.');
             } finally {
-                restoreExportElement(tabEl, originalStyle);
-                btn.innerHTML = originalContent;
-                btn.disabled = false;
+                restoreExportElement(card, originalStyle);
             }
         }
 
@@ -2817,6 +2824,27 @@
                 }
             });
 
+            // Mini gráfico da vazão média diária por poço, ordenado alfabeticamente
+            const datasVazao = Array.from(new Set(filteredEntrada.map(d => d.IsoDate))).sort();
+            const pocosVazao = Array.from(new Set(filteredEntrada.map(d => d.Poco))).sort((a,b) => a.localeCompare(b, undefined, {numeric:true, sensitivity:'base'}));
+            const datasetsVazao = pocosVazao.map((poco, idx) => {
+                const cor = ['#0369a1','#7c3aed','#059669','#d97706','#dc2626','#0891b2','#9333ea','#65a30d'][idx % 8];
+                const data = datasVazao.map(iso => {
+                    const rows = filteredEntrada.filter(d => d.Poco === poco && d.IsoDate === iso && d.Vazao > 0);
+                    if (!rows.length) return null;
+                    return rows.reduce((sum, r) => sum + r.Vazao, 0) / rows.length;
+                });
+                return { label:poco, data, borderColor:cor, backgroundColor:cor, borderWidth:2, pointRadius:2.5, pointHoverRadius:4, tension:0.2, spanGaps:true };
+            });
+            renderChart('vazaoMediaDiaPocosChart', 'vazaoMediaDiaPocos', 'line', {
+                labels: datasVazao.map(iso => { const [y,m,d]=iso.split('-'); return `${d}/${m}`; }),
+                datasets: datasetsVazao
+            }, {
+                responsive:true, maintainAspectRatio:false, interaction:{mode:'index', intersect:false},
+                scales:{ y:{ title:{display:true,text:'Vazão média (L/h)'}, ticks:{callback:v => `${Number(v).toLocaleString('pt-BR')} L/h`} }, x:{ticks:{autoSkip:true,maxRotation:0,minRotation:0,font:{size:9}},grid:{display:false}} },
+                plugins:{ legend:{display:true, position:'top', labels:{boxWidth:12,font:{size:9}}}, datalabels:{display:false} }
+            });
+
             // Filtro Saída
             let filteredSaida = globalSaidaData.filter(d => {
                 if (selectedWells.length > 0 && d.Poco && !selectedWells.includes(d.Poco)) return false;
@@ -2835,21 +2863,33 @@
             document.getElementById('kpi4_saidaTempo').innerText = `${totalSaidaTempo.toFixed(1)} h`;
             document.getElementById('kpi4_saidaLocais').innerText = uniqueSaidaLocais;
 
-            // Gráfico Saída de Água por Bloco
+            // Gráfico Saída de Água por cultura/tipo de área
             const locaisSaida = Array.from(new Set(filteredSaida.map(d => d.Local))).sort((a,b) => a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'}));
-            const volSaidaByLocal = locaisSaida.map(loc => {
-                const sub = filteredSaida.filter(d => d.Local === loc);
-                return Math.round(sub.reduce((acc, curr) => acc + curr.VolumeCalculado, 0));
+            const classifySaida = d => {
+                const txt = `${d.Cultura || ''} ${d.Local || ''} ${d.TipoStr || ''}`.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+                if (txt.includes('tamara')) return 'Tâmaras';
+                if (txt.includes('fita') && txt.includes('gotej')) return 'Fita Gotejo';
+                if (txt.includes('brocol') || txt.includes('broccoli')) return 'Brócolis';
+                return 'Brócolis';
+            };
+            const categoriasSaida = [
+                { label: 'Brócolis', color: '#166534' },
+                { label: 'Tâmaras', color: '#1e3a8a' },
+                { label: 'Fita Gotejo', color: '#dc2626' }
+            ];
+            const volumeCategoria = categoria => locaisSaida.map(loc => {
+                return Math.round(filteredSaida.filter(d => d.Local === loc && classifySaida(d) === categoria).reduce((acc, curr) => acc + curr.VolumeCalculado, 0));
             });
 
             renderChart('saidaAguaChart', 'saidaAgua', 'bar', {
                 labels: locaisSaida,
-                datasets: [{
-                    label: 'Volume Irrigado por Bloco (L)',
-                    data: volSaidaByLocal,
-                    backgroundColor: 'rgba(16, 185, 129, 0.85)',
+                datasets: categoriasSaida.map(c => ({
+                    label: c.label,
+                    data: volumeCategoria(c.label),
+                    backgroundColor: c.color,
+                    borderColor: c.color,
                     borderRadius: 6
-                }]
+                }))
             }, {
                 responsive: true,
                 maintainAspectRatio: false,
@@ -3459,5 +3499,22 @@
             // Pronta para receber interações ou autologin em desenvolvimento
         };
     </script>
+
+    <!-- Seletor de gráfico para exportação em JPEG -->
+    <div id="imageExportModal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[85vh] overflow-hidden">
+            <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
+                <div>
+                    <h3 class="text-base font-extrabold text-slate-800">Baixar gráfico em JPEG</h3>
+                    <p class="text-xs text-slate-500 mt-1">Escolha qual gráfico deseja baixar.</p>
+                </div>
+                <button type="button" onclick="closeImageExportMenu()" class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div id="imageExportOptions" class="p-4 space-y-2 overflow-y-auto max-h-[65vh]"></div>
+        </div>
+    </div>
+
 </body>
 </html>
