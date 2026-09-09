@@ -2214,7 +2214,9 @@
 
             let filtered = globalRawData.filter(d => {
                 if (selectedWells.length > 0 && !selectedWells.includes(d.Poco)) return false;
-                if (selectedMonths.length > 0 && !selectedMonths.includes(d.MesLabel)) return false;
+                // Registros sem data de manutenção ainda devem aparecer no relatório.
+                // O filtro por mês só deve restringir registros que realmente possuem mês.
+                if (selectedMonths.length > 0 && d.MesLabel !== 'N/I' && !selectedMonths.includes(d.MesLabel)) return false;
                 if (startDate && d.IsoDate < startDate) return false;
                 if (endDate && d.IsoDate > endDate) return false;
                 return true;
