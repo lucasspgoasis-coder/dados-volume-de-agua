@@ -732,11 +732,20 @@
                             <p class="text-xs text-slate-500">Exibe o volume total jorado (em barras com valores no topo da média vazão × tempo) e as horas trabalhadas.</p>
                         </div>
                     </div>
-                    <div id="nivelTanqueRegua" class="mt-3 mb-3 rounded-lg border border-blue-100 bg-blue-50/40 p-3">
+                    <div id="nivelTanqueRegua" class="mt-3 mb-3 ml-auto max-w-[420px] rounded-lg border border-blue-100 bg-blue-50/40 p-3">
 <div class="flex items-center justify-between gap-2 mb-2"><div class="text-[11px] font-extrabold uppercase tracking-wide text-slate-700">Nível do Tanque 03</div><div id="nivelTanqueReguaValor" class="text-xs font-extrabold text-blue-800">-- m · --%</div></div>
 <div class="relative px-1"><div class="h-3 rounded-full bg-slate-200 overflow-hidden border border-blue-100"><div id="nivelTanqueReguaFill" class="h-full rounded-full bg-blue-600 transition-all" style="width:0%"></div></div><div id="nivelTanqueReguaTicks" class="relative mt-1 h-5 text-[9px] font-semibold text-slate-600"></div></div>
 <div id="nivelTanqueReguaInfo" class="mt-1 text-[10px] text-slate-500 text-right">Sem leitura de nível no período selecionado.</div></div>
 <div class="chart-container-no-scroll mt-3"><canvas id="entradaAguaChart"></canvas></div>
+                </div>
+
+                <!-- Vazão Média dos Poços por Dia -->
+                <div class="glass-card p-5 mt-4">
+                    <div class="mb-2">
+                        <h3 class="text-base font-bold text-slate-800">Vazão Média dos Poços por Dia</h3>
+                        <p class="text-xs text-slate-500">Vazão média diária por poço, apresentada em linhas e em ordem alfabética.</p>
+                    </div>
+                    <div class="chart-container-no-scroll mt-3"><canvas id="vazaoMediaDiaPocosChart"></canvas></div>
                 </div>
 
                 <!-- KPIs Saída -->
@@ -2739,11 +2748,70 @@
     if (!dados.length) { fill.style.width='0%'; valorEl.textContent='-- m · --%'; infoEl.textContent='Sem leitura de nível correspondente ao período selecionado.'; return; }
     const d=dados[dados.length-1], nivel=Math.max(0,Math.min(MAX,Number(d.nivel))), pct=nivel/MAX*100, litros=AREA*nivel*1000;
     fill.style.width=`${pct}%`;
-    valorEl.textContent=`${nivel.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})} m · ${pct.toFixed(1).replace('.',',')}%`;
+    valorEl.textContent=`${nivel.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})} m · ${Math.round(pct)}%`;
     infoEl.textContent=`Leitura de ${d.dateObj.toLocaleDateString('pt-BR')} · aproximadamente ${Math.round(litros).toLocaleString('pt-BR')} L`;
 }
 
-function applyFiltersTab4() {
+function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
+            const byDateWell = {};
+            filteredEntrada.forEach(d => {
+                const date = d.IsoDate || d.DataFormatted || '';
+                const well = d.Poco || '';
+                if (!date || !well || !Number.isFinite(Number(d.Vazao))) return;
+                const key = `${date}___${well}`;
+                if (!byDateWell[key]) byDateWell[key] = { date, well, sum: 0, count: 0 };
+                byDateWell[key].sum += Number(d.Vazao);
+                byDateWell[key].count += 1;
+            });
+
+            const dates = Array.from(new Set(Object.values(byDateWell).map(x => x.date))).sort();
+            const wells = Array.from(new Set(Object.values(byDateWell).map(x => x.well)))
+                .sort((a,b) => a.localeCompare(b, undefined, {numeric:true, sensitivity:'base'}));
+
+            const datasets = wells.map((well, idx) => {
+                const data = dates.map(date => {
+                    const r = byDateWell[`${date}___${well}`];
+                    return r ? Math.round(r.sum / r.count) : null;
+                });
+                return {
+                    label: well,
+                    data,
+                    borderWidth: 2,
+                    tension: 0.2,
+                    spanGaps: true,
+                    pointRadius: 0,
+                    pointHoverRadius: 4,
+                    fill: false
+                };
+            });
+
+            renderChart('vazaoMediaDiaPocosChart', 'vazaoMediaDiaPocos', 'line', {
+                labels: dates.map(d => {
+                    const parts = d.split('-');
+                    return parts.length === 3 ? `${parts[2]}/${parts[1]}` : d;
+                }),
+                datasets
+            }, {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        title: { display: true, text: 'Vazão Média (L/h)' },
+                        beginAtZero: false
+                    }
+                },
+                plugins: {
+                    datalabels: { display: false },
+                    legend: {
+                        display: true,
+                        position: 'bottom',
+                        labels: { boxWidth: 12, font: { size: 10 } }
+                    }
+                }
+            });
+        }
+
+        function applyFiltersTab4() {
             const selectedWells = Array.from(document.querySelectorAll('.well-chk-4:checked')).map(c => c.value);
             const selectedLocais = Array.from(document.querySelectorAll('.local-chk-4:checked')).map(c => c.value);
             const selectedTipoEmissor = document.getElementById('filterTipoEmissorTab4').value;
@@ -2763,6 +2831,7 @@ function applyFiltersTab4() {
             const maxPeakVol = filteredEntrada.length > 0 ? Math.max(...filteredEntrada.map(d => d.VolumeCalculado)) : 0;
 
             atualizarReguaNivelTanqueTab4(filteredEntrada);
+            renderVazaoMediaDiaPocosTab4(filteredEntrada);
 
             document.getElementById('kpi4_totalVol').innerText = `${Math.round(totalVolEntrada).toLocaleString('pt-BR')} L`;
             document.getElementById('kpi4_avgHours').innerText = `${avgHours.toFixed(1)} h/dia`;
