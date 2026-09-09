@@ -1559,23 +1559,42 @@
         }
 
         async function renderExportCanvas(wrapper) {
-            // html2canvas é mais robusto para DOM + tabelas + canvas Chart.js.
-            // Fazemos a captura pelo elemento efetivamente renderizado na viewport.
+            // Usa a biblioteca html-to-image já carregada no HTML. O arquivo não
+            // depende de html2canvas (que não está incluído nesta página).
+            if (!window.htmlToImage || typeof window.htmlToImage.toCanvas !== 'function') {
+                throw new Error('Biblioteca html-to-image não carregada.');
+            }
             await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
-            return await html2canvas(wrapper, {
-                scale: 2,
-                useCORS: true,
-                allowTaint: true,
+            return await window.htmlToImage.toCanvas(wrapper, {
                 backgroundColor: '#f8fafc',
-                logging: false,
-                scrollX: 0,
-                scrollY: 0,
-                width: 1200,
-                height: Math.max(700, wrapper.scrollHeight),
-                windowWidth: 1280,
-                windowHeight: Math.max(800, wrapper.scrollHeight + 40),
-                removeContainer: true
+                pixelRatio: 1.5,
+                cacheBust: true,
+                skipFonts: false,
+                style: {
+                    margin: '0',
+                    transform: 'none'
+                }
             });
+        }
+
+        function makePdfPageCanvas(sourceCanvas, pageWidth, pageHeight, margin, yOffset) {
+            const page = document.createElement('canvas');
+            const scale = 1.5;
+            page.width = Math.round(pageWidth * scale);
+            page.height = Math.round(pageHeight * scale);
+            const ctx = page.getContext('2d');
+            ctx.fillStyle = '#f8fafc';
+            ctx.fillRect(0, 0, page.width, page.height);
+            const innerW = page.width - margin * 2 * scale;
+            const sourceW = sourceCanvas.width;
+            const drawH = innerW * sourceCanvas.height / sourceW;
+            const visibleH = Math.min(drawH - yOffset, page.height - margin * 2 * scale);
+            if (visibleH > 0) {
+                const sy = Math.max(0, yOffset * sourceW / innerW);
+                const sh = visibleH * sourceW / innerW;
+                ctx.drawImage(sourceCanvas, 0, sy, sourceW, sh, margin * scale, margin * scale, innerW, visibleH);
+            }
+            return page;
         }
 
         async function exportSelectedSectionsJPEG(selected, tabName, btn) {
@@ -1590,9 +1609,12 @@
                 const link = document.createElement('a');
                 link.download = `${tabName}_${new Date().toISOString().split('T')[0]}.jpeg`;
                 link.href = dataUrl;
+                document.body.appendChild(link);
                 link.click();
+                link.remove();
             } catch (e) {
-                console.error(e); alert('Não foi possível gerar o JPEG.');
+                console.error('Erro ao gerar JPEG:', e);
+                alert('Não foi possível gerar o JPEG. Verifique se a página terminou de carregar e tente novamente.');
             } finally {
                 if (wrapper) wrapper.remove();
                 btn.innerHTML = original; btn.disabled = false;
@@ -1607,16 +1629,28 @@
             try {
                 wrapper = await buildExportContainer(selected);
                 const canvas = await renderExportCanvas(wrapper);
-                const dataUrl = canvas.toDataURL('image/png', 1.0);
-                const img = new Image();
-                await new Promise((resolve, reject) => { img.onload = resolve; img.onerror = reject; img.src = dataUrl; });
-                const { jsPDF } = window.jspdf;
-                const orientation = img.width >= img.height ? 'l' : 'p';
-                const pdf = new jsPDF({ orientation, unit: 'px', format: [img.width, img.height], compress: true });
-                pdf.addImage(dataUrl, 'PNG', 0, 0, img.width, img.height, undefined, 'FAST');
+                const { jsPDF } = window.jspdf || {};
+                if (!jsPDF) throw new Error('Biblioteca jsPDF não carregada.');
+
+                // PDF A4 paisagem. A imagem é dividida em páginas para não ficar
+                // comprimida em uma única faixa/banda e preservar a leitura.
+                const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4', compress: true });
+                const pageW = 297, pageH = 210, margin = 8;
+                const usableW = pageW - margin * 2;
+                const scaledH = usableW * canvas.height / canvas.width;
+                const pageUsableH = pageH - margin * 2;
+                const totalPages = Math.max(1, Math.ceil(scaledH / pageUsableH));
+
+                for (let pageIndex = 0; pageIndex < totalPages; pageIndex++) {
+                    if (pageIndex > 0) pdf.addPage('a4', 'landscape');
+                    const yMm = -(pageIndex * pageUsableH) + margin;
+                    const imgData = canvas.toDataURL('image/jpeg', 0.92);
+                    pdf.addImage(imgData, 'JPEG', margin, yMm, usableW, scaledH, undefined, 'FAST');
+                }
                 pdf.save(`${tabName}_${new Date().toISOString().split('T')[0]}.pdf`);
             } catch (e) {
-                console.error(e); alert('Não foi possível gerar o PDF.');
+                console.error('Erro ao gerar PDF:', e);
+                alert('Não foi possível gerar o PDF. Verifique se a página terminou de carregar e tente novamente.');
             } finally {
                 if (wrapper) wrapper.remove();
                 btn.innerHTML = original; btn.disabled = false;
