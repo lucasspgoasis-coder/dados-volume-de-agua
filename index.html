@@ -728,10 +728,11 @@
                 <div class="glass-card p-5">
                     <div class="flex justify-between items-center mb-1 flex-wrap gap-2">
                         <div>
-                            <h3 class="text-base font-bold text-slate-800">Volume Total e Horas Trabalhadas por Poço (Entrada)</h3>
+                            <h3 class="text-base font-bold text-slate-800">Volume Total por Poço (Entrada)</h3>
                             <p class="text-xs text-slate-500">Volume total por poço nas barras. O horário trabalhado aparece no topo de cada poço, com cor conforme a duração.</p>
                         </div>
                     </div>
+                    <div id="entradaHorasTopo" class="flex flex-wrap items-center gap-2 mt-3 mb-2"></div>
                     <div id="nivelTanqueRegua" class="mt-3 mb-3 ml-auto max-w-[420px] bg-blue-50/40 p-3">
 <div class="flex items-center justify-between gap-2 mb-2"><div class="text-[11px] font-extrabold uppercase tracking-wide text-slate-700">Nível do Tanque 03</div><div id="nivelTanqueReguaValor" class="text-xs font-extrabold text-blue-800">-- m · --%</div></div>
 <div class="relative px-1"><div class="h-3 rounded-full bg-slate-200 overflow-hidden border border-blue-100"><div id="nivelTanqueReguaFill" class="h-full rounded-full bg-blue-600 transition-all" style="width:0%"></div></div><div id="nivelTanqueReguaTicks" class="relative mt-1 h-5 text-[9px] font-semibold text-slate-600"></div></div>
@@ -796,7 +797,7 @@
                 <div class="glass-card p-5 mb-4">
                     <div class="flex justify-between items-center mb-1 flex-wrap gap-2">
                         <div>
-                            <h3 class="text-base font-bold text-slate-800">Saída de Água - Irrigação por Bloco (Cálculo Detalhado)</h3>
+                            <h3 class="text-base font-bold text-slate-800">Saída de Água - Irrigação por Bloco e Cultura (Cálculo Detalhado)</h3>
                             <p class="text-xs text-slate-500">
                                 Cálculo: <b class="text-emerald-700">Se 1 Válvula: Qtd × Vazão × (Tempo/60) | Se ≥ 2 Válvulas: (Qtd ÷ Válvulas) × Vazão × (Tempo/60)</b>. 
                             </p>
@@ -3240,6 +3241,25 @@ function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
                 return parseFloat(Math.min(24, avgDailyH).toFixed(1));
             });
 
+            const horasCor = (h) => {
+                const n = Number(h) || 0;
+                if (n >= 23) return { bg: '#dcfce7', border: '#86efac', text: '#166534' }; // 24 h
+                if (n >= 17) return { bg: '#dbeafe', border: '#93c5fd', text: '#1e40af' }; // 18 h
+                if (n >= 9) return { bg: '#ecfccb', border: '#bef264', text: '#3f6212' }; // 10 h
+                if (n >= 5) return { bg: '#fef3c7', border: '#fcd34d', text: '#92400e' }; // 6 h
+                if (n > 0) return { bg: '#f1f5f9', border: '#cbd5e1', text: '#475569' };
+                return { bg: '#f8fafc', border: '#e2e8f0', text: '#94a3b8' };
+            };
+            const horasTopo = document.getElementById('entradaHorasTopo');
+            if (horasTopo) {
+                horasTopo.innerHTML = wellsEntrada.map((w, i) => {
+                    const h = Number(hoursByWell[i] || 0);
+                    const c = horasCor(h);
+                    const hs = h.toLocaleString('pt-BR', { maximumFractionDigits: 1 });
+                    return `<span style="display:inline-flex;align-items:center;gap:6px;padding:5px 9px;border-radius:8px;border:1px solid ${c.border};background:${c.bg};color:${c.text};font-size:10px;font-weight:700;line-height:1.1;">${w}: ${hs} h</span>`;
+                }).join('');
+            }
+
             renderChart('entradaAguaChart', 'entradaAgua', 'bar', {
                 labels: wellsEntrada,
                 datasets: [{
@@ -3264,22 +3284,12 @@ function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
                 },
                 plugins: {
                     datalabels: {
-                        display: function(context) { return context.dataset.type === 'bar'; },
+                        display: true,
                         anchor: 'end', align: 'top', offset: 4,
-                        formatter: function(val, context) {
-                            const h = Math.min(24, Number(hoursByWell[context.dataIndex] || 0));
-                            return `${Number(val).toLocaleString('pt-BR')} L\n${h.toLocaleString('pt-BR', {maximumFractionDigits: 1})} h`;
-                        },
-                        color: function(context) {
-                            const h = Math.min(24, Number(hoursByWell[context.dataIndex] || 0));
-                            if (h >= 23.5) return '#15803d';
-                            if (h >= 17.5) return '#2563eb';
-                            if (h >= 11.5) return '#d97706';
-                            if (h >= 5.5) return '#dc2626';
-                            return '#64748b';
-                        },
+                        formatter: function(val) { return `${Number(val).toLocaleString('pt-BR')} L`; },
                         font: { size: 10, weight: 'bold' },
-                        backgroundColor: 'rgba(255,255,255,0.94)', borderRadius: 4,
+                        color: '#334155',
+                        backgroundColor: 'rgba(255,255,255,0.92)', borderRadius: 4,
                         padding: {top: 2, bottom: 2, left: 4, right: 4}
                     },
                     legend: { display: false }
@@ -3305,32 +3315,57 @@ function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
             document.getElementById('kpi4_saidaTempo').innerText = `${totalSaidaTempo.toFixed(1)} h`;
             document.getElementById('kpi4_saidaLocais').innerText = uniqueSaidaLocais;
 
-            // Gráfico Saída de Água por Bloco
+            // Gráfico Saída de Água por Bloco, separado por CULTURA
+            // Brócolis = verde suave | Tâmaras = azul suave | Fita gotejo = amarelo suave.
             const locaisSaida = Array.from(new Set(filteredSaida.map(d => d.Local))).sort((a,b) => a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'}));
-            const volSaidaByLocal = locaisSaida.map(loc => {
-                const sub = filteredSaida.filter(d => d.Local === loc);
-                return Math.round(sub.reduce((acc, curr) => acc + curr.VolumeCalculado, 0));
+            const normalizarCultura = (v) => String(v || 'Sem Cultura').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            const culturaNome = (v) => {
+                const n = normalizarCultura(v);
+                if (n.includes('brocol')) return 'Brócolis';
+                if (n.includes('tamar')) return 'Tâmaras';
+                if (n.includes('fita') || n.includes('gotej')) return 'Fita gotejo';
+                return String(v || 'Sem Cultura').trim() || 'Sem Cultura';
+            };
+            const culturaCor = (nome) => {
+                const n = normalizarCultura(nome);
+                if (n.includes('brocol')) return { bg: 'rgba(134, 239, 172, 0.68)', border: '#86efac', text: '#166534' };
+                if (n.includes('tamar')) return { bg: 'rgba(147, 197, 253, 0.68)', border: '#93c5fd', text: '#1e40af' };
+                if (n.includes('fita') || n.includes('gotej')) return { bg: 'rgba(253, 224, 71, 0.62)', border: '#facc15', text: '#854d0e' };
+                return { bg: 'rgba(203, 213, 225, 0.65)', border: '#cbd5e1', text: '#475569' };
+            };
+            const culturasSaida = Array.from(new Set(filteredSaida.map(d => culturaNome(d.Cultura))))
+                .sort((a,b) => { const ordem = {'Brócolis':0,'Tâmaras':1,'Fita gotejo':2}; return (ordem[a] ?? 99) - (ordem[b] ?? 99) || a.localeCompare(b); });
+            const datasetsCulturaSaida = culturasSaida.map(cultura => {
+                const c = culturaCor(cultura);
+                return {
+                    label: cultura,
+                    data: locaisSaida.map(loc => Math.round(filteredSaida.filter(d => d.Local === loc && culturaNome(d.Cultura) === cultura).reduce((acc, curr) => acc + curr.VolumeCalculado, 0))),
+                    backgroundColor: c.bg,
+                    borderColor: c.border,
+                    borderWidth: 1,
+                    borderRadius: 5
+                };
             });
 
             renderChart('saidaAguaChart', 'saidaAgua', 'bar', {
                 labels: locaisSaida,
-                datasets: [{
-                    label: 'Volume Irrigado por Bloco (L)',
-                    data: volSaidaByLocal,
-                    backgroundColor: 'rgba(16, 185, 129, 0.85)',
-                    borderRadius: 6
-                }]
+                datasets: datasetsCulturaSaida
             }, {
                 responsive: true,
                 maintainAspectRatio: false,
+                scales: {
+                    x: { stacked: false },
+                    y: { beginAtZero: true, title: { display: true, text: 'Volume Irrigado (L)' } }
+                },
                 plugins: {
                     datalabels: {
                         anchor: 'end',
                         align: 'end',
                         formatter: (val) => val > 0 ? val.toLocaleString('pt-BR') : '',
-                        font: { size: 10, weight: 'bold' },
-                        color: '#065f46'
-                    }
+                        font: { size: 9, weight: 'bold' },
+                        color: '#475569'
+                    },
+                    legend: { display: true, position: 'bottom', labels: { boxWidth: 14, font: { size: 10 } } }
                 }
             });
 
