@@ -1712,58 +1712,79 @@
             return el ? (el.textContent || '--').trim() : '--';
         }
 
-        async function composeTab4SectionCanvas(item, width = 2100) {
+        async function composeTab4SectionCanvas(item, width = 3000) {
             const meta = getTab4ExportMeta(item.title);
-            const chart = await captureExportCard(item.card, width, 920);
-            const headH = meta.items.length ? 210 : 125;
+            // Captura em resolução alta e com altura generosa para que gráficos e rótulos nunca sejam espremidos.
+            const chart = await captureExportCard(item.card, width, 1180);
+            const headH = meta.items.length ? 250 : 155;
             const out = document.createElement('canvas');
             out.width = width;
-            out.height = headH + chart.height + 28;
+            out.height = headH + chart.height + 42;
             const ctx = out.getContext('2d');
             ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, out.width, out.height);
-            ctx.fillStyle = '#0f172a'; ctx.font = '700 38px Arial';
-            ctx.fillText(meta.section, 34, 52);
+
+            // Cabeçalho profissional da seção
+            ctx.fillStyle = '#166534';
+            ctx.fillRect(0, 0, 14, out.height);
+            ctx.fillStyle = '#0f172a'; ctx.font = '700 46px Arial';
+            ctx.fillText(meta.section, 52, 58);
             const range = getExportDateRange('content-entrada');
-            if (range) { ctx.fillStyle = '#64748b'; ctx.font = '600 18px Arial'; ctx.fillText(`Período: ${range}`, 34, 86); }
+            if (range) {
+                ctx.fillStyle = '#64748b'; ctx.font = '600 22px Arial';
+                ctx.fillText(`Período: ${range}`, 52, 96);
+            }
+            ctx.fillStyle = '#e2e8f0'; ctx.fillRect(52, 116, width - 104, 2);
+
             if (meta.items.length) {
-                const gap = 22, top = 112, boxH = 76;
-                const boxW = (width - 68 - gap * (meta.items.length - 1)) / meta.items.length;
+                const gap = 28, top = 140, boxH = 92;
+                const boxW = (width - 104 - gap * (meta.items.length - 1)) / meta.items.length;
                 meta.items.forEach((it, i) => {
-                    const x = 34 + i * (boxW + gap);
+                    const x = 52 + i * (boxW + gap);
                     ctx.fillStyle = '#f8fafc'; ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 2;
-                    ctx.beginPath(); ctx.roundRect(x, top, boxW, boxH, 10); ctx.fill(); ctx.stroke();
-                    ctx.fillStyle = '#64748b'; ctx.font = '700 15px Arial'; ctx.fillText(it[1].toUpperCase(), x + 16, top + 27);
-                    ctx.fillStyle = '#0f172a'; ctx.font = '700 30px Arial'; ctx.fillText(getTab4ExportValue(it[0]), x + 16, top + 60);
+                    ctx.beginPath(); ctx.roundRect(x, top, boxW, boxH, 14); ctx.fill(); ctx.stroke();
+                    ctx.fillStyle = '#64748b'; ctx.font = '700 17px Arial';
+                    ctx.fillText(it[1].toUpperCase(), x + 20, top + 31);
+                    ctx.fillStyle = '#0f172a'; ctx.font = '700 36px Arial';
+                    ctx.fillText(getTab4ExportValue(it[0]), x + 20, top + 72);
                 });
             }
-            ctx.drawImage(chart, 0, headH + 4, width, chart.height);
+
+            // Gráfico em largura integral, sem colunas laterais.
+            ctx.drawImage(chart, 0, headH + 8, width, chart.height);
             return out;
         }
 
         async function composeExportJPEG(selected, tabId, tabName) {
             const isTab4 = isTab4Export(tabName);
-            const outW = isTab4 ? 2800 : 2400;
-            const margin = isTab4 ? 40 : 36;
-            const gap = isTab4 ? 34 : 26;
+            const outW = isTab4 ? 3000 : 2600;
+            const margin = isTab4 ? 24 : 36;
+            const gap = isTab4 ? 42 : 30;
             const cards = [];
             if (isTab4) {
-                for (const item of selected) cards.push({ item, canvas: await composeTab4SectionCanvas(item, outW - margin * 2) });
-                const headerH = 150;
+                for (const item of selected) {
+                    cards.push({ item, canvas: await composeTab4SectionCanvas(item, outW - margin * 2) });
+                }
+                const headerH = 190;
                 const totalH = margin + headerH + gap + cards.reduce((sum, c) => sum + c.canvas.height, 0) + gap * Math.max(0, cards.length - 1) + margin;
                 const out = document.createElement('canvas'); out.width = outW; out.height = totalH;
-                const ctx = out.getContext('2d'); ctx.fillStyle = '#f1f5f9'; ctx.fillRect(0, 0, out.width, out.height);
-                ctx.fillStyle = '#0f172a'; ctx.font = '700 48px Arial'; ctx.fillText('RELATÓRIO — ENTRADA E SAÍDA DE ÁGUA', margin, 58);
-                ctx.fillStyle = '#94a3b8'; ctx.fillRect(margin, 72, outW - margin * 2, 3);
-                const range = getExportDateRange(tabId); if (range) { ctx.fillStyle = '#64748b'; ctx.font = '600 22px Arial'; ctx.fillText(`Período: ${range}`, margin, 108); }
-                let y = margin + headerH + gap; cards.forEach(({canvas}) => { ctx.drawImage(canvas, margin, y, outW - margin * 2, canvas.height); y += canvas.height + gap; });
+                const ctx = out.getContext('2d');
+                ctx.fillStyle = '#f1f5f9'; ctx.fillRect(0, 0, out.width, out.height);
+                ctx.fillStyle = '#166534'; ctx.fillRect(0, 0, outW, 14);
+                ctx.fillStyle = '#0f172a'; ctx.font = '700 56px Arial'; ctx.fillText('RELATÓRIO — ENTRADA E SAÍDA DE ÁGUA', margin, 78);
+                ctx.fillStyle = '#64748b'; ctx.font = '600 24px Arial';
+                const range = getExportDateRange(tabId);
+                ctx.fillText(range ? `Período: ${range}` : 'Relatório operacional de irrigação', margin, 122);
+                ctx.fillStyle = '#cbd5e1'; ctx.fillRect(margin, 150, outW - margin * 2, 3);
+                let y = margin + headerH + gap;
+                cards.forEach(({canvas}) => { ctx.drawImage(canvas, margin, y, outW - margin * 2, canvas.height); y += canvas.height + gap; });
                 return out;
             }
-            for (const item of selected) cards.push({ item, canvas: await captureExportCard(item.card) });
+            for (const item of selected) cards.push({ item, canvas: await captureExportCard(item.card, outW - margin * 2, 1100) });
             const colW = outW - margin * 2;
-            const data = cards.map(({canvas}) => ({canvas, h: Math.max(300, Math.round(colW * canvas.height / canvas.width))}));
-            const totalH = margin + 150 + gap + data.reduce((a,b)=>a+b.h,0) + gap*Math.max(0,data.length-1) + margin;
+            const data = cards.map(({canvas}) => ({canvas, h: Math.max(520, Math.round(colW * canvas.height / canvas.width))}));
+            const totalH = margin + 180 + gap + data.reduce((a,b)=>a+b.h,0) + gap*Math.max(0,data.length-1) + margin;
             const out=document.createElement('canvas'); out.width=outW; out.height=totalH; const ctx=out.getContext('2d'); ctx.fillStyle='#f8fafc';ctx.fillRect(0,0,out.width,out.height); drawExportSummary(ctx,outW,tabId,tabName,false);
-            let y=margin+150+gap; data.forEach(({canvas,h})=>{ctx.drawImage(canvas,margin,y,colW,h);y+=h+gap;}); return out;
+            let y=margin+180+gap; data.forEach(({canvas,h})=>{ctx.drawImage(canvas,margin,y,colW,h);y+=h+gap;}); return out;
         }
 
         async function exportSelectedSectionsJPEG(selected, tabId, tabName, btn) {
@@ -1787,19 +1808,26 @@
             try {
                 const { jsPDF } = window.jspdf || {}; if (!jsPDF) throw new Error('Biblioteca jsPDF não carregada.');
                 const isTab4 = isTab4Export(tabName);
-                const pdfW = 297, margin = 5, contentW = pdfW - margin * 2, gapMm = 6;
+                // A4 em retrato, porém com altura personalizada: uma única folha contínua e todo o conteúdo em largura integral.
+                const pdfW = 210, margin = 4, contentW = pdfW - margin * 2, gapMm = 5;
                 const sections = [];
-                if (isTab4) { for (const item of selected) sections.push(await composeTab4SectionCanvas(item, 2800)); }
-                else { for (const item of selected) sections.push(await captureExportCard(item.card, 2600, 920)); }
-                const titleH = isTab4 ? 18 : 25;
+                if (isTab4) {
+                    for (const item of selected) sections.push(await composeTab4SectionCanvas(item, 3000));
+                } else {
+                    for (const item of selected) sections.push(await captureExportCard(item.card, 2800, 1100));
+                }
+                const titleH = isTab4 ? 17 : 22;
                 const heights = sections.map(c => contentW * c.height / c.width);
-                const pdfH = Math.max(210, margin * 2 + titleH + gapMm + heights.reduce((a,b)=>a+b,0) + gapMm * Math.max(0, sections.length - 1));
+                const pdfH = Math.max(297, margin * 2 + titleH + gapMm + heights.reduce((a,b)=>a+b,0) + gapMm * Math.max(0, sections.length - 1));
                 const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [pdfW, pdfH], compress: true });
                 pdf.setFillColor(248,250,252); pdf.rect(0,0,pdfW,pdfH,'F');
-                pdf.setTextColor(15,23,42); pdf.setFont('helvetica','bold'); pdf.setFontSize(16); pdf.text(isTab4 ? 'RELATÓRIO — ENTRADA E SAÍDA DE ÁGUA' : String(tabName || 'RELATÓRIO').toUpperCase(), margin, margin+7);
-                const range = getExportDateRange(tabId); if (range) { pdf.setTextColor(100,116,139); pdf.setFont('helvetica','normal'); pdf.setFontSize(9); pdf.text(`Período: ${range}`, margin, margin+13); }
+                pdf.setFillColor(22,101,52); pdf.rect(0,0,pdfW,3,'F');
+                pdf.setTextColor(15,23,42); pdf.setFont('helvetica','bold'); pdf.setFontSize(16);
+                pdf.text(isTab4 ? 'RELATÓRIO — ENTRADA E SAÍDA DE ÁGUA' : String(tabName || 'RELATÓRIO').toUpperCase(), margin, margin+8);
+                const range = getExportDateRange(tabId);
+                if (range) { pdf.setTextColor(100,116,139); pdf.setFont('helvetica','normal'); pdf.setFontSize(8); pdf.text(`Período: ${range}`, margin, margin+14); }
                 let y = margin + titleH + gapMm;
-                sections.forEach((c,i)=>{ const h=heights[i]; pdf.addImage(c.toDataURL('image/jpeg',0.98),'JPEG',margin,y,contentW,h,undefined,'FAST'); y += h + gapMm; });
+                sections.forEach((c,i)=>{ const h=heights[i]; pdf.addImage(c.toDataURL('image/jpeg',0.99),'JPEG',margin,y,contentW,h,undefined,'FAST'); y += h + gapMm; });
                 pdf.save(`${tabName}_${new Date().toISOString().split('T')[0]}.pdf`);
             } catch (e) { console.error('Erro ao gerar PDF:',e); alert(`Não foi possível gerar o PDF. ${e?.message || 'Tente novamente após os gráficos carregarem.'}`); }
             finally { btn.innerHTML=original; btn.disabled=false; }
