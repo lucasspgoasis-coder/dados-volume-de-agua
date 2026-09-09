@@ -998,7 +998,7 @@
                         </div>
                     </div>
                     <div class="chart-scroll-wrapper mt-3">
-                        <div id="chart-container-grafico02" class="chart-container-large" style="height:720px; min-width:1400px;">
+                        <div id="chart-container-grafico02" class="chart-container-large" style="height:850px; min-width:1500px;">
                             <canvas id="blocoCicloComparacaoChart"></canvas>
                         </div>
                     </div>
@@ -1249,7 +1249,7 @@
         const MANUTENCAO_SHEET = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQzVEGWOj1yLfJ6R5T_c07PxKhoLLinFnLyziQwMYIIXQKUVPL7T1qwhMjkoCKrkBaas8dmw7DUXPeV/pub?output=csv";
         // Fonte específica para os registros de poços parados e associação R2/R3.
         // Preencha com a URL CSV pública da planilha DADOS POÇOS FAZ. OASIS, aba Análise.
-        const POCOS_ANALISE_SHEET = ""; // Se preenchida, usa diretamente a aba Análise. Caso vazia, procura automaticamente a aba Análise nas fontes já adicionadas ao HTML.
+        const POCOS_ANALISE_SHEET = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQzVEGWOj1yLfJ6R5T_c07PxKhoLLinFnLyziQwMYIIXQKUVPL7T1qwhMjkoCKrkBaas8dmw7DUXPeV/pub?output=csv&sheet=An%C3%A1lise"; // DADOS POÇOS FAZ. OASIS — aba Análise
 
         let globalRawData = [];
         let globalSaidaData = [];
@@ -2866,7 +2866,7 @@
                 },
                 plugins:{
                     legend:{position:'top'},
-                    datalabels:{display:true,anchor:'end',align:'right',clamp:true,font:{size:8,weight:'bold'},formatter:(v,ctx)=>{
+                    datalabels:{display:true,anchor:'end',align:'top',offset:5,clamp:true,font:{size:12,weight:'bold',lineHeight:1.25},color:'#0f172a',backgroundColor:'rgba(255,255,255,.82)',borderRadius:4,padding:{top:3,right:5,bottom:3,left:5},formatter:(v,ctx)=>{
                         const r=entries[ctx.dataIndex];
                         if(ctx.datasetIndex===0) return `${Math.round(r.volume).toLocaleString('pt-BR')} L\n${r.ltrsPlanta.toFixed(1)} L/pl\n${r.ltrsDia.toFixed(2)} L/d/pl\n${Math.round(r.plantas).toLocaleString('pt-BR')} pl\nPart. ${r.participacao.toFixed(1)}%`;
                         if(ctx.datasetIndex===1) return r.entrada>0?`${Math.round(r.entrada).toLocaleString('pt-BR')} L`:'--';
