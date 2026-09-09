@@ -1465,7 +1465,7 @@
                 return card.querySelector('canvas, table');
             }).map((card, index) => {
                 const title = card.querySelector('h2,h3,h4')?.textContent?.trim() || `Gráfico ${index + 1}`;
-                return { card, title, index };
+                return { card, title, index, tabId };
             });
         }
 
@@ -1689,8 +1689,7 @@
             }
 
             if (isTab4) {
-                // Uma folha visual única: resumo no topo + gráficos largos em sequência.
-                // Mantém a ordem lógica do relatório: Entrada -> Tanque -> Vazão diária -> Saída.
+                // JPEG da Aba 04: mesma lógica do PDF, em grade 2x2, para manter leitura.
                 const ordem = ['Volume Total e Horas Trabalhadas por Poço (Entrada)', 'Nível Água Tanque', 'Vazão Média dos Poços por Dia', 'Saída de Água'];
                 cards.sort((a,b) => {
                     const ta = a.item.title.toLowerCase(), tb = b.item.title.toLowerCase();
@@ -1699,20 +1698,24 @@
                     return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
                 });
                 const innerW = outW - margin * 2;
-                const targetHeights = cards.map(({ canvas }) => {
-                    const ratio = canvas.height / canvas.width;
-                    return Math.max(210, Math.min(300, Math.round(innerW * ratio)));
-                });
-                const totalH = margin + summaryH + gap + targetHeights.reduce((a,b)=>a+b,0) + gap * Math.max(0, cards.length - 1) + margin;
+                const headerH = summaryH;
+                const gridTop = margin + headerH + gap;
+                const colGap = 22, rowGap = 22;
+                const colW = (innerW - colGap) / 2;
+                const rowH = 390;
+                const rows = Math.ceil(cards.length / 2);
                 const out = document.createElement('canvas');
-                out.width = outW; out.height = totalH;
+                out.width = outW; out.height = gridTop + rows * rowH + Math.max(0, rows - 1) * rowGap + margin;
                 const ctx = out.getContext('2d');
+                ctx.fillStyle = '#f8fafc'; ctx.fillRect(0,0,out.width,out.height);
                 drawExportSummary(ctx, outW, tabId, tabName, false);
-                let y = margin + summaryH + gap;
                 cards.forEach(({ canvas }, i) => {
-                    const h = targetHeights[i];
-                    ctx.drawImage(canvas, margin, y, innerW, h);
-                    y += h + gap;
+                    const row = Math.floor(i/2), col = i%2;
+                    const ratio = canvas.height / canvas.width;
+                    const h = Math.min(rowH, Math.max(240, Math.round(colW * ratio)));
+                    const x = margin + col * (colW + colGap);
+                    const y = gridTop + row * (rowH + rowGap) + Math.max(0,(rowH-h)/2);
+                    ctx.drawImage(canvas, x, y, colW, h);
                 });
                 return out;
             }
@@ -1768,29 +1771,28 @@
                 // Aba 04: uma única página A4, com resumo geral e os gráficos escolhidos.
                 // A altura de cada gráfico é calculada para caber sem virar uma faixa única.
                 if (isTab4) {
-                    const headerH = 27;
-                    const availableH = pageH - margin * 2 - headerH - gap - gap * Math.max(0, selected.length - 1);
-                    const eachH = availableH / Math.max(1, selected.length);
+                    // Aba 04: uma única folha A4 paisagem, com os gráficos em 2x2.
+                    // Isso evita que quatro gráficos fiquem achatados em uma coluna.
+                    const headerH = 24;
                     const contentW = pageW - margin * 2;
+                    const contentH = pageH - margin * 2 - headerH - gap;
+                    const colGap = 5, rowGap = 5;
+                    const colW = (contentW - colGap) / 2;
+                    const rowH = (contentH - rowGap) / 2;
 
-                    // Cabeçalho com os campos gerais.
                     const header = document.createElement('canvas');
-                    header.width = 1800; header.height = 180;
-                    const hctx = header.getContext('2d');
-                    drawExportSummary(hctx, header.width, tabId, tabName, true);
-                    const headerImg = header.toDataURL('image/jpeg', 0.94);
-                    pdf.addImage(headerImg, 'JPEG', margin, margin, contentW, headerH, undefined, 'FAST');
+                    header.width = 1800; header.height = 150;
+                    drawExportSummary(header.getContext('2d'), header.width, tabId, tabName, true);
+                    pdf.addImage(header.toDataURL('image/jpeg', 0.94), 'JPEG', margin, margin, contentW, headerH, undefined, 'FAST');
 
-                    let y = margin + headerH + gap;
-                    for (const item of selected) {
-                        const canvas = await captureExportCard(item.card);
+                    for (let i = 0; i < selected.length; i++) {
+                        const canvas = await captureExportCard(selected[i].card);
+                        const row = Math.floor(i / 2), col = i % 2;
                         const ratio = canvas.height / canvas.width;
-                        const naturalH = contentW * ratio;
-                        const h = Math.min(eachH, Math.max(24, naturalH));
-                        const yy = y + Math.max(0, (eachH - h) / 2);
-                        const img = canvas.toDataURL('image/jpeg', 0.93);
-                        pdf.addImage(img, 'JPEG', margin, yy, contentW, h, undefined, 'FAST');
-                        y += eachH + gap;
+                        const h = Math.min(rowH, Math.max(38, colW * ratio));
+                        const x = margin + col * (colW + colGap);
+                        const y = margin + headerH + gap + row * (rowH + rowGap) + Math.max(0, (rowH - h) / 2);
+                        pdf.addImage(canvas.toDataURL('image/jpeg', 0.93), 'JPEG', x, y, colW, h, undefined, 'FAST');
                     }
                 } else {
                     // Demais abas: 2 gráficos por linha e até 2 linhas por página.
@@ -1888,15 +1890,18 @@
         function parseHours(val) {
             if (val === null || val === undefined || val === '') return 0;
             let str = String(val).trim();
-            
+            let hours = 0;
             let timeMatch = str.match(/(\d{1,2}):(\d{2})(?::(\d{2}))?/);
             if (timeMatch) {
                 let h = parseInt(timeMatch[1], 10) || 0;
                 let m = parseInt(timeMatch[2], 10) || 0;
                 let s = timeMatch[3] ? (parseInt(timeMatch[3], 10) || 0) : 0;
-                return h + (m / 60) + (s / 3600);
+                hours = h + (m / 60) + (s / 3600);
+            } else {
+                hours = parseBrazilianNumber(val);
             }
-            return parseBrazilianNumber(val);
+            // Limite operacional: nunca exibir/calcular mais de 24 h por registro.
+            return Math.max(0, Math.min(24, Number(hours) || 0));
         }
 
         function parseBrazilianNumber(val) {
@@ -3230,9 +3235,11 @@ function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
                     datalabels: {
                         display: true,
                         anchor: 'end',
-                        align: 'top',
+                        align: function(ctx) { return Number(ctx.dataset.data[ctx.dataIndex]) >= 22 ? 'bottom' : 'top'; },
                         offset: 4,
-                        formatter: function(val) { return `${Number(val).toLocaleString('pt-BR', {maximumFractionDigits: 1})} h`; },
+                        clamp: true,
+                        clip: false,
+                        formatter: function(val) { return `${Math.min(24, Number(val)).toLocaleString('pt-BR', {maximumFractionDigits: 1})} h`; },
                         font: { size: 10, weight: 'bold' },
                         color: '#334155',
                         backgroundColor: 'rgba(255,255,255,0.92)',
