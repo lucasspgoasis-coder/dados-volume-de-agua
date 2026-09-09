@@ -779,6 +779,27 @@
                     <div class="chart-container-no-scroll mt-3"><canvas id="saidaAguaChart"></canvas></div>
                 </div>
 
+                <!-- Mini gráfico: Nível Atual do Tanque -->
+                <div class="glass-card p-4 mb-4">
+                    <div class="flex justify-between items-center mb-1 flex-wrap gap-2">
+                        <div>
+                            <h3 class="text-sm font-extrabold text-slate-800 flex items-center gap-2">
+                                <i class="fa-solid fa-gauge-high text-blue-600"></i> Nível Água Tanque — Nível Atual
+                            </h3>
+                            <p class="text-[11px] text-slate-500">Fonte: Registro de micros • aba Nível Água Tanque</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-end gap-2 mt-2 mb-2">
+                        <label for="nivelAguaTanqueSemana" class="text-[11px] font-semibold text-slate-600 whitespace-nowrap">Semana:</label>
+                        <select id="nivelAguaTanqueSemana" onchange="renderNivelAguaTanqueChart()" class="border border-slate-200 rounded-md px-2 py-1 text-[11px] bg-white text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-400">
+                            <option value="todas">Todas</option>
+                        </select>
+                    </div>
+                    <div class="chart-container-no-scroll mt-1" style="height: 190px;">
+                        <canvas id="nivelAguaTanqueChart"></canvas>
+                    </div>
+                </div>
+
                 <!-- NOVO PAINEL DE CAMPOS GERAIS PARA EMISSORES POR BLOCO -->
                 <div class="pt-4 border-t border-slate-200">
                     <h3 class="text-lg font-extrabold text-slate-800 mb-3 flex items-center gap-2">
@@ -1321,6 +1342,8 @@
         ];
         
         const SAIDA_SHEET = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSLCR4Ft4rx-g3QUa7onNWhiwHBHXbf07wLAkY3dmYxoYFHdz3meI5yBPXOeaLoIELTylglqAklMDKb/pub?output=csv";
+        // Aba Nível Água Tanque da planilha Registro de micros.
+        const NIVEL_AGUA_TANQUE_SHEET = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSLCR4Ft4rx-g3QUa7onNWhiwHBHXbf07wLAkY3dmYxoYFHdz3meI5yBPXOeaLoIELTylglqAklMDKb/pub?output=csv&sheet=N%C3%ADvel%20%C3%81gua%20Tanque";
 
         const MANUTENCAO_SHEET = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQzVEGWOj1yLfJ6R5T_c07PxKhoLLinFnLyziQwMYIIXQKUVPL7T1qwhMjkoCKrkBaas8dmw7DUXPeV/pub?output=csv";
         // Fonte específica para os registros de poços parados e associação R2/R3.
@@ -1331,6 +1354,7 @@
         let globalSaidaData = [];
         let globalManutencaoData = [];
         let globalPocosAnaliseData = [];
+        let globalNivelAguaTanqueData = [];
 
         const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
 
@@ -1341,6 +1365,7 @@
             trend: null,
             entradaAgua: null,
             saidaAgua: null,
+            nivelAguaTanque: null,
             emissoresBloco: null,
             resumoBloco: null,
             manutencaoVazao: null,
@@ -1388,6 +1413,7 @@
             globalRawData = [];
             globalSaidaData = [];
             globalManutencaoData = [];
+            globalNivelAguaTanqueData = [];
         }
 
         async function prepareExportElement(el) {
@@ -1658,12 +1684,180 @@
             });
         }
 
+        function normalizeNivelAguaTanqueData(rows) {
+            if (!Array.isArray(rows) || !rows.length) return [];
+
+            const normHeader = h => String(h || '')
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                .toLowerCase().replace(/[^a-z0-9]+/g, '');
+
+            const keys = Object.keys(rows[0] || {});
+            const findKey = candidates => keys.find(k => {
+                const n = normHeader(k);
+                return candidates.some(c => n === c || n.includes(c));
+            });
+
+            const dateKey = findKey(['data', 'date', 'datamedicao', 'dataleitura']);
+            const nivelKey = findKey(['nivelatual', 'nivel', 'nivelagua']);
+            if (!dateKey || !nivelKey) {
+                console.warn('Aba Nível Água Tanque sem colunas Data/Nível Atual.', { keys });
+                return [];
+            }
+
+            const parseDate = value => {
+                const raw = String(value ?? '').trim();
+                if (!raw) return null;
+                let m = raw.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
+                if (m) {
+                    let year = Number(m[3]);
+                    if (year < 100) year += 2000;
+                    const dt = new Date(year, Number(m[2]) - 1, Number(m[1]));
+                    return isNaN(dt.getTime()) ? null : dt;
+                }
+                const dt = new Date(raw);
+                return isNaN(dt.getTime()) ? null : dt;
+            };
+
+            const parseLevel = value => {
+                if (value === null || value === undefined || String(value).trim() === '') return null;
+                let str = String(value).trim().replace(/\s/g, '');
+                if (str.includes(',')) str = str.replace(/\./g, '').replace(',', '.');
+                const n = parseFloat(str);
+                return Number.isFinite(n) ? n : null;
+            };
+
+            const byDate = {};
+            rows.forEach(row => {
+                const dt = parseDate(row[dateKey]);
+                const nivel = parseLevel(row[nivelKey]);
+                if (!dt || nivel === null) return;
+                const iso = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+                // Se houver mais de um registro no mesmo dia, usa o último registro válido.
+                byDate[iso] = { iso, dateObj: dt, nivel };
+            });
+
+            return Object.values(byDate).sort((a,b) => a.dateObj - b.dateObj);
+        }
+
+        function getNumeroSemanaISO(date) {
+            const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+            const dayNum = d.getUTCDay() || 7;
+            d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+            const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+            return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+        }
+
+        function populateNivelAguaTanqueSemanaFilter() {
+            const select = document.getElementById('nivelAguaTanqueSemana');
+            if (!select) return;
+
+            const semanas = [...new Set(
+                globalNivelAguaTanqueData.map(d => getNumeroSemanaISO(d.dateObj))
+            )].sort((a,b) => a - b);
+
+            const atual = select.value || 'todas';
+            select.innerHTML = '<option value="todas">Todas</option>' +
+                semanas.map(s => `<option value="${s}">Semana ${s}</option>`).join('');
+
+            if (semanas.includes(Number(atual))) {
+                select.value = String(atual);
+            } else {
+                select.value = 'todas';
+            }
+        }
+
+        function renderNivelAguaTanqueChart() {
+            const canvas = document.getElementById('nivelAguaTanqueChart');
+            if (!canvas) return;
+
+            populateNivelAguaTanqueSemanaFilter();
+
+            const select = document.getElementById('nivelAguaTanqueSemana');
+            const semanaSelecionada = select ? select.value : 'todas';
+
+            const dadosFiltrados = globalNivelAguaTanqueData.filter(d =>
+                semanaSelecionada === 'todas' ||
+                getNumeroSemanaISO(d.dateObj) === Number(semanaSelecionada)
+            );
+
+            if (!dadosFiltrados.length) {
+                if (charts.nivelAguaTanque) {
+                    charts.nivelAguaTanque.destroy();
+                    charts.nivelAguaTanque = null;
+                }
+                return;
+            }
+
+            const labels = dadosFiltrados.map(d => {
+                const [y,m,day] = d.iso.split('-');
+                return `${day}/${m}`;
+            });
+            const values = dadosFiltrados.map(d => d.nivel);
+
+            renderChart('nivelAguaTanqueChart', 'nivelAguaTanque', 'line', {
+                labels,
+                datasets: [{
+                    label: 'Nível Atual (m)',
+                    data: values,
+                    borderColor: '#0284c7',
+                    backgroundColor: 'rgba(2, 132, 199, 0.12)',
+                    pointBackgroundColor: '#0284c7',
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 1.5,
+                    pointRadius: 3,
+                    pointHoverRadius: 5,
+                    borderWidth: 2.5,
+                    tension: 0.25,
+                    fill: true
+                }]
+            }, {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                scales: {
+                    x: {
+                        ticks: {
+                            autoSkip: true,
+                            maxRotation: 0,
+                            minRotation: 0,
+                            font: { size: 9 }
+                        },
+                        grid: { display: false }
+                    },
+                    y: {
+                        title: { display: true, text: 'Nível (m)' },
+                        ticks: {
+                            callback: value => `${Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} m`,
+                            font: { size: 9 }
+                        },
+                        beginAtZero: false
+                    }
+                },
+                plugins: {
+                    legend: { display: false },
+                    datalabels: {
+                        display: dadosFiltrados.length <= 20,
+                        align: 'top',
+                        anchor: 'end',
+                        offset: 2,
+                        formatter: value => `${Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} m`,
+                        font: { size: 8, weight: 'bold' },
+                        color: '#075985',
+                        backgroundColor: 'rgba(255,255,255,0.9)',
+                        borderRadius: 3,
+                        padding: { top: 1, bottom: 1, left: 3, right: 3 }
+                    }
+                }
+            });
+        }
+
         function loadGoogleSheetsData() {
             const loadingIcon = document.getElementById('loadingIcon');
             loadingIcon.className = "fa-solid fa-spinner fa-spin text-blue-400";
 
             const pEntrada = Promise.all(ENTRADA_SHEETS.map(url => fetchSingleSheet(url)));
             const pSaida = fetchSingleSheet(SAIDA_SHEET);
+            const pNivelAguaTanque = fetchSingleSheet(NIVEL_AGUA_TANQUE_SHEET);
             const pManutencao = fetchSingleSheet(MANUTENCAO_SHEET);
             // A aba Análise pode estar entre as fontes que já estão no HTML.
             // Se houver uma URL específica, ela tem prioridade. Caso contrário,
@@ -1673,8 +1867,8 @@
                 ? fetchSingleSheet(POCOS_ANALISE_SHEET).then(data => ({data, source:'url'}))
                 : Promise.resolve(null);
 
-            Promise.all([pEntrada, pSaida, pManutencao, pPocosAnalise])
-                .then(([resultsEntrada, resultsSaida, resultsManutencao, resultsPocosAnalise]) => {
+            Promise.all([pEntrada, pSaida, pNivelAguaTanque, pManutencao, pPocosAnalise])
+                .then(([resultsEntrada, resultsSaida, resultsNivelAguaTanque, resultsManutencao, resultsPocosAnalise]) => {
                     let combinedEntrada = [];
                     resultsEntrada.forEach(data => {
                         if (Array.isArray(data)) combinedEntrada = combinedEntrada.concat(data);
@@ -1688,6 +1882,12 @@
                             globalSaidaData = cleanAndNormalizeSaidaData(resultsSaida);
                         } else {
                             globalSaidaData = [];
+                        }
+
+                        if (resultsNivelAguaTanque.length > 0) {
+                            globalNivelAguaTanqueData = normalizeNivelAguaTanqueData(resultsNivelAguaTanque);
+                        } else {
+                            globalNivelAguaTanqueData = [];
                         }
 
                         if (resultsManutencao.length > 0) {
@@ -1716,6 +1916,7 @@
                         populateWellSelectors();
                         populateMonthSelectors();
                         populateLocalSelectors();
+                        renderNivelAguaTanqueChart();
                         populateBlocoSelectorsTab5();
                         populateCicloSelectorsTab5();
                         populateManutencaoSelectors();
