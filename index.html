@@ -1545,16 +1545,37 @@
 
         async function buildExportContainer(selected) {
             const wrapper = document.createElement('div');
-            // O elemento fica fora da área visível, mas NÃO usa display:none,
-            // visibility:hidden ou opacity:0, pois o html-to-image pode gerar
-            // uma imagem totalmente branca nesses casos.
-            wrapper.style.cssText = 'position:absolute;left:-1400px;top:0;background:#f8fafc;padding:18px;width:1200px;min-height:700px;box-sizing:border-box;font-family:Inter,Arial,sans-serif;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:minmax(320px,auto);align-items:stretch;gap:12px;overflow:visible;z-index:-1;';
+            // IMPORTANTE: o container precisa estar dentro da viewport e visível para
+            // html-to-image. left:-1400px / z-index:-1 pode resultar em imagem branca
+            // em alguns navegadores. Mantemos o container fora do fluxo, mas dentro
+            // da tela, com opacidade normal e sem display:none.
+            wrapper.style.cssText = 'position:fixed;left:0;top:0;background:#f8fafc;padding:18px;width:1200px;min-height:700px;box-sizing:border-box;font-family:Inter,Arial,sans-serif;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:minmax(320px,auto);align-items:stretch;gap:12px;overflow:visible;z-index:2147483647;';
             selected.forEach(item => wrapper.appendChild(cloneForExport(item.card)));
             document.body.appendChild(wrapper);
             // Aguarda layout, fontes e pintura dos canvases antes da captura.
             if (document.fonts && document.fonts.ready) { try { await document.fonts.ready; } catch(e) {} }
             await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
             return wrapper;
+        }
+
+        async function renderExportCanvas(wrapper) {
+            // html2canvas é mais robusto para DOM + tabelas + canvas Chart.js.
+            // Fazemos a captura pelo elemento efetivamente renderizado na viewport.
+            await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+            return await html2canvas(wrapper, {
+                scale: 2,
+                useCORS: true,
+                allowTaint: true,
+                backgroundColor: '#f8fafc',
+                logging: false,
+                scrollX: 0,
+                scrollY: 0,
+                width: 1200,
+                height: Math.max(700, wrapper.scrollHeight),
+                windowWidth: 1280,
+                windowHeight: Math.max(800, wrapper.scrollHeight + 40),
+                removeContainer: true
+            });
         }
 
         async function exportSelectedSectionsJPEG(selected, tabName, btn) {
@@ -1564,7 +1585,8 @@
             let wrapper;
             try {
                 wrapper = await buildExportContainer(selected);
-                const dataUrl = await htmlToImage.toJpeg(wrapper, { quality: 0.95, pixelRatio: 1, width: 1200, height: 700, canvasWidth: 1200, canvasHeight: 700, backgroundColor: '#f8fafc', cacheBust: true });
+                const canvas = await renderExportCanvas(wrapper);
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
                 const link = document.createElement('a');
                 link.download = `${tabName}_${new Date().toISOString().split('T')[0]}.jpeg`;
                 link.href = dataUrl;
@@ -1584,7 +1606,8 @@
             let wrapper;
             try {
                 wrapper = await buildExportContainer(selected);
-                const dataUrl = await htmlToImage.toPng(wrapper, { pixelRatio: 1, width: 1200, height: 700, canvasWidth: 1200, canvasHeight: 700, backgroundColor: '#f8fafc', cacheBust: true });
+                const canvas = await renderExportCanvas(wrapper);
+                const dataUrl = canvas.toDataURL('image/png', 1.0);
                 const img = new Image();
                 await new Promise((resolve, reject) => { img.onload = resolve; img.onerror = reject; img.src = dataUrl; });
                 const { jsPDF } = window.jspdf;
