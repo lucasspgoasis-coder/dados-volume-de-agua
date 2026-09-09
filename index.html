@@ -16,8 +16,8 @@
     <!-- PapaParse -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 
-    <!-- html2canvas -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- html-to-image -->
+    <script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js"></script>
     
     <!-- jsPDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -190,6 +190,14 @@
         .export-mode canvas {
             display: block !important;
         }
+
+        .export-modal-backdrop { position: fixed; inset: 0; z-index: 10000; background: rgba(15,23,42,.58); display:flex; align-items:center; justify-content:center; padding:20px; }
+        .export-modal { width:min(560px,100%); max-height:85vh; overflow:auto; background:#fff; border-radius:16px; box-shadow:0 25px 70px rgba(15,23,42,.28); }
+        .export-option { display:flex; align-items:center; gap:10px; padding:10px 12px; border:1px solid #e2e8f0; border-radius:10px; cursor:pointer; background:#fff; }
+        .export-option:hover { background:#f8fafc; border-color:#cbd5e1; }
+        .export-option input { accent-color:#2563eb; }
+        .export-temp { background:#f8fafc; padding:24px; box-sizing:border-box; }
+        .export-temp .export-hide, .export-temp .export-controls { display:none !important; }
     </style>
 </head>
 <body class="text-slate-800 min-h-screen flex flex-col antialiased">
@@ -321,9 +329,7 @@
                             <span class="text-slate-700 font-bold text-xs uppercase tracking-wide flex items-center gap-1.5">
                                 <i class="fa-solid fa-filter text-blue-600"></i> Filtros da Aba 1:
                             </span>
-                            <button onclick="captureTab('content-diario', 'aba_1_diario', this)" title="Capturar imagem da aba" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
-                                <i class="fa-solid fa-camera text-blue-600"></i> Capturar Aba
-                            </button>
+                            <button onclick="openImageExportMenu('content-diario', 'aba_1_diario', this)" title="Baixar aba em JPEG" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm"><i class="fa-solid fa-file-image text-emerald-600"></i> Baixar JPEG</button>
                             <button onclick="downloadPDF('content-diario', 'aba_1_diario', this)" title="Baixar aba em PDF" class="bg-rose-600 hover:bg-rose-700 text-white px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
                                 <i class="fa-solid fa-file-pdf"></i> Baixar em PDF
                             </button>
@@ -431,9 +437,7 @@
                             <span class="text-slate-700 font-bold text-xs uppercase tracking-wide flex items-center gap-1.5">
                                 <i class="fa-solid fa-filter text-indigo-600"></i> Filtros da Aba 2:
                             </span>
-                            <button onclick="captureTab('content-mensal', 'aba_2_mensal', this)" title="Capturar imagem da aba" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
-                                <i class="fa-solid fa-camera text-indigo-600"></i> Capturar Aba
-                            </button>
+                            <button onclick="openImageExportMenu('content-mensal', 'aba_2_mensal', this)" title="Baixar aba em JPEG" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm"><i class="fa-solid fa-file-image text-emerald-600"></i> Baixar JPEG</button>
                             <button onclick="downloadPDF('content-mensal', 'aba_2_volumes_tendencia', this)" title="Baixar aba em PDF" class="bg-rose-600 hover:bg-rose-700 text-white px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
                                 <i class="fa-solid fa-file-pdf"></i> Baixar em PDF
                             </button>
@@ -540,9 +544,7 @@
                             <span class="text-slate-700 font-bold text-xs uppercase tracking-wide flex items-center gap-1.5">
                                 <i class="fa-solid fa-filter text-orange-600"></i> Filtros de Consulta:
                             </span>
-                            <button onclick="captureTab('content-comparacao', 'aba_3_dados_tabulares', this)" title="Capturar imagem da aba" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
-                                <i class="fa-solid fa-camera text-orange-600"></i> Capturar Aba
-                            </button>
+                            <button onclick="openImageExportMenu('content-comparacao', 'aba_3_dados_tabulares', this)" title="Baixar aba em JPEG" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm"><i class="fa-solid fa-file-image text-emerald-600"></i> Baixar JPEG</button>
                             <button onclick="downloadPDF('content-comparacao', 'aba_3_dados_tabulares', this)" title="Baixar aba em PDF" class="bg-rose-600 hover:bg-rose-700 text-white px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
                                 <i class="fa-solid fa-file-pdf"></i> Baixar em PDF
                             </button>
@@ -655,9 +657,7 @@
                             <span class="text-slate-700 font-bold text-xs uppercase tracking-wide flex items-center gap-1.5">
                                 <i class="fa-solid fa-filter text-sky-600"></i> Filtros da Aba 4:
                             </span>
-                            <button onclick="captureTab('content-entrada', 'aba_4_entrada_saida', this)" title="Capturar imagem da aba" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
-                                <i class="fa-solid fa-camera text-sky-600"></i> Capturar Aba
-                            </button>
+                            <button onclick="openImageExportMenu('content-entrada', 'aba_4_entrada_saida', this)" title="Baixar aba em JPEG" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm"><i class="fa-solid fa-file-image text-emerald-600"></i> Baixar JPEG</button>
                             <button onclick="downloadPDF('content-entrada', 'aba_4_entrada_saida', this)" title="Baixar aba em PDF" class="bg-rose-600 hover:bg-rose-700 text-white px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
                                 <i class="fa-solid fa-file-pdf"></i> Baixar em PDF
                             </button>
@@ -986,9 +986,7 @@
                             <span class="text-slate-700 font-bold text-xs uppercase tracking-wide flex items-center gap-1.5">
                                 <i class="fa-solid fa-filter text-blue-600"></i> Filtros de Bloco, Ciclo e Período:
                             </span>
-                            <button onclick="captureTab('content-bloco', 'aba_5_resumo_bloco', this)" title="Capturar imagem da aba" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
-                                <i class="fa-solid fa-camera text-blue-600"></i> Capturar Aba
-                            </button>
+                            <button onclick="openImageExportMenu('content-bloco', 'aba_5_resumo_bloco', this)" title="Baixar aba em JPEG" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm"><i class="fa-solid fa-file-image text-emerald-600"></i> Baixar JPEG</button>
                             <button onclick="downloadPDF('content-bloco', 'aba_5_resumo_bloco', this)" title="Baixar aba em PDF" class="bg-rose-600 hover:bg-rose-700 text-white px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
                                 <i class="fa-solid fa-file-pdf"></i> Baixar em PDF
                             </button>
@@ -1172,9 +1170,7 @@
                             <span class="text-slate-700 font-bold text-xs uppercase tracking-wide flex items-center gap-1.5">
                                 <i class="fa-solid fa-filter text-indigo-600"></i> Filtros de Manutenção:
                             </span>
-                            <button onclick="captureTab('content-manutencao', 'aba_6_manutencao_bombas', this)" title="Capturar imagem da aba" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
-                                <i class="fa-solid fa-camera text-indigo-600"></i> Capturar Aba
-                            </button>
+                            <button onclick="openImageExportMenu('content-manutencao', 'aba_6_manutencao_bombas', this)" title="Baixar aba em JPEG" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm"><i class="fa-solid fa-file-image text-emerald-600"></i> Baixar JPEG</button>
                             <button onclick="downloadPDF('content-manutencao', 'aba_6_manutencao_bombas', this)" title="Baixar aba em PDF" class="bg-rose-600 hover:bg-rose-700 text-white px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
                                 <i class="fa-solid fa-file-pdf"></i> Baixar em PDF
                             </button>
@@ -1347,8 +1343,25 @@
         </footer>
     </div>
 
+
+    <div id="exportModal" class="export-modal-backdrop hidden">
+        <div class="export-modal">
+            <div class="p-5 border-b border-slate-200 flex items-center justify-between">
+                <div><h3 class="text-lg font-extrabold text-slate-800">Selecionar dados para o PDF</h3><p class="text-xs text-slate-500 mt-1">Escolha os blocos que deverão aparecer no arquivo. Os filtros da tela não serão exportados.</p></div>
+                <button type="button" onclick="closeExportModal()" class="text-slate-400 hover:text-slate-700 text-xl"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div id="exportOptions" class="p-5 space-y-2"></div>
+            <div class="p-5 pt-0 flex justify-end gap-2">
+                <button type="button" onclick="closeExportModal()" class="px-4 py-2 rounded-lg bg-slate-200 text-slate-700 text-sm font-semibold">Cancelar</button>
+                <button type="button" id="confirmPdfExport" class="px-4 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold"><i class="fa-solid fa-file-pdf mr-1"></i> Gerar PDF</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         Chart.register(ChartDataLabels);
+
+        const VAZAO_DIA_SHEET = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQAcr8_XCwnJWwn5DMCKsb3-03ZogzTgiJ9qtCtnEp9fnLMtEuTcCXpxeslsvQGzJ81nDkLy7DYBX8d/pub?output=csv";
 
         const ENTRADA_SHEETS = [
             "https://docs.google.com/spreadsheets/d/e/2PACX-1vSafB5fd5osyELyMS1T-pVO-WbL25l53ICs1dmVMgByrAlQsqSHT2YscIE-ClYrJvzPS-dGZSp25ysi/pub?output=csv",
@@ -1369,6 +1382,7 @@
         let globalManutencaoData = [];
         let globalPocosAnaliseData = [];
         let globalNivelAguaTanqueData = [];
+        let globalVazaoDiaData = [];
 
         const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
 
@@ -1461,127 +1475,90 @@
             el.style.overflow = originalStyle.overflow;
         }
 
-        async function captureTab(tabId, tabName, btn) {
-            const tabEl = document.getElementById(tabId);
-            if (!tabEl) return;
-
-            const originalContent = btn.innerHTML;
-            const originalStyle = {
-                width: tabEl.style.width,
-                maxWidth: tabEl.style.maxWidth,
-                overflow: tabEl.style.overflow
-            };
-            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Processando Imagem...`;
-            btn.disabled = true;
-
-            try {
-                window.scrollTo(0, 0);
-                const { exportWidth, exportHeight } = await prepareExportElement(tabEl);
-                const canvas = await html2canvas(tabEl, {
-                    scale: 2,
-                    useCORS: true,
-                    allowTaint: true,
-                    backgroundColor: '#f8fafc',
-                    logging: false,
-                    scrollX: 0,
-                    scrollY: 0,
-                    x: 0,
-                    y: 0,
-                    width: exportWidth,
-                    height: exportHeight,
-                    windowWidth: exportWidth + 80,
-                    windowHeight: exportHeight + 80,
-                    onclone: (doc) => {
-                        const cloned = doc.getElementById(tabId);
-                        if (cloned) {
-                            cloned.classList.add('export-mode');
-                            cloned.style.width = exportWidth + 'px';
-                            cloned.style.maxWidth = 'none';
-                            cloned.style.overflow = 'visible';
-                        }
-                    }
-                });
-
-                const image = canvas.toDataURL('image/png', 1.0);
-                const link = document.createElement('a');
-                link.download = `${tabName}_Captura_${new Date().toISOString().split('T')[0]}.png`;
-                link.href = image;
-                link.click();
-            } catch (err) {
-                console.error('Erro ao capturar imagem:', err);
-                alert('Ocorreu um erro ao realizar a captura da tela.');
-            } finally {
-                restoreExportElement(tabEl, originalStyle);
-                btn.innerHTML = originalContent;
-                btn.disabled = false;
-            }
+        function closeExportModal() {
+            const modal = document.getElementById('exportModal');
+            if (modal) modal.classList.add('hidden');
+            window.__pendingPdfExport = null;
         }
 
-        async function downloadPDF(elementId, fileName, btn) {
-            const el = document.getElementById(elementId);
-            if (!el) return;
+        function getExportSections(tabEl) {
+            return Array.from(tabEl.children).filter(child => {
+                if (!child || child.classList.contains('export-hide')) return false;
+                const text = (child.innerText || '').trim();
+                if (!text) return false;
+                if (/filtros/i.test(text) && child.querySelector('input,select,button')) return false;
+                return true;
+            });
+        }
 
-            const origText = btn.innerHTML;
-            const originalStyle = {
-                width: el.style.width,
-                maxWidth: el.style.maxWidth,
-                overflow: el.style.overflow
-            };
-            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Gerando PDF...`;
-            btn.disabled = true;
+        function sectionTitle(el, index) {
+            const heading = el.querySelector('h2,h3,h4');
+            if (heading && heading.textContent.trim()) return heading.textContent.trim();
+            const firstText = (el.innerText || '').split('\n').map(x=>x.trim()).find(x=>x);
+            return firstText || `Seção ${index+1}`;
+        }
 
+        function openImageExportMenu(tabId, tabName, btn) {
+            const tabEl = document.getElementById(tabId);
+            if (!tabEl) return;
+            downloadJPEG(tabId, tabName, btn);
+        }
+
+        async function downloadJPEG(tabId, tabName, btn) {
+            const el = document.getElementById(tabId);
+            if (!el || !window.htmlToImage) return alert('A biblioteca de imagem ainda não foi carregada.');
+            const original = { width: el.style.width, maxWidth: el.style.maxWidth, overflow: el.style.overflow };
+            const origText = btn ? btn.innerHTML : '';
+            if (btn) { btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Gerando JPEG...'; btn.disabled = true; }
             try {
-                window.scrollTo(0, 0);
-                const { exportWidth, exportHeight } = await prepareExportElement(el);
-                const canvas = await html2canvas(el, {
-                    scale: 2,
-                    useCORS: true,
-                    allowTaint: true,
-                    backgroundColor: '#f8fafc',
-                    logging: false,
-                    scrollX: 0,
-                    scrollY: 0,
-                    x: 0,
-                    y: 0,
-                    width: exportWidth,
-                    height: exportHeight,
-                    windowWidth: exportWidth + 80,
-                    windowHeight: exportHeight + 80,
-                    onclone: (doc) => {
-                        const cloned = doc.getElementById(elementId);
-                        if (cloned) {
-                            cloned.classList.add('export-mode');
-                            cloned.style.width = exportWidth + 'px';
-                            cloned.style.maxWidth = 'none';
-                            cloned.style.overflow = 'visible';
-                        }
-                    }
-                });
+                el.classList.add('export-mode');
+                el.style.maxWidth='none'; el.style.overflow='visible';
+                const clone = el.cloneNode(true);
+                clone.classList.add('export-temp');
+                clone.style.width = Math.max(el.scrollWidth, el.getBoundingClientRect().width) + 'px';
+                clone.querySelectorAll('.export-hide').forEach(x=>x.remove());
+                clone.querySelectorAll('input,select,button').forEach(x=>x.style.display='none');
+                clone.querySelectorAll('.overflow-x-auto,.overflow-y-auto,.chart-scroll-wrapper').forEach(x=>x.style.overflow='visible');
+                clone.querySelectorAll('canvas').forEach((c,i)=>{ const src=el.querySelectorAll('canvas')[i]; if(src && src.width) c.width=src.width; if(src && src.height) c.height=src.height; });
+                const holder=document.createElement('div'); holder.style.position='fixed'; holder.style.left='-100000px'; holder.style.top='0'; holder.appendChild(clone); document.body.appendChild(holder);
+                await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+                const dataUrl=await window.htmlToImage.toJpeg(clone,{quality:.95,pixelRatio:2,backgroundColor:'#f8fafc',cacheBust:true});
+                const link=document.createElement('a'); link.download=`${tabName}_JPEG_${new Date().toISOString().split('T')[0]}.jpg`; link.href=dataUrl; link.click();
+                holder.remove();
+            } catch(e) { console.error(e); alert('Não foi possível gerar o JPEG.'); }
+            finally { el.classList.remove('export-mode'); el.style.width=original.width; el.style.maxWidth=original.maxWidth; el.style.overflow=original.overflow; if(btn){btn.innerHTML=origText;btn.disabled=false;} }
+        }
 
-                const imgData = canvas.toDataURL('image/png', 1.0);
-                const { jsPDF } = window.jspdf;
-                const imgWidth = canvas.width;
-                const imgHeight = canvas.height;
+        function downloadPDF(elementId, fileName, btn) {
+            const el=document.getElementById(elementId); if(!el) return;
+            const sections=getExportSections(el);
+            const options=document.getElementById('exportOptions');
+            options.innerHTML=sections.map((sec,i)=>`<label class="export-option"><input type="checkbox" class="export-section-check" value="${i}" checked><span class="text-sm font-semibold text-slate-700">${sectionTitle(sec,i).replace(/</g,'&lt;')}</span></label>`).join('');
+            document.getElementById('exportModal').classList.remove('hidden');
+            window.__pendingPdfExport={elementId,fileName,btn,sections};
+            document.getElementById('confirmPdfExport').onclick=()=>confirmPDFExport();
+        }
 
-                // Mantém toda a aba no PDF sem cortar as extremidades.
-                const orientation = imgWidth >= imgHeight ? 'l' : 'p';
-                const pdf = new jsPDF({
-                    orientation: orientation,
-                    unit: 'px',
-                    format: [imgWidth, imgHeight],
-                    compress: true
-                });
-
-                pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight, undefined, 'FAST');
-                pdf.save(`${fileName}_${new Date().toISOString().split('T')[0]}.pdf`);
-            } catch (e) {
-                console.error('Erro ao baixar PDF:', e);
-                alert('Não foi possível gerar o arquivo PDF.');
-            } finally {
-                restoreExportElement(el, originalStyle);
-                btn.innerHTML = origText;
-                btn.disabled = false;
-            }
+        async function confirmPDFExport() {
+            const job=window.__pendingPdfExport; if(!job) return;
+            const selected=Array.from(document.querySelectorAll('.export-section-check:checked')).map(x=>Number(x.value));
+            if(!selected.length) return alert('Selecione pelo menos um bloco para o PDF.');
+            closeExportModal();
+            const el=document.getElementById(job.elementId); const btn=job.btn; const origText=btn?btn.innerHTML:'';
+            if(btn){btn.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Gerando PDF...';btn.disabled=true;}
+            let holder=null;
+            try {
+                const wrapper=document.createElement('div'); wrapper.className='export-temp'; wrapper.style.width=Math.max(el.scrollWidth,el.getBoundingClientRect().width)+'px';
+                const title=document.createElement('div'); title.style.cssText='font-family:Inter,Arial,sans-serif;font-size:20px;font-weight:800;color:#0f172a;margin-bottom:16px'; title.textContent=(el.querySelector('h1,h2')?.textContent||'Relatório'); wrapper.appendChild(title);
+                selected.forEach(i=>{ const clone=job.sections[i].cloneNode(true); clone.querySelectorAll('input,select,button').forEach(x=>x.style.display='none'); clone.querySelectorAll('.export-hide').forEach(x=>x.remove()); clone.querySelectorAll('.overflow-x-auto,.overflow-y-auto,.chart-scroll-wrapper').forEach(x=>x.style.overflow='visible'); wrapper.appendChild(clone); });
+                holder=document.createElement('div'); holder.style.position='fixed'; holder.style.left='-100000px'; holder.style.top='0'; holder.appendChild(wrapper); document.body.appendChild(holder);
+                await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+                const dataUrl=await window.htmlToImage.toPng(wrapper,{pixelRatio:2,backgroundColor:'#f8fafc',cacheBust:true});
+                const img=new Image(); await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=reject;img.src=dataUrl;});
+                const {jsPDF}=window.jspdf; const orientation=img.width>=img.height?'l':'p'; const pdf=new jsPDF({orientation,unit:'px',format:[img.width,img.height],compress:true});
+                pdf.addImage(dataUrl,'PNG',0,0,img.width,img.height,undefined,'FAST');
+                pdf.save(`${job.fileName}_${new Date().toISOString().split('T')[0]}.pdf`);
+            } catch(e){console.error(e);alert('Não foi possível gerar o arquivo PDF.');} finally {if(holder)holder.remove(); if(btn){btn.innerHTML=origText;btn.disabled=false;}}
         }
 
         function toggleDropdown(id) {
@@ -1847,6 +1824,7 @@
             loadingIcon.className = "fa-solid fa-spinner fa-spin text-blue-400";
 
             const pEntrada = Promise.all(ENTRADA_SHEETS.map(url => fetchSingleSheet(url)));
+            const pVazaoDia = fetchSingleSheet(VAZAO_DIA_SHEET);
             const pSaida = fetchSingleSheet(SAIDA_SHEET);
             const pNivelAguaTanque = fetchSingleSheet(NIVEL_AGUA_TANQUE_SHEET);
             const pManutencao = fetchSingleSheet(MANUTENCAO_SHEET);
@@ -1858,14 +1836,19 @@
                 ? fetchSingleSheet(POCOS_ANALISE_SHEET).then(data => ({data, source:'url'}))
                 : Promise.resolve(null);
 
-            Promise.all([pEntrada, pSaida, pNivelAguaTanque, pManutencao, pPocosAnalise])
-                .then(([resultsEntrada, resultsSaida, resultsNivelAguaTanque, resultsManutencao, resultsPocosAnalise]) => {
+            Promise.all([pEntrada, pVazaoDia, pSaida, pNivelAguaTanque, pManutencao, pPocosAnalise])
+                .then(([resultsEntrada, resultsVazaoDia, resultsSaida, resultsNivelAguaTanque, resultsManutencao, resultsPocosAnalise]) => {
                     let combinedEntrada = [];
                     resultsEntrada.forEach(data => {
                         if (Array.isArray(data)) combinedEntrada = combinedEntrada.concat(data);
                     });
 
                     try {
+                        if (Array.isArray(resultsVazaoDia) && resultsVazaoDia.length) {
+                            globalVazaoDiaData = cleanAndNormalizeData(resultsVazaoDia);
+                        } else {
+                            globalVazaoDiaData = [];
+                        }
                         if (combinedEntrada.length > 0) {
                             globalRawData = cleanAndNormalizeData(combinedEntrada);
                         }
@@ -2753,10 +2736,11 @@
 }
 
 function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
+            const fonte = globalVazaoDiaData.length ? globalVazaoDiaData : filteredEntrada;
             // Vazão média efetiva = volume calculado (vazão × horas) ÷ horas trabalhadas.
             // O cálculo é feito separadamente por poço e por dia.
             const byDateWell = {};
-            filteredEntrada.forEach(d => {
+            fonte.forEach(d => {
                 const date = d.IsoDate || d.DataFormatted || '';
                 const well = d.Poco || '';
                 const volume = Number(d.VolumeCalculado);
@@ -2835,7 +2819,13 @@ function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
             const maxPeakVol = filteredEntrada.length > 0 ? Math.max(...filteredEntrada.map(d => d.VolumeCalculado)) : 0;
 
             atualizarReguaNivelTanqueTab4(filteredEntrada);
-            renderVazaoMediaDiaPocosTab4(filteredEntrada);
+            const vazaoDiaFiltrada = (globalVazaoDiaData.length ? globalVazaoDiaData : filteredEntrada).filter(d => {
+                if (selectedWells.length > 0 && !selectedWells.includes(d.Poco)) return false;
+                if (startDate && d.IsoDate < startDate) return false;
+                if (endDate && d.IsoDate > endDate) return false;
+                return true;
+            });
+            renderVazaoMediaDiaPocosTab4(vazaoDiaFiltrada);
 
             document.getElementById('kpi4_totalVol').innerText = `${Math.round(totalVolEntrada).toLocaleString('pt-BR')} L`;
             document.getElementById('kpi4_avgHours').innerText = `${avgHours.toFixed(1)} h/dia`;
