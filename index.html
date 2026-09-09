@@ -786,14 +786,15 @@
                             <h3 class="text-sm font-extrabold text-slate-800 flex items-center gap-2">
                                 <i class="fa-solid fa-gauge-high text-blue-600"></i> Nível Água Tanque — Nível Atual
                             </h3>
-                            <p class="text-[11px] text-slate-500">Fonte: Registro de micros • aba Nível Água Tanque</p>
+                            <p class="text-[11px] font-bold text-blue-700 mt-1">Tanque 03</p>
                         </div>
                     </div>
-                    <div class="flex items-center justify-end gap-2 mt-2 mb-2">
-                        <label for="nivelAguaTanqueSemana" class="text-[11px] font-semibold text-slate-600 whitespace-nowrap">Semana:</label>
-                        <select id="nivelAguaTanqueSemana" onchange="renderNivelAguaTanqueChart()" class="border border-slate-200 rounded-md px-2 py-1 text-[11px] bg-white text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-400">
-                            <option value="todas">Todas</option>
-                        </select>
+                    <div class="flex items-center justify-end gap-2 mt-2 mb-2 flex-wrap">
+                        <label for="nivelAguaTanqueDataInicio" class="text-[11px] font-semibold text-slate-600 whitespace-nowrap">Data início:</label>
+                        <input type="date" id="nivelAguaTanqueDataInicio" onchange="renderNivelAguaTanqueChart()" class="border border-slate-200 rounded-md px-2 py-1 text-[11px] bg-white text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-400">
+                        <label for="nivelAguaTanqueDataFim" class="text-[11px] font-semibold text-slate-600 whitespace-nowrap">Data fim:</label>
+                        <input type="date" id="nivelAguaTanqueDataFim" onchange="renderNivelAguaTanqueChart()" class="border border-slate-200 rounded-md px-2 py-1 text-[11px] bg-white text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-400">
+                        <button type="button" onclick="limparFiltroDataNivelAguaTanque()" class="px-2 py-1 text-[11px] font-semibold rounded-md bg-slate-100 text-slate-600 hover:bg-slate-200">Limpar</button>
                     </div>
                     <div class="chart-container-no-scroll mt-1" style="height: 190px;">
                         <canvas id="nivelAguaTanqueChart"></canvas>
@@ -1342,8 +1343,8 @@
         ];
         
         const SAIDA_SHEET = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSLCR4Ft4rx-g3QUa7onNWhiwHBHXbf07wLAkY3dmYxoYFHdz3meI5yBPXOeaLoIELTylglqAklMDKb/pub?output=csv";
-        // Aba Nível Água Tanque da planilha Registro de micros.
-        const NIVEL_AGUA_TANQUE_SHEET = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSLCR4Ft4rx-g3QUa7onNWhiwHBHXbf07wLAkY3dmYxoYFHdz3meI5yBPXOeaLoIELTylglqAklMDKb/pub?output=csv&sheet=N%C3%ADvel%20%C3%81gua%20Tanque";
+        // Fonte do gráfico Nível Água Tanque — dados com data e nível.
+        const NIVEL_AGUA_TANQUE_SHEET = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQjHqVP0RC_EersvxX0jIK4YROieC_-EN4j9lnat87YRhxQ4ufxJhdvEcrDzxX_xPYPXoE3qIZsxlCT/pub?output=csv";
 
         const MANUTENCAO_SHEET = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQzVEGWOj1yLfJ6R5T_c07PxKhoLLinFnLyziQwMYIIXQKUVPL7T1qwhMjkoCKrkBaas8dmw7DUXPeV/pub?output=csv";
         // Fonte específica para os registros de poços parados e associação R2/R3.
@@ -1739,46 +1740,20 @@
             return Object.values(byDate).sort((a,b) => a.dateObj - b.dateObj);
         }
 
-        function getNumeroSemanaISO(date) {
-            const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-            const dayNum = d.getUTCDay() || 7;
-            d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-            const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-            return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
-        }
-
-        function populateNivelAguaTanqueSemanaFilter() {
-            const select = document.getElementById('nivelAguaTanqueSemana');
-            if (!select) return;
-
-            const semanas = [...new Set(
-                globalNivelAguaTanqueData.map(d => getNumeroSemanaISO(d.dateObj))
-            )].sort((a,b) => a - b);
-
-            const atual = select.value || 'todas';
-            select.innerHTML = '<option value="todas">Todas</option>' +
-                semanas.map(s => `<option value="${s}">Semana ${s}</option>`).join('');
-
-            if (semanas.includes(Number(atual))) {
-                select.value = String(atual);
-            } else {
-                select.value = 'todas';
-            }
-        }
-
         function renderNivelAguaTanqueChart() {
             const canvas = document.getElementById('nivelAguaTanqueChart');
             if (!canvas) return;
 
-            populateNivelAguaTanqueSemanaFilter();
+            const inicioEl = document.getElementById('nivelAguaTanqueDataInicio');
+            const fimEl = document.getElementById('nivelAguaTanqueDataFim');
+            const inicio = inicioEl && inicioEl.value ? new Date(`${inicioEl.value}T00:00:00`) : null;
+            const fim = fimEl && fimEl.value ? new Date(`${fimEl.value}T23:59:59`) : null;
 
-            const select = document.getElementById('nivelAguaTanqueSemana');
-            const semanaSelecionada = select ? select.value : 'todas';
-
-            const dadosFiltrados = globalNivelAguaTanqueData.filter(d =>
-                semanaSelecionada === 'todas' ||
-                getNumeroSemanaISO(d.dateObj) === Number(semanaSelecionada)
-            );
+            const dadosFiltrados = globalNivelAguaTanqueData.filter(d => {
+                if (inicio && d.dateObj < inicio) return false;
+                if (fim && d.dateObj > fim) return false;
+                return true;
+            });
 
             if (!dadosFiltrados.length) {
                 if (charts.nivelAguaTanque) {
@@ -1816,12 +1791,7 @@
                 interaction: { mode: 'index', intersect: false },
                 scales: {
                     x: {
-                        ticks: {
-                            autoSkip: true,
-                            maxRotation: 0,
-                            minRotation: 0,
-                            font: { size: 9 }
-                        },
+                        ticks: { autoSkip: true, maxRotation: 0, minRotation: 0, font: { size: 9 } },
                         grid: { display: false }
                     },
                     y: {
@@ -1849,6 +1819,14 @@
                     }
                 }
             });
+        }
+
+        function limparFiltroDataNivelAguaTanque() {
+            const inicio = document.getElementById('nivelAguaTanqueDataInicio');
+            const fim = document.getElementById('nivelAguaTanqueDataFim');
+            if (inicio) inicio.value = '';
+            if (fim) fim.value = '';
+            renderNivelAguaTanqueChart();
         }
 
         function loadGoogleSheetsData() {
