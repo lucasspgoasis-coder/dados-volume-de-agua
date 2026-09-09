@@ -2312,7 +2312,7 @@
 
             let filtered = globalRawData.filter(d => {
                 if (selectedWells.length > 0 && !selectedWells.includes(d.Poco)) return false;
-                if (selectedMonths.length > 0 && !selectedMonths.includes(d.MesLabel)) return false;
+                if (selectedMonths.length > 0 && d.MesLabel !== 'N/I' && !selectedMonths.includes(d.MesLabel)) return false;
                 return true;
             });
 
@@ -2464,7 +2464,7 @@
 
             let filtered = globalRawData.filter(d => {
                 if (selectedWells.length > 0 && !selectedWells.includes(d.Poco)) return false;
-                if (selectedMonths.length > 0 && !selectedMonths.includes(d.MesLabel)) return false;
+                if (selectedMonths.length > 0 && d.MesLabel !== 'N/I' && !selectedMonths.includes(d.MesLabel)) return false;
                 return true;
             });
 
@@ -3125,7 +3125,7 @@
 
             let filtered = globalManutencaoData.filter(d => {
                 if (selectedPocos.length > 0 && !selectedPocos.includes(d.Poco)) return false;
-                if (selectedMonths.length > 0 && !selectedMonths.includes(d.MesLabel)) return false;
+                if (selectedMonths.length > 0 && d.MesLabel !== 'N/I' && !selectedMonths.includes(d.MesLabel)) return false;
                 if (selectedResps.length > 0 && !selectedResps.includes(d.ResponsavelTec)) return false;
                 return true;
             });
