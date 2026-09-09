@@ -184,6 +184,9 @@
         .export-mode .glass-card {
             overflow: visible !important;
         }
+        .export-mode .export-hide {
+            display: none !important;
+        }
         .export-mode canvas {
             display: block !important;
         }
@@ -646,7 +649,7 @@
                     </div>
                 </div>
 
-                <div class="glass-card p-4 bg-slate-50/80 border-slate-200">
+                <div class="glass-card p-4 bg-slate-50/80 border-slate-200 export-hide">
                     <div class="flex flex-wrap items-center justify-between gap-4">
                         <div class="flex items-center gap-2">
                             <span class="text-slate-700 font-bold text-xs uppercase tracking-wide flex items-center gap-1.5">
@@ -1367,19 +1370,27 @@
         }
 
         async function prepareExportElement(el) {
+            el.classList.add('export-mode');
+            el.style.maxWidth = 'none';
+            el.style.overflow = 'visible';
+
+            // Aguarda os filtros/botões ocultos e o layout serem recalculados.
+            await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
             const rect = el.getBoundingClientRect();
             const exportWidth = Math.max(el.scrollWidth, Math.ceil(rect.width));
             const exportHeight = Math.max(el.scrollHeight, Math.ceil(rect.height));
 
-            el.classList.add('export-mode');
             el.style.width = exportWidth + 'px';
-            el.style.maxWidth = 'none';
-            el.style.overflow = 'visible';
 
-            // Aguarda o navegador recalcular dimensões e o Chart.js terminar de desenhar.
+            // Aguarda o Chart.js redesenhar com as dimensões finais.
             await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
 
-            return { exportWidth, exportHeight };
+            const finalRect = el.getBoundingClientRect();
+            return {
+                exportWidth: Math.max(exportWidth, Math.ceil(finalRect.width)),
+                exportHeight: Math.max(el.scrollHeight, Math.ceil(finalRect.height))
+            };
         }
 
         function restoreExportElement(el, originalStyle) {
@@ -2582,16 +2593,22 @@
                 },
                 plugins: {
                     datalabels: {
-                        display: function(context) {
-                            return context.dataset.type === 'line';
-                        },
+                        display: true,
                         anchor: 'end',
                         align: 'top',
                         offset: 6,
-                        formatter: (val) => val > 0 ? `${Number(val).toLocaleString('pt-BR', {minimumFractionDigits: 0, maximumFractionDigits: 1})} h` : '',
+                        formatter: function(val, context) {
+                            if (!val || val <= 0) return '';
+                            if (context.dataset.type === 'line') {
+                                return `${Number(val).toLocaleString('pt-BR', {minimumFractionDigits: 0, maximumFractionDigits: 1})} h`;
+                            }
+                            return `${Number(val).toLocaleString('pt-BR')} L`;
+                        },
                         font: { size: 11, weight: 'bold' },
-                        color: '#d97706',
-                        backgroundColor: 'rgba(255,255,255,0.9)',
+                        color: function(context) {
+                            return context.dataset.type === 'line' ? '#d97706' : '#0369a1';
+                        },
+                        backgroundColor: 'rgba(255,255,255,0.92)',
                         borderRadius: 4,
                         padding: {top: 2, bottom: 2, left: 4, right: 4}
                     }
