@@ -1019,6 +1019,27 @@
                             <p class="text-xs text-slate-500 mt-0.5">Valores exibidos em cada rótulo de barra com rolagem horizontal automatizada.</p>
                         </div>
                     </div>
+                    <div id="tab5-periodo-irrigacao" class="mb-3 overflow-x-auto">
+                        <div class="rounded-lg border border-blue-100 bg-blue-50/40 p-2">
+                            <div class="flex items-center gap-2 mb-2">
+                                <i class="fa-solid fa-calendar-days text-blue-600 text-xs"></i>
+                                <span class="text-[11px] font-extrabold uppercase tracking-wide text-slate-700">Período de Irrigação por Bloco e Ciclo</span>
+                            </div>
+                            <table class="w-full text-xs border-collapse">
+                                <thead>
+                                    <tr class="bg-white/80 text-slate-600 uppercase tracking-wide">
+                                        <th class="py-1.5 px-2 text-center">Bloco</th>
+                                        <th class="py-1.5 px-2 text-center">Ciclo</th>
+                                        <th class="py-1.5 px-2 text-center">Início</th>
+                                        <th class="py-1.5 px-2 text-center">Fim</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tab5PeriodoIrrigacaoBody">
+                                    <tr><td colspan="4" class="py-2 text-center text-slate-400">Carregando período...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                     <div class="chart-scroll-wrapper mt-4">
                         <div id="chart-container-tab5" class="chart-container-large">
                             <canvas id="resumoBlocoChart"></canvas>
@@ -2873,6 +2894,36 @@
             document.getElementById('kpi5_ltrsDiaPlanta').innerText = `${ltrsDiaPlanta.toFixed(2)} L/dia/planta`;
             document.getElementById('kpi5_diasIrrigados').innerText = `${uniqueDays} dias`;
             document.getElementById('kpi5_fimColheita').innerText = maxColheita ? maxColheita.toLocaleDateString('pt-BR') : '--/--/----';
+
+            // Mini tabela com início e fim da irrigação por bloco e ciclo
+            const periodoBody = document.getElementById('tab5PeriodoIrrigacaoBody');
+            if (periodoBody) {
+                const gruposPeriodo = {};
+                filtered.forEach(d => {
+                    const bloco = d.Local || '-';
+                    const ciclo = d.Ciclo || 'Sem ciclo';
+                    const key = `${bloco}|||${ciclo}`;
+                    const iso = d.IsoDate || '';
+                    if (!iso) return;
+                    if (!gruposPeriodo[key]) gruposPeriodo[key] = { bloco, ciclo, inicio: iso, fim: iso };
+                    else {
+                        if (iso < gruposPeriodo[key].inicio) gruposPeriodo[key].inicio = iso;
+                        if (iso > gruposPeriodo[key].fim) gruposPeriodo[key].fim = iso;
+                    }
+                });
+                const periodos = Object.values(gruposPeriodo).sort((a,b) => {
+                    const blocoCmp = a.bloco.localeCompare(b.bloco, undefined, {numeric:true, sensitivity:'base'});
+                    return blocoCmp || a.ciclo.localeCompare(b.ciclo, undefined, {numeric:true, sensitivity:'base'});
+                });
+                const fmtPeriodo = iso => {
+                    if (!iso) return '-';
+                    const [y,m,d] = iso.split('-');
+                    return (y && m && d) ? `${d}/${m}/${y}` : iso;
+                };
+                periodoBody.innerHTML = periodos.length
+                    ? periodos.map(p => `<tr class="border-t border-blue-100 bg-white/70 hover:bg-white"><td class="py-1.5 px-2 text-center font-bold text-slate-700">${p.bloco}</td><td class="py-1.5 px-2 text-center text-slate-600">${p.ciclo}</td><td class="py-1.5 px-2 text-center font-semibold text-emerald-700">${fmtPeriodo(p.inicio)}</td><td class="py-1.5 px-2 text-center font-semibold text-rose-700">${fmtPeriodo(p.fim)}</td></tr>`).join('')
+                    : `<tr><td colspan="4" class="py-2 text-center text-slate-400">Nenhum período de irrigação encontrado para os filtros selecionados.</td></tr>`;
+            }
 
             // Chart Volume Irrigado por Dia (Por Bloco)
             const dates = Array.from(new Set(filtered.map(d => d.DataFormatted)));
