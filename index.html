@@ -1363,6 +1363,9 @@
 
         const VAZAO_DIA_SHEET = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQAcr8_XCwnJWwn5DMCKsb3-03ZogzTgiJ9qtCtnEp9fnLMtEuTcCXpxeslsvQGzJ81nDkLy7DYBX8d/pub?output=csv";
 
+        // Fonte exclusiva do gráfico "Vazão Média dos Poços por Dia".
+        const VAZAO_MEDIA_DIA_SHEET = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQAcr8_XCwnJWwn5DMCKsb3-03ZogzTgiJ9qtCtnEp9fnLMtEuTcCXpxeslsvQGzJ81nDkLy7DYBX8d/pub?output=csv";
+
         const ENTRADA_SHEETS = [
             "https://docs.google.com/spreadsheets/d/e/2PACX-1vSafB5fd5osyELyMS1T-pVO-WbL25l53ICs1dmVMgByrAlQsqSHT2YscIE-ClYrJvzPS-dGZSp25ysi/pub?output=csv",
             "https://docs.google.com/spreadsheets/d/e/2PACX-1vQAcr8_XCwnJWwn5DMCKsb3-03ZogzTgiJ9qtCtnEp9fnLMtEuTcCXpxeslsvQGzJ81nDkLy7DYBX8d/pub?output=csv"
@@ -1439,126 +1442,138 @@
             document.getElementById('loginError').classList.add('hidden');
             
             globalRawData = [];
+            globalVazaoMediaDiaData = [];
             globalSaidaData = [];
             globalManutencaoData = [];
             globalNivelAguaTanqueData = [];
         }
 
-        async function prepareExportElement(el) {
-            el.classList.add('export-mode');
-            el.style.maxWidth = 'none';
-            el.style.overflow = 'visible';
-
-            // Aguarda os filtros/botões ocultos e o layout serem recalculados.
-            await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-
-            const rect = el.getBoundingClientRect();
-            const exportWidth = Math.max(el.scrollWidth, Math.ceil(rect.width));
-            const exportHeight = Math.max(el.scrollHeight, Math.ceil(rect.height));
-
-            el.style.width = exportWidth + 'px';
-
-            // Aguarda o Chart.js redesenhar com as dimensões finais.
-            await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-
-            const finalRect = el.getBoundingClientRect();
-            return {
-                exportWidth: Math.max(exportWidth, Math.ceil(finalRect.width)),
-                exportHeight: Math.max(el.scrollHeight, Math.ceil(finalRect.height))
-            };
-        }
-
-        function restoreExportElement(el, originalStyle) {
-            el.classList.remove('export-mode');
-            el.style.width = originalStyle.width;
-            el.style.maxWidth = originalStyle.maxWidth;
-            el.style.overflow = originalStyle.overflow;
-        }
-
-        function closeExportModal() {
-            const modal = document.getElementById('exportModal');
-            if (modal) modal.classList.add('hidden');
-            window.__pendingPdfExport = null;
-        }
-
-        function getExportSections(tabEl) {
-            return Array.from(tabEl.children).filter(child => {
-                if (!child || child.classList.contains('export-hide')) return false;
-                const text = (child.innerText || '').trim();
-                if (!text) return false;
-                if (/filtros/i.test(text) && child.querySelector('input,select,button')) return false;
-                return true;
+        function getExportableSections(tabId) {
+            const tab = document.getElementById(tabId);
+            if (!tab) return [];
+            return Array.from(tab.querySelectorAll('.glass-card')).filter(card => {
+                return card.querySelector('canvas, table');
+            }).map((card, index) => {
+                const title = card.querySelector('h2,h3,h4')?.textContent?.trim() || `Gráfico ${index + 1}`;
+                return { card, title, index };
             });
         }
 
-        function sectionTitle(el, index) {
-            const heading = el.querySelector('h2,h3,h4');
-            if (heading && heading.textContent.trim()) return heading.textContent.trim();
-            const firstText = (el.innerText || '').split('\n').map(x=>x.trim()).find(x=>x);
-            return firstText || `Seção ${index+1}`;
+        function showExportSelector(tabId, tabName, format, btn) {
+            const sections = getExportableSections(tabId);
+            if (!sections.length) {
+                alert('Não foram encontrados gráficos ou tabelas para exportar nesta aba.');
+                return;
+            }
+            const modal = document.getElementById('exportSelectorModal');
+            const list = document.getElementById('exportSelectorList');
+            const title = document.getElementById('exportSelectorTitle');
+            const confirm = document.getElementById('exportSelectorConfirm');
+            if (!modal || !list || !confirm) return;
+
+            title.textContent = `Selecionar dados para baixar — ${format.toUpperCase()}`;
+            list.innerHTML = sections.map((item, i) => `
+                <label class="flex items-center gap-3 p-3 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer">
+                    <input type="checkbox" class="export-section-check w-4 h-4" data-index="${i}" checked>
+                    <span class="text-sm font-semibold text-slate-700">${item.title.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</span>
+                </label>`).join('');
+
+            document.getElementById('exportSelectorSelectAll').checked = true;
+            modal.classList.remove('hidden'); modal.style.display = 'flex';
+
+            const close = () => { modal.classList.add('hidden'); modal.style.display = 'none'; };
+            document.getElementById('exportSelectorCancel').onclick = close;
+            document.getElementById('exportSelectorSelectAll').onchange = e => {
+                list.querySelectorAll('.export-section-check').forEach(c => c.checked = e.target.checked);
+            };
+            confirm.onclick = async () => {
+                const selected = Array.from(list.querySelectorAll('.export-section-check'))
+                    .filter(c => c.checked).map(c => sections[Number(c.dataset.index)]);
+                if (!selected.length) { alert('Selecione pelo menos um gráfico ou quadro.'); return; }
+                close();
+                if (format === 'jpeg') await exportSelectedSectionsJPEG(selected, tabName, btn);
+                else await exportSelectedSectionsPDF(selected, tabName, btn);
+            };
         }
 
-        function openImageExportMenu(tabId, tabName, btn) {
-            const tabEl = document.getElementById(tabId);
-            if (!tabEl) return;
-            downloadJPEG(tabId, tabName, btn);
+        function cloneForExport(card) {
+            const clone = card.cloneNode(true);
+            clone.classList.add('export-mode');
+            clone.style.width = Math.max(card.scrollWidth, card.getBoundingClientRect().width) + 'px';
+            clone.style.maxWidth = 'none';
+            clone.style.overflow = 'visible';
+            clone.style.margin = '0 0 16px 0';
+            const sourceCanvases = Array.from(card.querySelectorAll('canvas'));
+            const clonedCanvases = Array.from(clone.querySelectorAll('canvas'));
+            sourceCanvases.forEach((sourceCanvas, i) => {
+                const target = clonedCanvases[i];
+                if (!target) return;
+                target.width = sourceCanvas.width;
+                target.height = sourceCanvas.height;
+                const ctx = target.getContext('2d');
+                if (ctx) ctx.drawImage(sourceCanvas, 0, 0);
+            });
+            return clone;
         }
 
-        async function downloadJPEG(tabId, tabName, btn) {
-            const el = document.getElementById(tabId);
-            if (!el || !window.htmlToImage) return alert('A biblioteca de imagem ainda não foi carregada.');
-            const original = { width: el.style.width, maxWidth: el.style.maxWidth, overflow: el.style.overflow };
-            const origText = btn ? btn.innerHTML : '';
-            if (btn) { btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Gerando JPEG...'; btn.disabled = true; }
+        async function buildExportContainer(selected) {
+            const wrapper = document.createElement('div');
+            wrapper.style.cssText = 'position:fixed;left:-100000px;top:0;background:#f8fafc;padding:24px;width:1400px;box-sizing:border-box;font-family:Inter,Arial,sans-serif;';
+            selected.forEach(item => wrapper.appendChild(cloneForExport(item.card)));
+            document.body.appendChild(wrapper);
+            await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+            return wrapper;
+        }
+
+        async function exportSelectedSectionsJPEG(selected, tabName, btn) {
+            const original = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Gerando JPEG...';
+            let wrapper;
             try {
-                el.classList.add('export-mode');
-                el.style.maxWidth='none'; el.style.overflow='visible';
-                const clone = el.cloneNode(true);
-                clone.classList.add('export-temp');
-                clone.style.width = Math.max(el.scrollWidth, el.getBoundingClientRect().width) + 'px';
-                clone.querySelectorAll('.export-hide').forEach(x=>x.remove());
-                clone.querySelectorAll('input,select,button').forEach(x=>x.style.display='none');
-                clone.querySelectorAll('.overflow-x-auto,.overflow-y-auto,.chart-scroll-wrapper').forEach(x=>x.style.overflow='visible');
-                clone.querySelectorAll('canvas').forEach((c,i)=>{ const src=el.querySelectorAll('canvas')[i]; if(src && src.width) c.width=src.width; if(src && src.height) c.height=src.height; });
-                const holder=document.createElement('div'); holder.style.position='fixed'; holder.style.left='-100000px'; holder.style.top='0'; holder.appendChild(clone); document.body.appendChild(holder);
-                await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
-                const dataUrl=await window.htmlToImage.toJpeg(clone,{quality:.95,pixelRatio:2,backgroundColor:'#f8fafc',cacheBust:true});
-                const link=document.createElement('a'); link.download=`${tabName}_JPEG_${new Date().toISOString().split('T')[0]}.jpg`; link.href=dataUrl; link.click();
-                holder.remove();
-            } catch(e) { console.error(e); alert('Não foi possível gerar o JPEG.'); }
-            finally { el.classList.remove('export-mode'); el.style.width=original.width; el.style.maxWidth=original.maxWidth; el.style.overflow=original.overflow; if(btn){btn.innerHTML=origText;btn.disabled=false;} }
+                wrapper = await buildExportContainer(selected);
+                const dataUrl = await htmlToImage.toJpeg(wrapper, { quality: 0.95, pixelRatio: 2, backgroundColor: '#f8fafc', cacheBust: true });
+                const link = document.createElement('a');
+                link.download = `${tabName}_${new Date().toISOString().split('T')[0]}.jpeg`;
+                link.href = dataUrl;
+                link.click();
+            } catch (e) {
+                console.error(e); alert('Não foi possível gerar o JPEG.');
+            } finally {
+                if (wrapper) wrapper.remove();
+                btn.innerHTML = original; btn.disabled = false;
+            }
+        }
+
+        async function exportSelectedSectionsPDF(selected, tabName, btn) {
+            const original = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Gerando PDF...';
+            let wrapper;
+            try {
+                wrapper = await buildExportContainer(selected);
+                const dataUrl = await htmlToImage.toPng(wrapper, { pixelRatio: 2, backgroundColor: '#f8fafc', cacheBust: true });
+                const img = new Image();
+                await new Promise((resolve, reject) => { img.onload = resolve; img.onerror = reject; img.src = dataUrl; });
+                const { jsPDF } = window.jspdf;
+                const orientation = img.width >= img.height ? 'l' : 'p';
+                const pdf = new jsPDF({ orientation, unit: 'px', format: [img.width, img.height], compress: true });
+                pdf.addImage(dataUrl, 'PNG', 0, 0, img.width, img.height, undefined, 'FAST');
+                pdf.save(`${tabName}_${new Date().toISOString().split('T')[0]}.pdf`);
+            } catch (e) {
+                console.error(e); alert('Não foi possível gerar o PDF.');
+            } finally {
+                if (wrapper) wrapper.remove();
+                btn.innerHTML = original; btn.disabled = false;
+            }
+        }
+
+        function captureTab(tabId, tabName, btn) {
+            showExportSelector(tabId, tabName, 'jpeg', btn);
         }
 
         function downloadPDF(elementId, fileName, btn) {
-            const el=document.getElementById(elementId); if(!el) return;
-            const sections=getExportSections(el);
-            const options=document.getElementById('exportOptions');
-            options.innerHTML=sections.map((sec,i)=>`<label class="export-option"><input type="checkbox" class="export-section-check" value="${i}" checked><span class="text-sm font-semibold text-slate-700">${sectionTitle(sec,i).replace(/</g,'&lt;')}</span></label>`).join('');
-            document.getElementById('exportModal').classList.remove('hidden');
-            window.__pendingPdfExport={elementId,fileName,btn,sections};
-            document.getElementById('confirmPdfExport').onclick=()=>confirmPDFExport();
-        }
-
-        async function confirmPDFExport() {
-            const job=window.__pendingPdfExport; if(!job) return;
-            const selected=Array.from(document.querySelectorAll('.export-section-check:checked')).map(x=>Number(x.value));
-            if(!selected.length) return alert('Selecione pelo menos um bloco para o PDF.');
-            closeExportModal();
-            const el=document.getElementById(job.elementId); const btn=job.btn; const origText=btn?btn.innerHTML:'';
-            if(btn){btn.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Gerando PDF...';btn.disabled=true;}
-            let holder=null;
-            try {
-                const wrapper=document.createElement('div'); wrapper.className='export-temp'; wrapper.style.width=Math.max(el.scrollWidth,el.getBoundingClientRect().width)+'px';
-                const title=document.createElement('div'); title.style.cssText='font-family:Inter,Arial,sans-serif;font-size:20px;font-weight:800;color:#0f172a;margin-bottom:16px'; title.textContent=(el.querySelector('h1,h2')?.textContent||'Relatório'); wrapper.appendChild(title);
-                selected.forEach(i=>{ const clone=job.sections[i].cloneNode(true); clone.querySelectorAll('input,select,button').forEach(x=>x.style.display='none'); clone.querySelectorAll('.export-hide').forEach(x=>x.remove()); clone.querySelectorAll('.overflow-x-auto,.overflow-y-auto,.chart-scroll-wrapper').forEach(x=>x.style.overflow='visible'); wrapper.appendChild(clone); });
-                holder=document.createElement('div'); holder.style.position='fixed'; holder.style.left='-100000px'; holder.style.top='0'; holder.appendChild(wrapper); document.body.appendChild(holder);
-                await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
-                const dataUrl=await window.htmlToImage.toPng(wrapper,{pixelRatio:2,backgroundColor:'#f8fafc',cacheBust:true});
-                const img=new Image(); await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=reject;img.src=dataUrl;});
-                const {jsPDF}=window.jspdf; const orientation=img.width>=img.height?'l':'p'; const pdf=new jsPDF({orientation,unit:'px',format:[img.width,img.height],compress:true});
-                pdf.addImage(dataUrl,'PNG',0,0,img.width,img.height,undefined,'FAST');
-                pdf.save(`${job.fileName}_${new Date().toISOString().split('T')[0]}.pdf`);
-            } catch(e){console.error(e);alert('Não foi possível gerar o arquivo PDF.');} finally {if(holder)holder.remove(); if(btn){btn.innerHTML=origText;btn.disabled=false;}}
+            showExportSelector(elementId, fileName, 'pdf', btn);
         }
 
         function toggleDropdown(id) {
@@ -1852,6 +1867,7 @@
                         if (combinedEntrada.length > 0) {
                             globalRawData = cleanAndNormalizeData(combinedEntrada);
                         }
+                        globalVazaoMediaDiaData = Array.isArray(resultsVazaoDia) ? cleanAndNormalizeData(resultsVazaoDia) : [];
                         if (resultsSaida.length > 0) {
                             globalSaidaData = cleanAndNormalizeSaidaData(resultsSaida);
                         } else {
@@ -3549,5 +3565,17 @@ function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
             // Pronta para receber interações ou autologin em desenvolvimento
         };
     </script>
+
+    <div id="exportSelectorModal" class="fixed inset-0 z-[9999] hidden items-center justify-center bg-slate-900/60 p-4" style="display:none;">
+        <div class="w-full max-w-xl rounded-2xl bg-white shadow-2xl border border-slate-200 overflow-hidden">
+            <div class="px-5 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+                <div><h3 id="exportSelectorTitle" class="text-base font-extrabold text-slate-800">Selecionar dados para baixar</h3><p class="text-xs text-slate-500 mt-1">Marque somente os gráficos/quadro que deseja no arquivo.</p></div>
+                <button id="exportSelectorCancel" class="text-slate-400 hover:text-slate-700"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div class="p-5 max-h-[55vh] overflow-y-auto"><label class="flex items-center gap-2 mb-3 text-xs font-bold text-slate-600"><input id="exportSelectorSelectAll" type="checkbox" class="w-4 h-4" checked> Selecionar todos</label><div id="exportSelectorList" class="space-y-2"></div></div>
+            <div class="px-5 py-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-2"><button id="exportSelectorCancel2" class="px-4 py-2 rounded-lg border border-slate-300 text-sm font-semibold text-slate-700">Cancelar</button><button id="exportSelectorConfirm" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold"><i class="fa-solid fa-download mr-1"></i> Baixar selecionados</button></div>
+        </div>
+    </div>
+    <script>document.getElementById("exportSelectorCancel2").onclick=()=>document.getElementById("exportSelectorModal").classList.add("hidden");</script>
 </body>
 </html>
