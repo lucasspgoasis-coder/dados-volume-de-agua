@@ -741,9 +741,22 @@
 
                 <!-- Vazão Média dos Poços por Dia -->
                 <div class="glass-card p-4 mt-3">
-                    <div class="mb-1">
-                        <h3 class="text-sm font-bold text-slate-800">Vazão Média dos Poços por Dia</h3>
-                        <p class="text-[10px] text-slate-500">Vazão média calculada por poço: volume (vazão × horas) ÷ horas trabalhadas, em ordem alfabética.</p>
+                    <div class="flex justify-between items-start gap-3 flex-wrap mb-2">
+                        <div>
+                            <h3 class="text-sm font-bold text-slate-800">Vazão Média dos Poços por Dia</h3>
+                            <p class="text-[10px] text-slate-500">Vazão média calculada por poço: volume ÷ horas trabalhadas.</p>
+                        </div>
+                        <div class="flex items-end gap-2 flex-wrap bg-slate-50 border border-slate-200 rounded-lg p-2">
+                            <div>
+                                <label class="block text-[10px] font-semibold text-slate-500 mb-0.5">Data inicial do gráfico</label>
+                                <input type="date" id="vazaoDiaStartDateTab4" onchange="applySpecificVazaoDiaFilterTab4()" class="bg-white border border-slate-300 rounded-md text-[11px] px-2 py-1.5 shadow-sm">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-semibold text-slate-500 mb-0.5">Data final do gráfico</label>
+                                <input type="date" id="vazaoDiaEndDateTab4" onchange="applySpecificVazaoDiaFilterTab4()" class="bg-white border border-slate-300 rounded-md text-[11px] px-2 py-1.5 shadow-sm">
+                            </div>
+                            <button onclick="resetSpecificVazaoDiaFilterTab4()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-2.5 py-1.5 rounded-md text-[11px] font-semibold">Limpar</button>
+                        </div>
                     </div>
                     <div class="chart-container-no-scroll mt-2" style="height:220px; min-height:220px;"><canvas id="vazaoMediaDiaPocosChart"></canvas></div>
                 </div>
@@ -1363,9 +1376,6 @@
 
         const VAZAO_DIA_SHEET = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQAcr8_XCwnJWwn5DMCKsb3-03ZogzTgiJ9qtCtnEp9fnLMtEuTcCXpxeslsvQGzJ81nDkLy7DYBX8d/pub?output=csv";
 
-        // Fonte exclusiva do gráfico "Vazão Média dos Poços por Dia".
-        const VAZAO_MEDIA_DIA_SHEET = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQAcr8_XCwnJWwn5DMCKsb3-03ZogzTgiJ9qtCtnEp9fnLMtEuTcCXpxeslsvQGzJ81nDkLy7DYBX8d/pub?output=csv";
-
         const ENTRADA_SHEETS = [
             "https://docs.google.com/spreadsheets/d/e/2PACX-1vSafB5fd5osyELyMS1T-pVO-WbL25l53ICs1dmVMgByrAlQsqSHT2YscIE-ClYrJvzPS-dGZSp25ysi/pub?output=csv",
             "https://docs.google.com/spreadsheets/d/e/2PACX-1vQAcr8_XCwnJWwn5DMCKsb3-03ZogzTgiJ9qtCtnEp9fnLMtEuTcCXpxeslsvQGzJ81nDkLy7DYBX8d/pub?output=csv"
@@ -1502,7 +1512,13 @@
             clone.style.width = Math.max(card.scrollWidth, card.getBoundingClientRect().width) + 'px';
             clone.style.maxWidth = 'none';
             clone.style.overflow = 'visible';
-            clone.style.margin = '0 0 16px 0';
+            clone.style.margin = '0';
+            clone.style.width = '100%';
+            clone.style.height = '100%';
+            clone.style.minWidth = '0';
+            clone.style.minHeight = '0';
+            clone.style.boxSizing = 'border-box';
+            clone.style.overflow = 'hidden';
             const sourceCanvases = Array.from(card.querySelectorAll('canvas'));
             const clonedCanvases = Array.from(clone.querySelectorAll('canvas'));
             sourceCanvases.forEach((sourceCanvas, i) => {
@@ -1518,7 +1534,7 @@
 
         async function buildExportContainer(selected) {
             const wrapper = document.createElement('div');
-            wrapper.style.cssText = 'position:fixed;left:-100000px;top:0;background:#f8fafc;padding:24px;width:1400px;box-sizing:border-box;font-family:Inter,Arial,sans-serif;';
+            wrapper.style.cssText = 'position:fixed;left:-100000px;top:0;background:#f8fafc;padding:18px;width:1200px;height:700px;box-sizing:border-box;font-family:Inter,Arial,sans-serif;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:minmax(0,1fr);gap:12px;overflow:hidden;';
             selected.forEach(item => wrapper.appendChild(cloneForExport(item.card)));
             document.body.appendChild(wrapper);
             await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
@@ -1532,7 +1548,7 @@
             let wrapper;
             try {
                 wrapper = await buildExportContainer(selected);
-                const dataUrl = await htmlToImage.toJpeg(wrapper, { quality: 0.95, pixelRatio: 2, backgroundColor: '#f8fafc', cacheBust: true });
+                const dataUrl = await htmlToImage.toJpeg(wrapper, { quality: 0.95, pixelRatio: 1, width: 1200, height: 700, canvasWidth: 1200, canvasHeight: 700, backgroundColor: '#f8fafc', cacheBust: true });
                 const link = document.createElement('a');
                 link.download = `${tabName}_${new Date().toISOString().split('T')[0]}.jpeg`;
                 link.href = dataUrl;
@@ -1552,7 +1568,7 @@
             let wrapper;
             try {
                 wrapper = await buildExportContainer(selected);
-                const dataUrl = await htmlToImage.toPng(wrapper, { pixelRatio: 2, backgroundColor: '#f8fafc', cacheBust: true });
+                const dataUrl = await htmlToImage.toPng(wrapper, { pixelRatio: 1, width: 1200, height: 700, canvasWidth: 1200, canvasHeight: 700, backgroundColor: '#f8fafc', cacheBust: true });
                 const img = new Image();
                 await new Promise((resolve, reject) => { img.onload = resolve; img.onerror = reject; img.src = dataUrl; });
                 const { jsPDF } = window.jspdf;
@@ -2757,7 +2773,7 @@ function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
             // O cálculo é feito separadamente por poço e por dia.
             const byDateWell = {};
             fonte.forEach(d => {
-                const date = d.IsoDate || d.DataFormatted || '';
+                const date = String(d.IsoDate || d.DataFormatted || '').slice(0, 10);
                 const well = d.Poco || '';
                 const volume = Number(d.VolumeCalculado);
                 const horas = Number(d.Horas);
@@ -2815,6 +2831,33 @@ function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
             });
         }
 
+        function applySpecificVazaoDiaFilterTab4() {
+            const start = document.getElementById('vazaoDiaStartDateTab4')?.value || '';
+            const end = document.getElementById('vazaoDiaEndDateTab4')?.value || '';
+            const selectedWells = Array.from(document.querySelectorAll('.well-chk-4:checked')).map(c => c.value);
+            const generalStart = document.getElementById('filterStartDateTab4')?.value || '';
+            const generalEnd = document.getElementById('filterEndDateTab4')?.value || '';
+            const effectiveStart = start || generalStart;
+            const effectiveEnd = end || generalEnd;
+            const base = globalVazaoDiaData.length ? globalVazaoDiaData : globalRawData;
+            const filtered = base.filter(d => {
+                if (selectedWells.length > 0 && !selectedWells.includes(d.Poco)) return false;
+                const iso = String(d.IsoDate || '').slice(0, 10);
+                if (effectiveStart && iso < effectiveStart) return false;
+                if (effectiveEnd && iso > effectiveEnd) return false;
+                return true;
+            });
+            renderVazaoMediaDiaPocosTab4(filtered);
+        }
+
+        function resetSpecificVazaoDiaFilterTab4() {
+            const a = document.getElementById('vazaoDiaStartDateTab4');
+            const b = document.getElementById('vazaoDiaEndDateTab4');
+            if (a) a.value = '';
+            if (b) b.value = '';
+            applySpecificVazaoDiaFilterTab4();
+        }
+
         function applyFiltersTab4() {
             const selectedWells = Array.from(document.querySelectorAll('.well-chk-4:checked')).map(c => c.value);
             const selectedLocais = Array.from(document.querySelectorAll('.local-chk-4:checked')).map(c => c.value);
@@ -2835,13 +2878,7 @@ function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
             const maxPeakVol = filteredEntrada.length > 0 ? Math.max(...filteredEntrada.map(d => d.VolumeCalculado)) : 0;
 
             atualizarReguaNivelTanqueTab4(filteredEntrada);
-            const vazaoDiaFiltrada = (globalVazaoDiaData.length ? globalVazaoDiaData : filteredEntrada).filter(d => {
-                if (selectedWells.length > 0 && !selectedWells.includes(d.Poco)) return false;
-                if (startDate && d.IsoDate < startDate) return false;
-                if (endDate && d.IsoDate > endDate) return false;
-                return true;
-            });
-            renderVazaoMediaDiaPocosTab4(vazaoDiaFiltrada);
+            applySpecificVazaoDiaFilterTab4();
 
             document.getElementById('kpi4_totalVol').innerText = `${Math.round(totalVolEntrada).toLocaleString('pt-BR')} L`;
             document.getElementById('kpi4_avgHours').innerText = `${avgHours.toFixed(1)} h/dia`;
@@ -2858,6 +2895,8 @@ function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
                 const totalH = sub.reduce((acc, curr) => acc + curr.Horas, 0);
                 return parseFloat(totalH.toFixed(1));
             });
+            const allWells24h = wellsEntrada.length > 0 && hoursByWell.every(h => Math.abs(h - 24) < 0.05);
+            const totalEntradaSelecionado = Math.round(filteredEntrada.reduce((acc, curr) => acc + curr.VolumeCalculado, 0));
 
             renderChart('entradaAguaChart', 'entradaAgua', 'bar', {
                 labels: wellsEntrada,
@@ -2908,7 +2947,10 @@ function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
                         formatter: function(val, context) {
                             if (!val || val <= 0) return '';
                             if (context.dataset.type === 'line') {
-                                return `${Number(val).toLocaleString('pt-BR', {minimumFractionDigits: 0, maximumFractionDigits: 1})} h`;
+                                return allWells24h && context.dataIndex === 0 ? '24 h' : '';
+                            }
+                            if (allWells24h) {
+                                return context.dataIndex === 0 ? `Entrada total: ${totalEntradaSelecionado.toLocaleString('pt-BR')} L · 24 h` : '';
                             }
                             return `${Number(val).toLocaleString('pt-BR')} L`;
                         },
@@ -3576,6 +3618,6 @@ function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
             <div class="px-5 py-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-2"><button id="exportSelectorCancel2" class="px-4 py-2 rounded-lg border border-slate-300 text-sm font-semibold text-slate-700">Cancelar</button><button id="exportSelectorConfirm" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold"><i class="fa-solid fa-download mr-1"></i> Baixar selecionados</button></div>
         </div>
     </div>
-    <script>document.getElementById("exportSelectorCancel2").onclick=()=>document.getElementById("exportSelectorModal").classList.add("hidden");</script>
+    <script>document.getElementById("exportSelectorCancel2").onclick=()=>{const m=document.getElementById("exportSelectorModal");m.classList.add("hidden");m.style.display="none";};</script>
 </body>
 </html>
