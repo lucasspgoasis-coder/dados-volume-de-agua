@@ -998,7 +998,7 @@
                         </div>
                     </div>
                     <div class="chart-scroll-wrapper mt-3">
-                        <div id="chart-container-grafico02" class="chart-container-large" style="height:720px; min-width:1200px;">
+                        <div id="chart-container-grafico02" class="chart-container-large" style="height:720px; min-width:1400px;">
                             <canvas id="blocoCicloComparacaoChart"></canvas>
                         </div>
                     </div>
@@ -1249,7 +1249,7 @@
         const MANUTENCAO_SHEET = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQzVEGWOj1yLfJ6R5T_c07PxKhoLLinFnLyziQwMYIIXQKUVPL7T1qwhMjkoCKrkBaas8dmw7DUXPeV/pub?output=csv";
         // Fonte específica para os registros de poços parados e associação R2/R3.
         // Preencha com a URL CSV pública da planilha DADOS POÇOS FAZ. OASIS, aba Análise.
-        const POCOS_ANALISE_SHEET = "";
+        const POCOS_ANALISE_SHEET = ""; // Se preenchida, usa diretamente a aba Análise. Caso vazia, procura automaticamente a aba Análise nas fontes já adicionadas ao HTML.
 
         let globalRawData = [];
         let globalSaidaData = [];
@@ -1499,7 +1499,13 @@
             const pEntrada = Promise.all(ENTRADA_SHEETS.map(url => fetchSingleSheet(url)));
             const pSaida = fetchSingleSheet(SAIDA_SHEET);
             const pManutencao = fetchSingleSheet(MANUTENCAO_SHEET);
-            const pPocosAnalise = fetchSingleSheet(POCOS_ANALISE_SHEET);
+            // A aba Análise pode estar entre as fontes que já estão no HTML.
+            // Se houver uma URL específica, ela tem prioridade. Caso contrário,
+            // identificamos automaticamente a fonte cujos cabeçalhos contêm
+            // “Poços Parados” e/ou “Medidor (R2)/(R3)”.
+            const pPocosAnalise = POCOS_ANALISE_SHEET
+                ? fetchSingleSheet(POCOS_ANALISE_SHEET).then(data => ({data, source:'url'}))
+                : Promise.resolve(null);
 
             Promise.all([pEntrada, pSaida, pManutencao, pPocosAnalise])
                 .then(([resultsEntrada, resultsSaida, resultsManutencao, resultsPocosAnalise]) => {
@@ -1523,7 +1529,21 @@
                         } else {
                             globalManutencaoData = [];
                         }
-                        globalPocosAnaliseData = Array.isArray(resultsPocosAnalise) ? resultsPocosAnalise : [];
+                        const normHeader = h => String(h || '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'');
+                        const isAnaliseData = data => {
+                            if (!Array.isArray(data) || !data.length) return false;
+                            const headers = Object.keys(data[0] || {}).map(normHeader);
+                            const hasParados = headers.some(h => h.includes('pocosparados'));
+                            const hasR2 = headers.some(h => h === 'medidorr2' || h.includes('medidorr2'));
+                            const hasR3 = headers.some(h => h === 'medidorr3' || h.includes('medidorr3'));
+                            return hasParados || (hasR2 && hasR3);
+                        };
+                        if (resultsPocosAnalise && Array.isArray(resultsPocosAnalise.data)) {
+                            globalPocosAnaliseData = resultsPocosAnalise.data;
+                        } else {
+                            const analiseFonte = resultsEntrada.find(isAnaliseData);
+                            globalPocosAnaliseData = analiseFonte || [];
+                        }
 
                         loadingIcon.className = "fa-solid fa-circle-check text-emerald-400";
                         
@@ -2836,13 +2856,13 @@
                 datasets: [
                     {label:'Total irrigado (L)', data:entries.map(r=>Math.round(r.volume)), backgroundColor:'rgba(37,99,235,.82)', borderRadius:5, yAxisID:'y'},
                     {label:'Entrada estimada (L)', data:entries.map(r=>Math.round(r.entrada)), backgroundColor:'rgba(245,158,11,.72)', borderRadius:5, yAxisID:'y'},
-                    {label:'Rendimento (%)', data:entries.map(r=>Number(r.rendimento.toFixed(1))), backgroundColor:'rgba(16,185,129,.78)', borderRadius:5, yAxisID:'yPct'}
+                    {label:'Rendimento (%)', data:entries.map(r=>Number(r.rendimento.toFixed(1))), backgroundColor:'rgba(16,185,129,.78)', borderRadius:5}
                 ]
             }, {
-                indexAxis:'y', responsive:true, maintainAspectRatio:false,
+                responsive:true, maintainAspectRatio:false,
                 scales:{
-                    y:{ticks:{font:{size:10,weight:'600'}}},
-                    yPct:{position:'right',beginAtZero:true,grid:{drawOnChartArea:false},title:{display:true,text:'Rendimento (%)'}}
+                    x:{ticks:{font:{size:9,weight:'600'},maxRotation:60,minRotation:35}},
+                    y:{beginAtZero:true,ticks:{font:{size:10,weight:'600'}}}
                 },
                 plugins:{
                     legend:{position:'top'},
@@ -2858,51 +2878,91 @@
 
         function normalizeAnaliseRow(row) {
             const keys = Object.keys(row || {});
-            const find = terms => keys.find(k => terms.some(t => k.toLowerCase().trim() === t || k.toLowerCase().includes(t)));
-            const pocoK = find(['poços parados','poço parado','poco parado','poço','poco']);
-            const inicioK = find(['inicio','início']);
-            const fimK = find(['fim','final','ultima','última']);
-            const medK = find(['medidor']);
-            const r2K = find(['r2']);
-            const r3K = find(['r3']);
-            return {poco:pocoK ? formatWellName(row[pocoK]) || String(row[pocoK]).trim() : null, inicio:inicioK ? parsePortugueseDate(row[inicioK]) : null, fim:fimK ? parsePortugueseDate(row[fimK]) : null, medidor:medK ? String(row[medK]||'').trim() : '', r2:r2K ? String(row[r2K]||'').trim() : '', r3:r3K ? String(row[r3K]||'').trim() : ''};
+            const norm = s => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'').trim();
+            const findKey = terms => {
+                const nt = terms.map(norm);
+                return keys.find(k => nt.includes(norm(k))) || keys.find(k => nt.some(t => norm(k).includes(t)));
+            };
+            const pocoK = findKey(['Poços Parados','Poço Parado','Poco Parado']);
+            const inicioK = findKey(['Inicio','Início']);
+            const fimK = findKey(['Fim','Final','Ultima','Última','Última data parado','Fim parado']);
+            const r2K = findKey(['Medidor (R2)','R2']);
+            const r3K = findKey(['Medidor (R3)','R3']);
+            const medK = findKey(['Medidor']);
+            const val = k => k ? String(row[k] ?? '').trim() : '';
+            return {
+                poco: pocoK ? (formatWellName(row[pocoK]) || val(pocoK)) : null,
+                inicio: inicioK ? parsePortugueseDate(row[inicioK]) : null,
+                fim: fimK ? parsePortugueseDate(row[fimK]) : null,
+                medidor: val(medK), r2: val(r2K), r3: val(r3K)
+            };
+        }
+
+        function extractWellNames(text) {
+            const raw = String(text || '').trim();
+            if (!raw) return [];
+            const cleaned = raw.replace(/\b(?:poço|poco|p)\s*/gi, '|');
+            const nums = [];
+            cleaned.split(/[|,;\/\n\r]+/).forEach(part => {
+                const m = part.match(/\b(\d{1,2})\b/g);
+                if (m) m.forEach(n => nums.push(`Poço ${parseInt(n,10)}`));
+            });
+            return Array.from(new Set(nums));
         }
 
         function renderPocosParados() {
             const tbody = document.getElementById('pocosParadosTableBody');
             if (!tbody) return;
             if (!globalPocosAnaliseData.length) {
-                tbody.innerHTML = `<tr><td colspan="4" class="py-6 text-center text-slate-400">Fonte “DADOS POÇOS FAZ. OASIS — Análise” ainda não conectada. Informe a URL CSV pública para preencher este registro.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="4" class="py-6 text-center text-slate-400">Nenhum dado encontrado na aba Análise.</td></tr>`;
                 renderMedidoresR2R3([]);
                 return;
             }
-            const rows = globalPocosAnaliseData.map(normalizeAnaliseRow).filter(r => r.poco);
-            rows.sort((a,b)=>String(a.poco).localeCompare(String(b.poco),undefined,{numeric:true,sensitivity:'base'}));
-            tbody.innerHTML = rows.map(r => {
-                const dias = r.inicio && r.fim ? Math.max(0, Math.round((r.fim-r.inicio)/86400000)+1) : null;
-                return `<tr class="hover:bg-slate-50 transition"><td class="py-2.5 px-3 font-extrabold text-slate-800">${r.poco}</td><td class="py-2.5 px-3">${r.inicio?r.inicio.toLocaleDateString('pt-BR'):'-'}</td><td class="py-2.5 px-3">${r.fim?r.fim.toLocaleDateString('pt-BR'):'-'}</td><td class="py-2.5 px-3 font-bold text-rose-600">${dias===null?'-':dias+' dias'}</td></tr>`;
-            }).join('');
-            renderMedidoresR2R3(rows);
+            const parsed = globalPocosAnaliseData.map(normalizeAnaliseRow);
+            const stopped = parsed.filter(r => r.poco);
+            const grouped = {};
+            stopped.forEach(r => {
+                if (!grouped[r.poco]) grouped[r.poco] = {poco:r.poco,inicio:null,fim:null};
+                const g=grouped[r.poco];
+                if (r.inicio && (!g.inicio || r.inicio < g.inicio)) g.inicio=r.inicio;
+                if (r.fim && (!g.fim || r.fim > g.fim)) g.fim=r.fim;
+            });
+            const rows = Object.values(grouped).filter(r => r.inicio || r.fim).sort((a,b)=>String(a.poco).localeCompare(String(b.poco),undefined,{numeric:true,sensitivity:'base'}));
+            if (!rows.length) {
+                tbody.innerHTML = `<tr><td colspan="4" class="py-6 text-center text-slate-400">Nenhum registro de poço parado encontrado na aba Análise.</td></tr>`;
+            } else {
+                tbody.innerHTML = rows.map(r => {
+                    const dias = r.inicio && r.fim ? Math.max(0, Math.round((r.fim-r.inicio)/86400000)+1) : null;
+                    return `<tr class="hover:bg-slate-50 transition"><td class="py-2.5 px-3 font-extrabold text-slate-800">${r.poco}</td><td class="py-2.5 px-3">${r.inicio?r.inicio.toLocaleDateString('pt-BR'):'-'}</td><td class="py-2.5 px-3">${r.fim?r.fim.toLocaleDateString('pt-BR'):'-'}</td><td class="py-2.5 px-3 font-bold text-rose-600">${dias===null?'-':dias+' dias'}</td></tr>`;
+                }).join('');
+            }
+            renderMedidoresR2R3(parsed);
         }
 
         function renderMedidoresR2R3(rows) {
-            const r2 = rows.filter(r=>/r2/i.test(`${r.medidor} ${r.r2}`)).map(r=>r.poco);
-            const r3 = rows.filter(r=>/r3/i.test(`${r.medidor} ${r.r3}`)).map(r=>r.poco);
-            const all = Array.from(new Set([...r2,...r3])).sort((a,b)=>String(a).localeCompare(String(b),undefined,{numeric:true,sensitivity:'base'}));
+            const r2Set = new Set();
+            const r3Set = new Set();
+            rows.forEach(r => {
+                extractWellNames(r.r2).forEach(p => r2Set.add(p));
+                extractWellNames(r.r3).forEach(p => r3Set.add(p));
+                const med = String(r.medidor || '').toUpperCase();
+                if (/\bR2\b/.test(med)) extractWellNames(r.poco).forEach(p => r2Set.add(p));
+                if (/\bR3\b/.test(med)) extractWellNames(r.poco).forEach(p => r3Set.add(p));
+            });
+            const all = Array.from(new Set([...r2Set,...r3Set])).sort((a,b)=>String(a).localeCompare(String(b),undefined,{numeric:true,sensitivity:'base'}));
             if (!all.length) {
-                renderChart('medidoresR2R3Chart','medidoresR2R3','line',{labels:['R2','R3'],datasets:[{label:'R2',data:[0,0],borderColor:'#16a34a',backgroundColor:'#16a34a',pointRadius:5},{label:'R3',data:[1,1],borderColor:'#dc2626',backgroundColor:'#dc2626',pointRadius:5}]},{responsive:true,maintainAspectRatio:false,scales:{y:{min:-.5,max:1.5,ticks:{stepSize:1,callback:v=>v===1?'R3':'R2'}}},plugins:{datalabels:{display:false}}});
+                renderChart('medidoresR2R3Chart','medidoresR2R3','line',{labels:['Sem dados'],datasets:[]},{responsive:true,maintainAspectRatio:false,plugins:{datalabels:{display:false}}});
                 return;
             }
-            const labels = all;
-            const dataR2 = labels.map(p=>r2.includes(p)?1:null);
-            const dataR3 = labels.map(p=>r3.includes(p)?0:null);
-            renderChart('medidoresR2R3Chart','medidoresR2R3','line',{labels,datasets:[
-                {label:'R2',data:dataR2,borderColor:'#16a34a',backgroundColor:'#16a34a',pointRadius:6,pointHoverRadius:7,tension:0,spanGaps:false},
-                {label:'R3',data:dataR3,borderColor:'#dc2626',backgroundColor:'#dc2626',pointRadius:6,pointHoverRadius:7,tension:0,spanGaps:false}
-            ]},{responsive:true,maintainAspectRatio:false,scales:{y:{min:-.5,max:1.5,ticks:{stepSize:1,callback:v=>v===1?'R2':v===0?'R3':''},title:{display:true,text:'Medidor'}}},plugins:{legend:{position:'top'},datalabels:{display:true,align:'top',font:{size:9,weight:'bold'},formatter:(v,ctx)=>v===null?'':ctx.dataset.label}}});
+            const dataR2=all.map(p=>r2Set.has(p)?1:null);
+            const dataR3=all.map(p=>r3Set.has(p)?0:null);
+            renderChart('medidoresR2R3Chart','medidoresR2R3','line',{labels:all,datasets:[
+                {label:'R2',data:dataR2,borderColor:'#16a34a',backgroundColor:'#16a34a',pointRadius:6,tension:0,spanGaps:false,borderWidth:3},
+                {label:'R3',data:dataR3,borderColor:'#dc2626',backgroundColor:'#dc2626',pointRadius:6,tension:0,spanGaps:false,borderWidth:3}
+            ]},{responsive:true,maintainAspectRatio:false,scales:{x:{ticks:{autoSkip:false,maxRotation:55,minRotation:35,font:{size:10,weight:'600'}}},y:{min:-.25,max:1.25,ticks:{stepSize:1,callback:v=>v===1?'R2':v===0?'R3':''},title:{display:true,text:'Medidor'}}},plugins:{legend:{position:'top'},datalabels:{display:true,align:'top',offset:4,font:{size:9,weight:'bold'},formatter:(v,ctx)=>v===null?'':ctx.dataset.label}}});
         }
 
-                function applyFiltersTab6() {
+        function applyFiltersTab6() {
             const selectedPocos = Array.from(document.querySelectorAll('.well-chk-6:checked')).map(c => c.value);
             const selectedMonths = Array.from(document.querySelectorAll('.month-chk-6:checked')).map(c => c.value);
             const selectedResps = Array.from(document.querySelectorAll('.resp-chk-6:checked')).map(c => c.value);
