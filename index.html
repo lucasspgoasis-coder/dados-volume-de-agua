@@ -724,7 +724,7 @@
                     </div>
                 </div>
 
-                <!-- Gráfico Entrada de Água — tempo trabalhado no topo das barras -->
+                <!-- Gráfico Entrada de Água — volume em barras e horas em linha -->
                 <div class="glass-card p-5">
                     <div class="flex justify-between items-center mb-1 flex-wrap gap-2">
                         <div>
@@ -2804,8 +2804,14 @@ function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
                 datasets
             }, {
                 responsive: true, maintainAspectRatio: false,
-                scales: { y: { title: { display: true, text: 'Média litros/h' }, beginAtZero: false } },
-                plugins: { datalabels: { display: false }, legend: { display: true, position: 'bottom', labels: { boxWidth: 12, font: { size: 9 } } } }
+                scales: {
+                    y: { title: { display: true, text: 'Vazão (L/h)' }, beginAtZero: false },
+                    x: { ticks: { autoSkip: true, maxRotation: 45, minRotation: 0 } }
+                },
+                plugins: {
+                    datalabels: { display: false },
+                    legend: { display: true, position: 'bottom', labels: { boxWidth: 12, font: { size: 9 } } }
+                }
             });
         }
 
@@ -2855,7 +2861,7 @@ function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
             document.getElementById('kpi4_avgHours').innerText = `${avgHours.toFixed(1)} h/dia`;
             document.getElementById('kpi4_maxPeak').innerText = `${Math.round(maxPeakVol).toLocaleString('pt-BR')} L`;
 
-            // Gráfico Entrada de Água — tempo trabalhado no topo das barras
+            // Gráfico Entrada de Água — volume em barras e horas em linha
             const wellsEntrada = Array.from(new Set(filteredEntrada.map(d => d.Poco))).sort((a,b) => a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'}));
             const volByWell = wellsEntrada.map(w => {
                 const sub = filteredEntrada.filter(d => d.Poco === w);
@@ -2866,8 +2872,6 @@ function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
                 const totalH = sub.reduce((acc, curr) => acc + curr.Horas, 0);
                 return parseFloat(totalH.toFixed(1));
             });
-            const allWells24h = wellsEntrada.length > 0 && hoursByWell.every(h => Math.abs(h - 24) < 0.05);
-            const totalEntradaSelecionado = Math.round(filteredEntrada.reduce((acc, curr) => acc + curr.VolumeCalculado, 0));
 
             renderChart('entradaAguaChart', 'entradaAgua', 'bar', {
                 labels: wellsEntrada,
@@ -2879,51 +2883,55 @@ function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
                     borderColor: '#0284c7',
                     borderWidth: 1,
                     borderRadius: 6,
-                    yAxisID: 'y',
-                    order: 2
+                    yAxisID: 'y'
                 }, {
                     type: 'line',
                     label: 'Horas Trabalhadas',
                     data: hoursByWell,
                     yAxisID: 'y1',
-                    borderWidth: 2.5,
-                    pointRadius: 4,
-                    pointHoverRadius: 6,
+                    borderWidth: 3,
                     tension: 0.25,
                     fill: false,
-                    order: 1
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    datalabels: {
+                        display: true,
+                        anchor: 'end',
+                        align: 'top',
+                        offset: 4,
+                        formatter: function(val) { return `${Number(val).toLocaleString('pt-BR', {maximumFractionDigits: 1})} h`; },
+                        font: { size: 10, weight: 'bold' },
+                        color: '#334155',
+                        backgroundColor: 'rgba(255,255,255,0.92)',
+                        borderRadius: 4,
+                        padding: {top: 2, bottom: 2, left: 4, right: 4}
+                    }
                 }]
             }, {
                 responsive: true,
                 maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
                 scales: {
                     y: {
-                        type: 'linear',
-                        position: 'left',
+                        type: 'linear', position: 'left', beginAtZero: true,
                         title: { display: true, text: 'Volume Total (L)' }
                     },
                     y1: {
-                        type: 'linear',
-                        position: 'right',
-                        title: { display: true, text: 'Horas' },
-                        beginAtZero: true,
+                        type: 'linear', position: 'right', beginAtZero: true,
+                        title: { display: true, text: 'Horas Trabalhadas (h)' },
                         grid: { drawOnChartArea: false }
                     }
                 },
                 plugins: {
                     datalabels: {
                         display: function(context) { return context.dataset.type === 'bar'; },
-                        anchor: 'end',
-                        align: 'top',
-                        offset: 4,
+                        anchor: 'end', align: 'top', offset: 4,
                         formatter: function(val) { return `${Number(val).toLocaleString('pt-BR')} L`; },
-                        font: { size: 10, weight: 'bold' },
-                        color: '#0f172a',
-                        backgroundColor: 'rgba(255,255,255,0.92)',
-                        borderRadius: 4,
+                        font: { size: 10, weight: 'bold' }, color: '#0f172a',
+                        backgroundColor: 'rgba(255,255,255,0.92)', borderRadius: 4,
                         padding: {top: 2, bottom: 2, left: 4, right: 4}
                     },
-                    legend: { position: 'top' }
+                    legend: { display: true, position: 'bottom', labels: { boxWidth: 12, font: { size: 9 } } }
                 }
             });
 
