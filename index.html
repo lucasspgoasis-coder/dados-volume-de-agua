@@ -1506,12 +1506,13 @@
             };
         }
 
-        function cloneForExport(card) {
+        function cloneForExport(card, targetWidth = null, targetHeight = null) {
             const clone = card.cloneNode(true);
             clone.classList.add('export-mode');
             const rect = card.getBoundingClientRect();
-            const width = Math.max(card.scrollWidth || 0, rect.width || 0, 300);
-            const height = Math.max(card.scrollHeight || 0, rect.height || 0, 220);
+            const width = targetWidth || Math.max(card.scrollWidth || 0, rect.width || 0, 300);
+            const height = targetHeight || Math.max(card.scrollHeight || 0, rect.height || 0, 180);
+
             clone.style.boxSizing = 'border-box';
             clone.style.width = width + 'px';
             clone.style.minWidth = width + 'px';
@@ -1522,9 +1523,10 @@
             clone.style.margin = '0';
             clone.style.overflow = 'visible';
             clone.style.visibility = 'visible';
+            clone.style.position = 'relative';
 
-            // Copia os canvases dos gráficos para o clone. Sem isso, alguns
-            // navegadores exportam o elemento canvas clonado vazio.
+            // Copia os pixels dos canvases para o clone. Isso evita que Chart.js
+            // apareça vazio durante a exportação.
             const sourceCanvases = Array.from(card.querySelectorAll('canvas'));
             const clonedCanvases = Array.from(clone.querySelectorAll('canvas'));
             sourceCanvases.forEach((sourceCanvas, i) => {
@@ -1532,8 +1534,8 @@
                 if (!target) return;
                 target.width = sourceCanvas.width;
                 target.height = sourceCanvas.height;
-                target.style.width = sourceCanvas.style.width || getComputedStyle(sourceCanvas).width;
-                target.style.height = sourceCanvas.style.height || getComputedStyle(sourceCanvas).height;
+                target.style.width = getComputedStyle(sourceCanvas).width;
+                target.style.height = getComputedStyle(sourceCanvas).height;
                 const ctx = target.getContext('2d');
                 if (ctx) {
                     ctx.clearRect(0, 0, target.width, target.height);
@@ -1543,81 +1545,137 @@
             return clone;
         }
 
-        async function buildExportContainer(selected) {
-            const wrapper = document.createElement('div');
-            // IMPORTANTE: o container precisa estar dentro da viewport e visível para
-            // html-to-image. left:-1400px / z-index:-1 pode resultar em imagem branca
-            // em alguns navegadores. Mantemos o container fora do fluxo, mas dentro
-            // da tela, com opacidade normal e sem display:none.
-            wrapper.style.cssText = 'position:fixed;left:0;top:0;background:#f8fafc;padding:18px;width:1200px;min-height:700px;box-sizing:border-box;font-family:Inter,Arial,sans-serif;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:minmax(320px,auto);align-items:stretch;gap:12px;overflow:visible;z-index:2147483647;';
-            selected.forEach(item => wrapper.appendChild(cloneForExport(item.card)));
-            document.body.appendChild(wrapper);
-            // Aguarda layout, fontes e pintura dos canvases antes da captura.
-            if (document.fonts && document.fonts.ready) { try { await document.fonts.ready; } catch(e) {} }
-            await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
-            return wrapper;
-        }
-
-        async function renderExportCanvas(wrapper) {
-            // Usa a biblioteca html-to-image já carregada no HTML. O arquivo não
-            // depende de html2canvas (que não está incluído nesta página).
+        async function captureExportCard(card) {
             if (!window.htmlToImage || typeof window.htmlToImage.toCanvas !== 'function') {
                 throw new Error('Biblioteca html-to-image não carregada.');
             }
-            await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
-            return await window.htmlToImage.toCanvas(wrapper, {
-                backgroundColor: '#f8fafc',
-                pixelRatio: 1.5,
-                cacheBust: true,
-                skipFonts: false,
-                style: {
-                    margin: '0',
-                    transform: 'none'
+
+            const rect = card.getBoundingClientRect();
+            const sourceWidth = Math.max(card.scrollWidth || 0, rect.width || 0, 300);
+            const sourceHeight = Math.max(card.scrollHeight || 0, rect.height || 0, 180);
+
+            const stage = document.createElement('div');
+            stage.style.cssText = [
+                'position:fixed', 'left:-20000px', 'top:0',
+                'width:' + sourceWidth + 'px', 'height:' + sourceHeight + 'px',
+                'background:#ffffff', 'padding:0', 'margin:0',
+                'overflow:visible', 'z-index:-1', 'box-sizing:border-box'
+            ].join(';');
+
+            const clone = cloneForExport(card, sourceWidth, sourceHeight);
+            stage.appendChild(clone);
+            document.body.appendChild(stage);
+
+            try {
+                if (document.fonts && document.fonts.ready) {
+                    try { await document.fonts.ready; } catch (e) {}
                 }
-            });
+                await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+                return await window.htmlToImage.toCanvas(clone, {
+                    backgroundColor: '#ffffff',
+                    pixelRatio: 1.5,
+                    cacheBust: true,
+                    skipFonts: false,
+                    style: { margin: '0', transform: 'none' }
+                });
+            } finally {
+                stage.remove();
+            }
         }
 
-        function makePdfPageCanvas(sourceCanvas, pageWidth, pageHeight, margin, yOffset) {
-            const page = document.createElement('canvas');
-            const scale = 1.5;
-            page.width = Math.round(pageWidth * scale);
-            page.height = Math.round(pageHeight * scale);
-            const ctx = page.getContext('2d');
-            ctx.fillStyle = '#f8fafc';
-            ctx.fillRect(0, 0, page.width, page.height);
-            const innerW = page.width - margin * 2 * scale;
-            const sourceW = sourceCanvas.width;
-            const drawH = innerW * sourceCanvas.height / sourceW;
-            const visibleH = Math.min(drawH - yOffset, page.height - margin * 2 * scale);
-            if (visibleH > 0) {
-                const sy = Math.max(0, yOffset * sourceW / innerW);
-                const sh = visibleH * sourceW / innerW;
-                ctx.drawImage(sourceCanvas, 0, sy, sourceW, sh, margin * scale, margin * scale, innerW, visibleH);
+        function downloadCanvasAsJPEG(canvas, fileName) {
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
+            const link = document.createElement('a');
+            link.download = fileName;
+            link.href = dataUrl;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        }
+
+        function isTab4Export(tabName) {
+            return /aba[_ -]?4|entrada[_ -]?saida/i.test(String(tabName || ''));
+        }
+
+        async function composeExportJPEG(selected, tabName) {
+            const isTab4 = isTab4Export(tabName);
+            const targetWidth = isTab4 ? 1600 : 1500;
+            const gap = isTab4 ? 18 : 22;
+            const margin = isTab4 ? 24 : 30;
+            const cards = [];
+
+            for (const item of selected) {
+                cards.push({ item, canvas: await captureExportCard(item.card) });
             }
-            return page;
+
+            if (!cards.length) throw new Error('Nenhum conteúdo selecionado.');
+
+            // Aba 04: formato de relatório, igual ao exemplo enviado pelo usuário:
+            // quatro gráficos largos, organizados verticalmente em uma única folha.
+            if (isTab4) {
+                const usableW = targetWidth - margin * 2;
+                const cardHeights = cards.map(({ canvas }) => {
+                    const ratio = canvas.height / canvas.width;
+                    return Math.max(150, Math.min(225, Math.round(usableW * ratio)));
+                });
+                const totalH = margin * 2 + cardHeights.reduce((a,b) => a+b, 0) + gap * (cards.length - 1);
+                const out = document.createElement('canvas');
+                out.width = targetWidth;
+                out.height = totalH;
+                const ctx = out.getContext('2d');
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, out.width, out.height);
+                let y = margin;
+                cards.forEach(({ canvas }, i) => {
+                    const h = cardHeights[i];
+                    ctx.drawImage(canvas, margin, y, usableW, h);
+                    y += h + gap;
+                });
+                return out;
+            }
+
+            // Demais abas: duas colunas, várias linhas, mantendo os gráficos grandes.
+            const colW = Math.floor((targetWidth - margin * 2 - gap) / 2);
+            const cardData = cards.map(({ canvas }) => {
+                const ratio = canvas.height / canvas.width;
+                return { canvas, h: Math.max(190, Math.min(430, Math.round(colW * ratio))) };
+            });
+            const rows = [];
+            for (let i = 0; i < cardData.length; i += 2) {
+                rows.push(cardData.slice(i, i + 2));
+            }
+            const rowHeights = rows.map(row => Math.max(...row.map(x => x.h)));
+            const totalH = margin * 2 + rowHeights.reduce((a,b) => a+b, 0) + gap * (rows.length - 1);
+            const out = document.createElement('canvas');
+            out.width = targetWidth;
+            out.height = totalH;
+            const ctx = out.getContext('2d');
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, out.width, out.height);
+            let y = margin;
+            rows.forEach((row, r) => {
+                row.forEach((item, c) => {
+                    const x = margin + c * (colW + gap);
+                    ctx.drawImage(item.canvas, x, y, colW, item.h);
+                });
+                y += rowHeights[r] + gap;
+            });
+            return out;
         }
 
         async function exportSelectedSectionsJPEG(selected, tabName, btn) {
             const original = btn.innerHTML;
             btn.disabled = true;
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Gerando JPEG...';
-            let wrapper;
             try {
-                wrapper = await buildExportContainer(selected);
-                const canvas = await renderExportCanvas(wrapper);
-                const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
-                const link = document.createElement('a');
-                link.download = `${tabName}_${new Date().toISOString().split('T')[0]}.jpeg`;
-                link.href = dataUrl;
-                document.body.appendChild(link);
-                link.click();
-                link.remove();
+                const canvas = await composeExportJPEG(selected, tabName);
+                downloadCanvasAsJPEG(canvas, `${tabName}_${new Date().toISOString().split('T')[0]}.jpeg`);
             } catch (e) {
                 console.error('Erro ao gerar JPEG:', e);
-                alert('Não foi possível gerar o JPEG. Verifique se a página terminou de carregar e tente novamente.');
+                alert('Não foi possível gerar o JPEG. Aguarde os gráficos carregarem e tente novamente.');
             } finally {
-                if (wrapper) wrapper.remove();
-                btn.innerHTML = original; btn.disabled = false;
+                btn.innerHTML = original;
+                btn.disabled = false;
             }
         }
 
@@ -1625,35 +1683,75 @@
             const original = btn.innerHTML;
             btn.disabled = true;
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Gerando PDF...';
-            let wrapper;
             try {
-                wrapper = await buildExportContainer(selected);
-                const canvas = await renderExportCanvas(wrapper);
                 const { jsPDF } = window.jspdf || {};
                 if (!jsPDF) throw new Error('Biblioteca jsPDF não carregada.');
 
-                // PDF A4 paisagem. A imagem é dividida em páginas para não ficar
-                // comprimida em uma única faixa/banda e preservar a leitura.
-                const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4', compress: true });
-                const pageW = 297, pageH = 210, margin = 8;
+                const isTab4 = isTab4Export(tabName);
+                const pageW = 297, pageH = 210;
+                const margin = isTab4 ? 6 : 8;
+                const gap = isTab4 ? 4 : 7;
                 const usableW = pageW - margin * 2;
-                const scaledH = usableW * canvas.height / canvas.width;
-                const pageUsableH = pageH - margin * 2;
-                const totalPages = Math.max(1, Math.ceil(scaledH / pageUsableH));
+                const cards = [];
 
-                for (let pageIndex = 0; pageIndex < totalPages; pageIndex++) {
-                    if (pageIndex > 0) pdf.addPage('a4', 'landscape');
-                    const yMm = -(pageIndex * pageUsableH) + margin;
-                    const imgData = canvas.toDataURL('image/jpeg', 0.92);
-                    pdf.addImage(imgData, 'JPEG', margin, yMm, usableW, scaledH, undefined, 'FAST');
+                for (const item of selected) {
+                    cards.push({ item, canvas: await captureExportCard(item.card) });
                 }
+                if (!cards.length) throw new Error('Nenhum conteúdo selecionado.');
+
+                const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4', compress: true });
+
+                if (isTab4) {
+                    // Aba 04: tudo em UMA página A4 paisagem, em quatro faixas largas,
+                    // preservando títulos, gráficos, tabelas e rótulos.
+                    const availableH = pageH - margin * 2 - gap * (cards.length - 1);
+                    const eachH = availableH / cards.length;
+                    cards.forEach(({ canvas }, i) => {
+                        if (i > 0) pdf.addPage('a4', 'landscape');
+                        // Só adiciona página extra se a quantidade ultrapassar 4.
+                    });
+                    // A lógica acima não deve criar páginas extras para a Aba 04.
+                    while (pdf.getNumberOfPages() > 1) pdf.deletePage(pdf.getNumberOfPages());
+                    cards.forEach(({ canvas }, i) => {
+                        const ratio = canvas.height / canvas.width;
+                        const naturalH = usableW * ratio;
+                        const h = Math.min(eachH, naturalH);
+                        const y = margin + i * (eachH + gap) + (eachH - h) / 2;
+                        const img = canvas.toDataURL('image/jpeg', 0.92);
+                        pdf.addImage(img, 'JPEG', margin, y, usableW, h, undefined, 'FAST');
+                    });
+                } else {
+                    // Demais abas: 2 gráficos por linha, 2 linhas por página quando possível.
+                    const colGap = 6;
+                    const colW = (usableW - colGap) / 2;
+                    const rowGap = 6;
+                    const usableH = pageH - margin * 2;
+                    const rowH = (usableH - rowGap) / 2;
+                    let index = 0;
+                    while (index < cards.length) {
+                        if (index > 0) pdf.addPage('a4', 'landscape');
+                        for (let row = 0; row < 2 && index < cards.length; row++) {
+                            for (let col = 0; col < 2 && index < cards.length; col++) {
+                                const { canvas } = cards[index++];
+                                const ratio = canvas.height / canvas.width;
+                                const naturalH = colW * ratio;
+                                const h = Math.min(rowH, Math.max(30, naturalH));
+                                const x = margin + col * (colW + colGap);
+                                const y = margin + row * (rowH + rowGap) + (rowH - h) / 2;
+                                const img = canvas.toDataURL('image/jpeg', 0.92);
+                                pdf.addImage(img, 'JPEG', x, y, colW, h, undefined, 'FAST');
+                            }
+                        }
+                    }
+                }
+
                 pdf.save(`${tabName}_${new Date().toISOString().split('T')[0]}.pdf`);
             } catch (e) {
                 console.error('Erro ao gerar PDF:', e);
-                alert('Não foi possível gerar o PDF. Verifique se a página terminou de carregar e tente novamente.');
+                alert('Não foi possível gerar o PDF. Aguarde os gráficos carregarem e tente novamente.');
             } finally {
-                if (wrapper) wrapper.remove();
-                btn.innerHTML = original; btn.disabled = false;
+                btn.innerHTML = original;
+                btn.disabled = false;
             }
         }
 
