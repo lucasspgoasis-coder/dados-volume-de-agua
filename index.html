@@ -1249,7 +1249,7 @@
         const MANUTENCAO_SHEET = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQzVEGWOj1yLfJ6R5T_c07PxKhoLLinFnLyziQwMYIIXQKUVPL7T1qwhMjkoCKrkBaas8dmw7DUXPeV/pub?output=csv";
         // Fonte específica para os registros de poços parados e associação R2/R3.
         // Preencha com a URL CSV pública da planilha DADOS POÇOS FAZ. OASIS, aba Análise.
-        const POCOS_ANALISE_SHEET = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQzVEGWOj1yLfJ6R5T_c07PxKhoLLinFnLyziQwMYIIXQKUVPL7T1qwhMjkoCKrkBaas8dmw7DUXPeV/pub?output=csv&sheet=An%C3%A1lise"; // DADOS POÇOS FAZ. OASIS — aba Análise
+        const POCOS_ANALISE_SHEET = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQzVEGWOj1yLfJ6R5T_c07PxKhoLLinFnLyziQwMYIIXQKUVPL7T1qwhMjkoCKrkBaas8dmw7DUXPeV/gviz/tq?tqx=out:csv&sheet=An%C3%A1lise"; // DADOS POÇOS FAZ. OASIS — aba Análise
 
         let globalRawData = [];
         let globalSaidaData = [];
@@ -1472,9 +1472,9 @@
             if (!rawWell) return null;
             let str = String(rawWell).trim();
             if (str === '0' || str.toLowerCase() === 'desconhecido' || str === '' || str.toLowerCase() === 'null') return null;
-            if (/^\d+$/.test(str)) return `Poço ${parseInt(str, 10)}`;
+            if (/^\d+$/.test(str)) return `Poço ${String(parseInt(str, 10)).padStart(2,'0')}`;
             let match = str.match(/^(?:poço|poco|p)\s*0*(\d+)$/i);
-            if (match) return `Poço ${parseInt(match[1], 10)}`;
+            if (match) return `Poço ${String(parseInt(match[1], 10)).padStart(2,'0')}`;
             if (!str.toLowerCase().startsWith('poço')) str = `Poço ${str}`;
             return str;
         }
@@ -1482,13 +1482,29 @@
         function fetchSingleSheet(url) {
             return new Promise((resolve) => {
                 if (!url) { resolve([]); return; }
-                Papa.parse(url, {
-                    download: true,
-                    header: true,
-                    skipEmptyLines: true,
-                    complete: function(results) { resolve(results.data || []); },
-                    error: function(err) { console.error("Erro ao carregar planilha:", url, err); resolve([]); }
-                });
+                const urls = [url];
+                // Para planilhas Google publicadas, tenta também o endpoint GViz,
+                // que é mais confiável para selecionar uma aba pelo nome.
+                if (url.includes('/gviz/tq?')) {
+                    urls.push(url.replace('/gviz/tq?', '/pub?output=csv&'));
+                }
+                const tryNext = (idx) => {
+                    if (idx >= urls.length) { resolve([]); return; }
+                    Papa.parse(urls[idx], {
+                        download: true,
+                        header: true,
+                        skipEmptyLines: true,
+                        complete: function(results) {
+                            const data = results.data || [];
+                            if (data.length) resolve(data); else tryNext(idx + 1);
+                        },
+                        error: function(err) {
+                            console.error("Erro ao carregar planilha:", urls[idx], err);
+                            tryNext(idx + 1);
+                        }
+                    });
+                };
+                tryNext(0);
             });
         }
 
@@ -2861,12 +2877,12 @@
             }, {
                 responsive:true, maintainAspectRatio:false,
                 scales:{
-                    x:{ticks:{font:{size:9,weight:'600'},maxRotation:60,minRotation:35}},
-                    y:{beginAtZero:true,ticks:{font:{size:10,weight:'600'}}}
+                    x:{ticks:{font:{size:12,weight:'700'},maxRotation:55,minRotation:35,padding:8}},
+                    y:{beginAtZero:true,ticks:{font:{size:12,weight:'700'},padding:6}}
                 },
                 plugins:{
                     legend:{position:'top'},
-                    datalabels:{display:true,anchor:'end',align:'top',offset:5,clamp:true,font:{size:12,weight:'bold',lineHeight:1.25},color:'#0f172a',backgroundColor:'rgba(255,255,255,.82)',borderRadius:4,padding:{top:3,right:5,bottom:3,left:5},formatter:(v,ctx)=>{
+                    datalabels:{display:true,anchor:'end',align:'top',offset:5,clamp:true,font:{size:16,weight:'800',lineHeight:1.35},color:'#0f172a',backgroundColor:'rgba(255,255,255,.82)',borderRadius:4,padding:{top:5,right:7,bottom:5,left:7},formatter:(v,ctx)=>{
                         const r=entries[ctx.dataIndex];
                         if(ctx.datasetIndex===0) return `${Math.round(r.volume).toLocaleString('pt-BR')} L\n${r.ltrsPlanta.toFixed(1)} L/pl\n${r.ltrsDia.toFixed(2)} L/d/pl\n${Math.round(r.plantas).toLocaleString('pt-BR')} pl\nPart. ${r.participacao.toFixed(1)}%`;
                         if(ctx.datasetIndex===1) return r.entrada>0?`${Math.round(r.entrada).toLocaleString('pt-BR')} L`:'--';
