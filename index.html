@@ -1652,7 +1652,7 @@
                 await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
                 return await window.htmlToImage.toCanvas(clone, {
                     backgroundColor: '#ffffff',
-                    pixelRatio: 1.25,
+                    pixelRatio: 2,
                     cacheBust: true,
                     skipFonts: false,
                     style: { margin: '0', transform: 'none' }
@@ -1714,26 +1714,26 @@
 
         async function composeTab4SectionCanvas(item, width = 2100) {
             const meta = getTab4ExportMeta(item.title);
-            const chart = await captureExportCard(item.card, width, 760);
-            const headH = meta.items.length ? 185 : 105;
+            const chart = await captureExportCard(item.card, width, 920);
+            const headH = meta.items.length ? 210 : 125;
             const out = document.createElement('canvas');
             out.width = width;
             out.height = headH + chart.height + 28;
             const ctx = out.getContext('2d');
             ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, out.width, out.height);
-            ctx.fillStyle = '#0f172a'; ctx.font = '700 34px Arial';
-            ctx.fillText(meta.section, 34, 46);
+            ctx.fillStyle = '#0f172a'; ctx.font = '700 38px Arial';
+            ctx.fillText(meta.section, 34, 52);
             const range = getExportDateRange('content-entrada');
-            if (range) { ctx.fillStyle = '#64748b'; ctx.font = '600 18px Arial'; ctx.fillText(`Período: ${range}`, 34, 76); }
+            if (range) { ctx.fillStyle = '#64748b'; ctx.font = '600 18px Arial'; ctx.fillText(`Período: ${range}`, 34, 86); }
             if (meta.items.length) {
-                const gap = 18, top = 98, boxH = 68;
+                const gap = 22, top = 112, boxH = 76;
                 const boxW = (width - 68 - gap * (meta.items.length - 1)) / meta.items.length;
                 meta.items.forEach((it, i) => {
                     const x = 34 + i * (boxW + gap);
                     ctx.fillStyle = '#f8fafc'; ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 2;
                     ctx.beginPath(); ctx.roundRect(x, top, boxW, boxH, 10); ctx.fill(); ctx.stroke();
-                    ctx.fillStyle = '#64748b'; ctx.font = '700 14px Arial'; ctx.fillText(it[1].toUpperCase(), x + 14, top + 24);
-                    ctx.fillStyle = '#0f172a'; ctx.font = '700 25px Arial'; ctx.fillText(getTab4ExportValue(it[0]), x + 14, top + 53);
+                    ctx.fillStyle = '#64748b'; ctx.font = '700 15px Arial'; ctx.fillText(it[1].toUpperCase(), x + 16, top + 27);
+                    ctx.fillStyle = '#0f172a'; ctx.font = '700 30px Arial'; ctx.fillText(getTab4ExportValue(it[0]), x + 16, top + 60);
                 });
             }
             ctx.drawImage(chart, 0, headH + 4, width, chart.height);
@@ -1742,18 +1742,19 @@
 
         async function composeExportJPEG(selected, tabId, tabName) {
             const isTab4 = isTab4Export(tabName);
-            const outW = isTab4 ? 2400 : 2000;
-            const margin = isTab4 ? 50 : 36;
+            const outW = isTab4 ? 2800 : 2400;
+            const margin = isTab4 ? 40 : 36;
             const gap = isTab4 ? 34 : 26;
             const cards = [];
             if (isTab4) {
                 for (const item of selected) cards.push({ item, canvas: await composeTab4SectionCanvas(item, outW - margin * 2) });
-                const headerH = 125;
+                const headerH = 150;
                 const totalH = margin + headerH + gap + cards.reduce((sum, c) => sum + c.canvas.height, 0) + gap * Math.max(0, cards.length - 1) + margin;
                 const out = document.createElement('canvas'); out.width = outW; out.height = totalH;
                 const ctx = out.getContext('2d'); ctx.fillStyle = '#f1f5f9'; ctx.fillRect(0, 0, out.width, out.height);
-                ctx.fillStyle = '#0f172a'; ctx.font = '700 42px Arial'; ctx.fillText('RELATÓRIO — ENTRADA E SAÍDA DE ÁGUA', margin, 55);
-                const range = getExportDateRange(tabId); if (range) { ctx.fillStyle = '#64748b'; ctx.font = '600 22px Arial'; ctx.fillText(`Período: ${range}`, margin, 92); }
+                ctx.fillStyle = '#0f172a'; ctx.font = '700 48px Arial'; ctx.fillText('RELATÓRIO — ENTRADA E SAÍDA DE ÁGUA', margin, 58);
+                ctx.fillStyle = '#94a3b8'; ctx.fillRect(margin, 72, outW - margin * 2, 3);
+                const range = getExportDateRange(tabId); if (range) { ctx.fillStyle = '#64748b'; ctx.font = '600 22px Arial'; ctx.fillText(`Período: ${range}`, margin, 108); }
                 let y = margin + headerH + gap; cards.forEach(({canvas}) => { ctx.drawImage(canvas, margin, y, outW - margin * 2, canvas.height); y += canvas.height + gap; });
                 return out;
             }
@@ -1788,8 +1789,8 @@
                 const isTab4 = isTab4Export(tabName);
                 const pdfW = 297, margin = 5, contentW = pdfW - margin * 2, gapMm = 6;
                 const sections = [];
-                if (isTab4) { for (const item of selected) sections.push(await composeTab4SectionCanvas(item, 2100)); }
-                else { for (const item of selected) sections.push(await captureExportCard(item.card, 2100, 760)); }
+                if (isTab4) { for (const item of selected) sections.push(await composeTab4SectionCanvas(item, 2800)); }
+                else { for (const item of selected) sections.push(await captureExportCard(item.card, 2600, 920)); }
                 const titleH = isTab4 ? 18 : 25;
                 const heights = sections.map(c => contentW * c.height / c.width);
                 const pdfH = Math.max(210, margin * 2 + titleH + gapMm + heights.reduce((a,b)=>a+b,0) + gapMm * Math.max(0, sections.length - 1));
