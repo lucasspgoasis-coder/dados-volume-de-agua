@@ -20,7 +20,6 @@
     <script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js"></script>
     
     <!-- jsPDF -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -350,9 +349,7 @@
                                 <i class="fa-solid fa-filter text-blue-600"></i> Filtros da Aba 1:
                             </span>
                             <button onclick="printCurrentTab('content-diario', 'aba_1_diario', this)" title="Printar tela" class="print-hide bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm"><i class="fa-solid fa-print text-blue-600"></i> Printar tela</button>
-                            <button onclick="downloadPDF('content-diario', 'aba_1_diario', this)" title="Baixar aba em PDF" class="bg-rose-600 hover:bg-rose-700 text-white px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
-                                <i class="fa-solid fa-file-pdf"></i> Baixar em PDF
-                            </button>
+                            
                         </div>
                         <div class="flex flex-wrap items-center gap-3">
                             <div class="relative">
@@ -458,9 +455,7 @@
                                 <i class="fa-solid fa-filter text-indigo-600"></i> Filtros da Aba 2:
                             </span>
                             <button onclick="printCurrentTab('content-mensal', 'aba_2_mensal', this)" title="Printar tela" class="print-hide bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm"><i class="fa-solid fa-print text-blue-600"></i> Printar tela</button>
-                            <button onclick="downloadPDF('content-mensal', 'aba_2_volumes_tendencia', this)" title="Baixar aba em PDF" class="bg-rose-600 hover:bg-rose-700 text-white px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
-                                <i class="fa-solid fa-file-pdf"></i> Baixar em PDF
-                            </button>
+                            
                         </div>
                         <div class="flex flex-wrap items-center gap-3">
                             <div class="relative">
@@ -565,9 +560,7 @@
                                 <i class="fa-solid fa-filter text-orange-600"></i> Filtros de Consulta:
                             </span>
                             <button onclick="openImageExportMenu('content-comparacao', 'aba_3_dados_tabulares', this)" title="Baixar aba em JPEG" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm"><i class="fa-solid fa-file-image text-emerald-600"></i> Baixar JPEG</button>
-                            <button onclick="downloadPDF('content-comparacao', 'aba_3_dados_tabulares', this)" title="Baixar aba em PDF" class="bg-rose-600 hover:bg-rose-700 text-white px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
-                                <i class="fa-solid fa-file-pdf"></i> Baixar em PDF
-                            </button>
+                            
                         </div>
                         <div class="flex flex-wrap items-center gap-3">
                             <div class="relative">
@@ -678,9 +671,7 @@
                                 <i class="fa-solid fa-filter text-sky-600"></i> Filtros da Aba 4:
                             </span>
                             <button onclick="printCurrentTab('content-entrada', 'aba_4_entrada_saida', this)" title="Printar tela" class="print-hide bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm"><i class="fa-solid fa-print text-blue-600"></i> Printar tela</button>
-                            <button onclick="downloadPDF('content-entrada', 'aba_4_entrada_saida', this)" title="Baixar aba em PDF" class="bg-rose-600 hover:bg-rose-700 text-white px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
-                                <i class="fa-solid fa-file-pdf"></i> Baixar em PDF
-                            </button>
+                            
                         </div>
                         <div class="flex flex-wrap items-center gap-3">
                             <div class="relative">
@@ -1021,9 +1012,7 @@
                                 <i class="fa-solid fa-filter text-blue-600"></i> Filtros de Bloco, Ciclo e Período:
                             </span>
                             <button onclick="printCurrentTab('content-bloco', 'aba_5_resumo_bloco', this)" title="Printar tela" class="print-hide bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm"><i class="fa-solid fa-print text-blue-600"></i> Printar tela</button>
-                            <button onclick="downloadPDF('content-bloco', 'aba_5_resumo_bloco', this)" title="Baixar aba em PDF" class="bg-rose-600 hover:bg-rose-700 text-white px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
-                                <i class="fa-solid fa-file-pdf"></i> Baixar em PDF
-                            </button>
+                            
                         </div>
                         <div class="flex flex-wrap items-center gap-3">
                             <div class="relative">
@@ -1205,9 +1194,7 @@
                                 <i class="fa-solid fa-filter text-indigo-600"></i> Filtros de Manutenção:
                             </span>
                             <button onclick="printCurrentTab('content-manutencao', 'aba_6_manutencao_bombas', this)" title="Printar tela" class="print-hide bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm"><i class="fa-solid fa-print text-blue-600"></i> Printar tela</button>
-                            <button onclick="downloadPDF('content-manutencao', 'aba_6_manutencao_bombas', this)" title="Baixar aba em PDF" class="bg-rose-600 hover:bg-rose-700 text-white px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
-                                <i class="fa-solid fa-file-pdf"></i> Baixar em PDF
-                            </button>
+                            
                         </div>
 
                         <div class="flex flex-wrap items-center gap-3">
@@ -1394,6 +1381,22 @@
 
     <script>
         Chart.register(ChartDataLabels);
+// Valores visíveis nos pontos do gráfico Vazão Média Diária Exata
+const dailyFlowLabelsPlugin = {
+    id: 'dailyFlowLabelsPlugin',
+    afterDatasetsDraw(chart) {
+        if (chart.canvas && chart.canvas.id === 'dailyFlowChart') {
+            const ctx = chart.ctx;
+            ctx.save(); ctx.font = 'bold 11px Inter, Arial'; ctx.textAlign='center'; ctx.textBaseline='bottom'; ctx.fillStyle='#334155';
+            chart.data.datasets.forEach((ds, di) => {
+                const meta=chart.getDatasetMeta(di);
+                meta.data.forEach((pt,i)=>{ const v=ds.data[i]; if(v==null || !Number.isFinite(Number(v))) return; ctx.fillText(Number(v).toLocaleString('pt-BR')+' L/h', pt.x, pt.y-8); });
+            }); ctx.restore();
+        }
+    }
+};
+Chart.register(dailyFlowLabelsPlugin);
+
 
         const VAZAO_DIA_SHEET = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSafB5fd5osyELyMS1T-pVO-WbL25l53ICs1dmVMgByrAlQsqSHT2YscIE-ClYrJvzPS-dGZSp25ysi/pub?output=csv";
 
@@ -1886,37 +1889,21 @@
             showExportSelector(elementId, fileName, 'pdf', btn);
         }
 
-        function printCurrentTab(tabId, tabName, btn) {
-            const tab = document.getElementById(tabId);
-            if (!tab) return;
-            const body = document.body;
-            const hidden = [];
-            // Esconde especificamente os cards que contêm os filtros da aba.
-            tab.querySelectorAll('.glass-card').forEach(card => {
-                const text = (card.textContent || '').toLowerCase();
-                if (text.includes('filtros da aba') || text.includes('filtro da aba')) {
-                    card.classList.add('print-filter'); hidden.push(card);
-                }
-            });
-            // Fecha menus suspensos antes da impressão.
-            document.querySelectorAll('.relative > .absolute').forEach(el => el.classList.add('print-hide'));
-            tab.classList.add('print-target');
-            body.classList.add('printing');
-            const cleanup = () => {
-                body.classList.remove('printing');
-                tab.classList.remove('print-target');
-                hidden.forEach(el => el.classList.remove('print-filter'));
-                document.querySelectorAll('.print-hide').forEach(el => {
-                    if (el.dataset.printTemp === '1') { el.classList.remove('print-hide'); delete el.dataset.printTemp; }
-                });
-                window.removeEventListener('afterprint', cleanup);
-            };
-            window.addEventListener('afterprint', cleanup);
-            // Pequeno atraso para o navegador recalcular os gráficos antes da impressão.
-            setTimeout(() => window.print(), 250);
-        }
-
-        function toggleDropdown(id) {
+        function printCurrentTab(tabId, fileName, btn) {
+    const tab = document.getElementById(tabId);
+    if (!tab) return;
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('print-target'));
+    tab.classList.add('print-target');
+    document.body.classList.add('printing');
+    // Give Chart.js time to finish rendering before the browser print snapshot.
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            setTimeout(() => { window.print(); }, 250);
+        });
+    });
+    const cleanup = () => { document.body.classList.remove('printing'); tab.classList.remove('print-target'); window.removeEventListener('afterprint', cleanup); };
+    window.addEventListener('afterprint', cleanup);
+}function toggleDropdown(id) {
             document.getElementById(id).classList.toggle('hidden');
         }
 
@@ -4033,5 +4020,9 @@ function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
         </div>
     </div>
     <script>document.getElementById("exportSelectorCancel2").onclick=()=>{const m=document.getElementById("exportSelectorModal");m.classList.add("hidden");m.style.display="none";};</script>
+
+<style>
+@media print { body.printing .tab-content.print-target { display:block!important; } body.printing .print-hide, body.printing button, body.printing input, body.printing select, body.printing .filter-container, body.printing .filters { display:none!important; } body.printing .glass-card { break-inside:avoid; page-break-inside:avoid; } }
+</style>
 </body>
 </html>
