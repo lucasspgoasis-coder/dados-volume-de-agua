@@ -3249,9 +3249,13 @@ function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
             const endDate = document.getElementById('filterEndDateTab4').value;
 
             // Filtro Entrada
+            // Entrada: considerar EXCLUSIVAMENTE registros que realmente existem na planilha.
+            // Não usar DataFormatted como fallback, evitando que datas sem registro sejam exibidas.
             let filteredEntrada = globalRawData.filter(d => {
+                if (!d || !d.IsoDate || !d.Poco) return false;
+                const dia = String(d.IsoDate).slice(0,10);
+                if (!/^\d{4}-\d{2}-\d{2}$/.test(dia)) return false;
                 if (selectedWells.length > 0 && !selectedWells.includes(d.Poco)) return false;
-                const dia = String(d.IsoDate || d.DataFormatted || '').slice(0,10);
                 if (startDate && dia < startDate) return false;
                 if (endDate && dia > endDate) return false;
                 return true;
