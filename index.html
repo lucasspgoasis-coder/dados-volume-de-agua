@@ -16,8 +16,8 @@
     <!-- PapaParse -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 
-    <!-- html-to-image -->
-    <script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js"></script>
+    <!-- html2canvas -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
     <!-- jsPDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -190,14 +190,6 @@
         .export-mode canvas {
             display: block !important;
         }
-
-        .export-modal-backdrop { position: fixed; inset: 0; z-index: 10000; background: rgba(15,23,42,.58); display:flex; align-items:center; justify-content:center; padding:20px; }
-        .export-modal { width:min(560px,100%); max-height:85vh; overflow:auto; background:#fff; border-radius:16px; box-shadow:0 25px 70px rgba(15,23,42,.28); }
-        .export-option { display:flex; align-items:center; gap:10px; padding:10px 12px; border:1px solid #e2e8f0; border-radius:10px; cursor:pointer; background:#fff; }
-        .export-option:hover { background:#f8fafc; border-color:#cbd5e1; }
-        .export-option input { accent-color:#2563eb; }
-        .export-temp { background:#f8fafc; padding:24px; box-sizing:border-box; }
-        .export-temp .export-hide, .export-temp .export-controls { display:none !important; }
     </style>
 </head>
 <body class="text-slate-800 min-h-screen flex flex-col antialiased">
@@ -329,7 +321,9 @@
                             <span class="text-slate-700 font-bold text-xs uppercase tracking-wide flex items-center gap-1.5">
                                 <i class="fa-solid fa-filter text-blue-600"></i> Filtros da Aba 1:
                             </span>
-                            <button onclick="openImageExportMenu('content-diario', 'aba_1_diario', this)" title="Baixar aba em JPEG" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm"><i class="fa-solid fa-file-image text-emerald-600"></i> Baixar JPEG</button>
+                            <button onclick="captureTab('content-diario', 'aba_1_diario', this)" title="Capturar imagem da aba" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
+                                <i class="fa-solid fa-camera text-blue-600"></i> Capturar Aba
+                            </button>
                             <button onclick="downloadPDF('content-diario', 'aba_1_diario', this)" title="Baixar aba em PDF" class="bg-rose-600 hover:bg-rose-700 text-white px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
                                 <i class="fa-solid fa-file-pdf"></i> Baixar em PDF
                             </button>
@@ -437,7 +431,9 @@
                             <span class="text-slate-700 font-bold text-xs uppercase tracking-wide flex items-center gap-1.5">
                                 <i class="fa-solid fa-filter text-indigo-600"></i> Filtros da Aba 2:
                             </span>
-                            <button onclick="openImageExportMenu('content-mensal', 'aba_2_mensal', this)" title="Baixar aba em JPEG" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm"><i class="fa-solid fa-file-image text-emerald-600"></i> Baixar JPEG</button>
+                            <button onclick="captureTab('content-mensal', 'aba_2_mensal', this)" title="Capturar imagem da aba" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
+                                <i class="fa-solid fa-camera text-indigo-600"></i> Capturar Aba
+                            </button>
                             <button onclick="downloadPDF('content-mensal', 'aba_2_volumes_tendencia', this)" title="Baixar aba em PDF" class="bg-rose-600 hover:bg-rose-700 text-white px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
                                 <i class="fa-solid fa-file-pdf"></i> Baixar em PDF
                             </button>
@@ -544,7 +540,9 @@
                             <span class="text-slate-700 font-bold text-xs uppercase tracking-wide flex items-center gap-1.5">
                                 <i class="fa-solid fa-filter text-orange-600"></i> Filtros de Consulta:
                             </span>
-                            <button onclick="openImageExportMenu('content-comparacao', 'aba_3_dados_tabulares', this)" title="Baixar aba em JPEG" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm"><i class="fa-solid fa-file-image text-emerald-600"></i> Baixar JPEG</button>
+                            <button onclick="captureTab('content-comparacao', 'aba_3_dados_tabulares', this)" title="Capturar imagem da aba" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
+                                <i class="fa-solid fa-camera text-orange-600"></i> Capturar Aba
+                            </button>
                             <button onclick="downloadPDF('content-comparacao', 'aba_3_dados_tabulares', this)" title="Baixar aba em PDF" class="bg-rose-600 hover:bg-rose-700 text-white px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
                                 <i class="fa-solid fa-file-pdf"></i> Baixar em PDF
                             </button>
@@ -657,7 +655,9 @@
                             <span class="text-slate-700 font-bold text-xs uppercase tracking-wide flex items-center gap-1.5">
                                 <i class="fa-solid fa-filter text-sky-600"></i> Filtros da Aba 4:
                             </span>
-                            <button onclick="openImageExportMenu('content-entrada', 'aba_4_entrada_saida', this)" title="Baixar aba em JPEG" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm"><i class="fa-solid fa-file-image text-emerald-600"></i> Baixar JPEG</button>
+                            <button onclick="captureTab('content-entrada', 'aba_4_entrada_saida', this)" title="Capturar imagem da aba" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
+                                <i class="fa-solid fa-camera text-sky-600"></i> Capturar Aba
+                            </button>
                             <button onclick="downloadPDF('content-entrada', 'aba_4_entrada_saida', this)" title="Baixar aba em PDF" class="bg-rose-600 hover:bg-rose-700 text-white px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
                                 <i class="fa-solid fa-file-pdf"></i> Baixar em PDF
                             </button>
@@ -724,40 +724,26 @@
                     </div>
                 </div>
 
-                <!-- Gráfico Entrada de Água — volume em barras e horas em linha -->
+                <!-- Gráfico Entrada de Água com Rótulos Visíveis -->
                 <div class="glass-card p-5">
                     <div class="flex justify-between items-center mb-1 flex-wrap gap-2">
                         <div>
-                            <h3 class="text-base font-bold text-slate-800">Volume Total por Poço (Entrada)</h3>
-                            <p class="text-xs text-slate-500">Volume total por poço nas barras. O horário trabalhado aparece no topo de cada poço, com cor conforme a duração.</p>
+                            <h3 class="text-base font-bold text-slate-800">Volume Total e Horas Trabalhadas por Poço (Entrada)</h3>
+                            <p class="text-xs text-slate-500">Exibe o volume total jorado (em barras com valores no topo da média vazão × tempo) e as horas trabalhadas.</p>
                         </div>
                     </div>
-                    <div id="entradaHorasTopo" class="flex flex-wrap items-center gap-2 mt-3 mb-2"></div>
-                    <div id="nivelTanqueRegua" class="mt-3 mb-3 ml-auto max-w-[420px] bg-blue-50/40 p-3">
+                    <div id="nivelTanqueRegua" class="mt-3 mb-3 ml-auto max-w-[420px] rounded-lg bg-white p-3">
 <div class="flex items-center justify-between gap-2 mb-2"><div class="text-[11px] font-extrabold uppercase tracking-wide text-slate-700">Nível do Tanque 03</div><div id="nivelTanqueReguaValor" class="text-xs font-extrabold text-blue-800">-- m · --%</div></div>
-<div class="relative px-1"><div class="h-3 rounded-full bg-slate-200 overflow-hidden border border-blue-100"><div id="nivelTanqueReguaFill" class="h-full rounded-full bg-blue-600 transition-all" style="width:0%"></div></div><div id="nivelTanqueReguaTicks" class="relative mt-1 h-5 text-[9px] font-semibold text-slate-600"></div></div>
+<div class="relative px-1"><div class="h-3 rounded-full bg-slate-200 overflow-hidden"><div id="nivelTanqueReguaFill" class="h-full rounded-full bg-blue-600 transition-all" style="width:0%"></div></div><div id="nivelTanqueReguaTicks" class="relative mt-1 h-5 text-[9px] font-semibold text-slate-600"></div></div>
 <div id="nivelTanqueReguaInfo" class="mt-1 text-[10px] text-slate-500 text-right">Sem leitura de nível no período selecionado.</div></div>
 <div class="chart-container-no-scroll mt-3"><canvas id="entradaAguaChart"></canvas></div>
                 </div>
 
                 <!-- Vazão Média dos Poços por Dia -->
                 <div class="glass-card p-4 mt-3">
-                    <div class="flex justify-between items-start gap-3 flex-wrap mb-2">
-                        <div>
-                            <h3 class="text-sm font-bold text-slate-800">Vazão Média dos Poços por Dia</h3>
-                            <p class="text-[10px] text-slate-500">Vazão (L/H) por poço e por dia, conforme a planilha de Vazão Média.</p>
-                        </div>
-                        <div class="flex items-end gap-2 flex-wrap bg-slate-50 border border-slate-200 rounded-lg p-2">
-                            <div>
-                                <label class="block text-[10px] font-semibold text-slate-500 mb-0.5">Data inicial do gráfico</label>
-                                <input type="date" id="vazaoDiaStartDateTab4" onchange="applySpecificVazaoDiaFilterTab4()" class="bg-white border border-slate-300 rounded-md text-[11px] px-2 py-1.5 shadow-sm">
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-semibold text-slate-500 mb-0.5">Data final do gráfico</label>
-                                <input type="date" id="vazaoDiaEndDateTab4" onchange="applySpecificVazaoDiaFilterTab4()" class="bg-white border border-slate-300 rounded-md text-[11px] px-2 py-1.5 shadow-sm">
-                            </div>
-                            <button onclick="resetSpecificVazaoDiaFilterTab4()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-2.5 py-1.5 rounded-md text-[11px] font-semibold">Limpar</button>
-                        </div>
+                    <div class="mb-1">
+                        <h3 class="text-sm font-bold text-slate-800">Vazão Média dos Poços por Dia</h3>
+                        <p class="text-[10px] text-slate-500">Vazão média calculada por poço: volume (vazão × horas) ÷ horas trabalhadas, em ordem alfabética.</p>
                     </div>
                     <div class="chart-container-no-scroll mt-2" style="height:220px; min-height:220px;"><canvas id="vazaoMediaDiaPocosChart"></canvas></div>
                 </div>
@@ -797,13 +783,13 @@
                 <div class="glass-card p-5 mb-4">
                     <div class="flex justify-between items-center mb-1 flex-wrap gap-2">
                         <div>
-                            <h3 class="text-base font-bold text-slate-800">Saída de Água - Irrigação por Bloco e Cultura (Cálculo Detalhado)</h3>
+                            <h3 class="text-base font-bold text-slate-800">Saída de Água - Irrigação por Bloco (Cálculo Detalhado)</h3>
                             <p class="text-xs text-slate-500">
                                 Cálculo: <b class="text-emerald-700">Se 1 Válvula: Qtd × Vazão × (Tempo/60) | Se ≥ 2 Válvulas: (Qtd ÷ Válvulas) × Vazão × (Tempo/60)</b>. 
                             </p>
                         </div>
                     </div>
-                    <div class="chart-container-no-scroll mt-3" style="height:520px; min-height:520px;"><canvas id="saidaAguaChart"></canvas></div>
+                    <div class="chart-container-no-scroll mt-3"><canvas id="saidaAguaChart"></canvas></div>
                 </div>
 
                 <!-- Mini gráfico: Nível Atual do Tanque -->
@@ -1000,7 +986,9 @@
                             <span class="text-slate-700 font-bold text-xs uppercase tracking-wide flex items-center gap-1.5">
                                 <i class="fa-solid fa-filter text-blue-600"></i> Filtros de Bloco, Ciclo e Período:
                             </span>
-                            <button onclick="openImageExportMenu('content-bloco', 'aba_5_resumo_bloco', this)" title="Baixar aba em JPEG" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm"><i class="fa-solid fa-file-image text-emerald-600"></i> Baixar JPEG</button>
+                            <button onclick="captureTab('content-bloco', 'aba_5_resumo_bloco', this)" title="Capturar imagem da aba" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
+                                <i class="fa-solid fa-camera text-blue-600"></i> Capturar Aba
+                            </button>
                             <button onclick="downloadPDF('content-bloco', 'aba_5_resumo_bloco', this)" title="Baixar aba em PDF" class="bg-rose-600 hover:bg-rose-700 text-white px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
                                 <i class="fa-solid fa-file-pdf"></i> Baixar em PDF
                             </button>
@@ -1184,7 +1172,9 @@
                             <span class="text-slate-700 font-bold text-xs uppercase tracking-wide flex items-center gap-1.5">
                                 <i class="fa-solid fa-filter text-indigo-600"></i> Filtros de Manutenção:
                             </span>
-                            <button onclick="openImageExportMenu('content-manutencao', 'aba_6_manutencao_bombas', this)" title="Baixar aba em JPEG" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm"><i class="fa-solid fa-file-image text-emerald-600"></i> Baixar JPEG</button>
+                            <button onclick="captureTab('content-manutencao', 'aba_6_manutencao_bombas', this)" title="Capturar imagem da aba" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
+                                <i class="fa-solid fa-camera text-indigo-600"></i> Capturar Aba
+                            </button>
                             <button onclick="downloadPDF('content-manutencao', 'aba_6_manutencao_bombas', this)" title="Baixar aba em PDF" class="bg-rose-600 hover:bg-rose-700 text-white px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
                                 <i class="fa-solid fa-file-pdf"></i> Baixar em PDF
                             </button>
@@ -1357,25 +1347,8 @@
         </footer>
     </div>
 
-
-    <div id="exportModal" class="export-modal-backdrop hidden">
-        <div class="export-modal">
-            <div class="p-5 border-b border-slate-200 flex items-center justify-between">
-                <div><h3 class="text-lg font-extrabold text-slate-800">Selecionar dados para o PDF</h3><p class="text-xs text-slate-500 mt-1">Escolha os blocos que deverão aparecer no arquivo. Os filtros da tela não serão exportados.</p></div>
-                <button type="button" onclick="closeExportModal()" class="text-slate-400 hover:text-slate-700 text-xl"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <div id="exportOptions" class="p-5 space-y-2"></div>
-            <div class="p-5 pt-0 flex justify-end gap-2">
-                <button type="button" onclick="closeExportModal()" class="px-4 py-2 rounded-lg bg-slate-200 text-slate-700 text-sm font-semibold">Cancelar</button>
-                <button type="button" id="confirmPdfExport" class="px-4 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold"><i class="fa-solid fa-file-pdf mr-1"></i> Gerar PDF</button>
-            </div>
-        </div>
-    </div>
-
     <script>
         Chart.register(ChartDataLabels);
-
-        const VAZAO_DIA_SHEET = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSafB5fd5osyELyMS1T-pVO-WbL25l53ICs1dmVMgByrAlQsqSHT2YscIE-ClYrJvzPS-dGZSp25ysi/pub?output=csv";
 
         const ENTRADA_SHEETS = [
             "https://docs.google.com/spreadsheets/d/e/2PACX-1vSafB5fd5osyELyMS1T-pVO-WbL25l53ICs1dmVMgByrAlQsqSHT2YscIE-ClYrJvzPS-dGZSp25ysi/pub?output=csv",
@@ -1396,7 +1369,6 @@
         let globalManutencaoData = [];
         let globalPocosAnaliseData = [];
         let globalNivelAguaTanqueData = [];
-        let globalVazaoDiaData = [];
 
         const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
 
@@ -1453,372 +1425,163 @@
             document.getElementById('loginError').classList.add('hidden');
             
             globalRawData = [];
-            globalVazaoMediaDiaData = [];
             globalSaidaData = [];
             globalManutencaoData = [];
             globalNivelAguaTanqueData = [];
         }
 
-        function getExportableSections(tabId) {
-            const tab = document.getElementById(tabId);
-            if (!tab) return [];
-            return Array.from(tab.querySelectorAll('.glass-card')).filter(card => {
-                return card.querySelector('canvas, table');
-            }).map((card, index) => {
-                const title = card.querySelector('h2,h3,h4')?.textContent?.trim() || `Gráfico ${index + 1}`;
-                return { card, title, index, tabId };
-            });
-        }
+        async function prepareExportElement(el) {
+            el.classList.add('export-mode');
+            el.style.maxWidth = 'none';
+            el.style.overflow = 'visible';
 
-        function showExportSelector(tabId, tabName, format, btn) {
-            const sections = getExportableSections(tabId);
-            if (!sections.length) {
-                alert('Não foram encontrados gráficos ou tabelas para exportar nesta aba.');
-                return;
-            }
-            const modal = document.getElementById('exportSelectorModal');
-            const list = document.getElementById('exportSelectorList');
-            const title = document.getElementById('exportSelectorTitle');
-            const confirm = document.getElementById('exportSelectorConfirm');
-            if (!modal || !list || !confirm) return;
+            // Aguarda os filtros/botões ocultos e o layout serem recalculados.
+            await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
 
-            title.textContent = `Selecionar dados para baixar — ${format.toUpperCase()}`;
-            list.innerHTML = sections.map((item, i) => `
-                <label class="flex items-center gap-3 p-3 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer">
-                    <input type="checkbox" class="export-section-check w-4 h-4" data-index="${i}" checked>
-                    <span class="text-sm font-semibold text-slate-700">${item.title.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</span>
-                </label>`).join('');
+            const rect = el.getBoundingClientRect();
+            const exportWidth = Math.max(el.scrollWidth, Math.ceil(rect.width));
+            const exportHeight = Math.max(el.scrollHeight, Math.ceil(rect.height));
 
-            document.getElementById('exportSelectorSelectAll').checked = true;
-            modal.classList.remove('hidden'); modal.style.display = 'flex';
+            el.style.width = exportWidth + 'px';
 
-            const close = () => { modal.classList.add('hidden'); modal.style.display = 'none'; };
-            document.getElementById('exportSelectorCancel').onclick = close;
-            document.getElementById('exportSelectorSelectAll').onchange = e => {
-                list.querySelectorAll('.export-section-check').forEach(c => c.checked = e.target.checked);
-            };
-            confirm.onclick = async () => {
-                const selected = Array.from(list.querySelectorAll('.export-section-check'))
-                    .filter(c => c.checked).map(c => sections[Number(c.dataset.index)]);
-                if (!selected.length) { alert('Selecione pelo menos um gráfico ou quadro.'); return; }
-                close();
-                if (format === 'jpeg') await exportSelectedSectionsJPEG(selected, tabId, tabName, btn);
-                else await exportSelectedSectionsPDF(selected, tabId, tabName, btn);
+            // Aguarda o Chart.js redesenhar com as dimensões finais.
+            await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
+            const finalRect = el.getBoundingClientRect();
+            return {
+                exportWidth: Math.max(exportWidth, Math.ceil(finalRect.width)),
+                exportHeight: Math.max(el.scrollHeight, Math.ceil(finalRect.height))
             };
         }
 
-        function getExportDateRange(tabId) {
-            const tab = document.getElementById(tabId);
-            if (!tab) return '';
-            const dates = Array.from(tab.querySelectorAll('input[type="date"]'))
-                .map(el => el.value).filter(Boolean).sort();
-            if (!dates.length) return '';
-            const fmt = d => {
-                const p = d.split('-');
-                return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : d;
+        function restoreExportElement(el, originalStyle) {
+            el.classList.remove('export-mode');
+            el.style.width = originalStyle.width;
+            el.style.maxWidth = originalStyle.maxWidth;
+            el.style.overflow = originalStyle.overflow;
+        }
+
+        async function captureTab(tabId, tabName, btn) {
+            const tabEl = document.getElementById(tabId);
+            if (!tabEl) return;
+
+            const originalContent = btn.innerHTML;
+            const originalStyle = {
+                width: tabEl.style.width,
+                maxWidth: tabEl.style.maxWidth,
+                overflow: tabEl.style.overflow
             };
-            return dates.length === 1 || dates[0] === dates[dates.length - 1]
-                ? fmt(dates[0])
-                : `${fmt(dates[0])} a ${fmt(dates[dates.length - 1])}`;
-        }
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Processando Imagem...`;
+            btn.disabled = true;
 
-        function getExportSummaryItems(tabId, tabName) {
-            const tab = document.getElementById(tabId);
-            if (!tab) return [];
-
-            // Na Aba 04 usamos os campos gerais principais, no mesmo conceito do
-            // relatório de referência enviado pelo usuário: entrada, horas, pico,
-            // nível do tanque e saída.
-            if (isTab4Export(tabName)) {
-                const ids = [
-                    ['kpi4_totalVol', 'Volume de Entrada'],
-                    ['kpi4_avgHours', 'Média de Horas Ligadas'],
-                    ['kpi4_maxPeak', 'Pico de Volume em 1 Dia'],
-                    ['nivelTanqueReguaValor', 'Nível do Tanque'],
-                    ['kpi4_saidaVol', 'Volume de Saída'],
-                    ['kpi4_saidaLocais', 'Locais/Blocos Irrigados'],
-                    ['kpi4_saidaTempo', 'Tempo de Irrigação']
-                ];
-                return ids.map(([id, label]) => {
-                    const el = document.getElementById(id);
-                    return el ? { label, value: (el.textContent || '--').trim() } : null;
-                }).filter(Boolean);
-            }
-
-            return Array.from(tab.querySelectorAll('.kpi-compact-card')).map(card => {
-                const label = card.querySelector('p')?.textContent?.trim();
-                const value = card.querySelector('h3')?.textContent?.trim();
-                return label && value ? { label, value } : null;
-            }).filter(Boolean).slice(0, 10);
-        }
-
-        function drawExportSummary(ctx, width, tabId, tabName, compact = false) {
-            const items = getExportSummaryItems(tabId, tabName);
-            const dateRange = getExportDateRange(tabId);
-            const title = isTab4Export(tabName) ? 'RELATÓRIO — ENTRADA E SAÍDA DE ÁGUA' : String(tabName || 'RELATÓRIO').replace(/[_-]+/g, ' ').toUpperCase();
-            const height = compact ? 180 : 150;
-
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(0, 0, width, height);
-            ctx.fillStyle = '#0f172a';
-            ctx.font = `700 ${compact ? 26 : 30}px Arial`;
-            ctx.fillText(title, 24, compact ? 31 : 36);
-            if (dateRange) {
-                ctx.fillStyle = '#64748b';
-                ctx.font = `600 ${compact ? 15 : 17}px Arial`;
-                ctx.fillText(`Período: ${dateRange}`, 24, compact ? 54 : 61);
-            }
-
-            const cols = Math.min(4, Math.max(1, items.length));
-            const rows = Math.ceil(items.length / cols);
-            const top = compact ? 66 : 75;
-            const gap = 8;
-            const boxW = (width - 48 - gap * (cols - 1)) / cols;
-            const boxH = rows > 1 ? 42 : 48;
-
-            items.forEach((item, i) => {
-                const col = i % cols;
-                const row = Math.floor(i / cols);
-                const x = 24 + col * (boxW + gap);
-                const y = top + row * (boxH + gap);
-                ctx.fillStyle = '#f8fafc';
-                ctx.strokeStyle = '#dbe3ec';
-                ctx.lineWidth = 1;
-                ctx.beginPath();
-                ctx.roundRect(x, y, boxW, boxH, 7);
-                ctx.fill(); ctx.stroke();
-                ctx.fillStyle = '#64748b';
-                ctx.font = `600 ${compact ? 10 : 11}px Arial`;
-                ctx.fillText(item.label, x + 9, y + 15);
-                ctx.fillStyle = '#0f172a';
-                ctx.font = `700 ${compact ? 15 : 17}px Arial`;
-                ctx.fillText(item.value, x + 9, y + 35);
-            });
-            return top + rows * (boxH + gap) + 8;
-        }
-
-        function cloneForExport(card, targetWidth = null, targetHeight = null) {
-            const clone = card.cloneNode(true);
-            clone.classList.add('export-mode');
-            const rect = card.getBoundingClientRect();
-            const width = targetWidth || Math.max(card.scrollWidth || 0, rect.width || 0, 300);
-            const height = targetHeight || Math.max(card.scrollHeight || 0, rect.height || 0, 500);
-
-            clone.style.cssText += `;box-sizing:border-box;width:${width}px!important;min-width:${width}px!important;max-width:${width}px!important;height:${height}px!important;min-height:${height}px!important;max-height:none!important;margin:0!important;padding:22px!important;overflow:visible!important;visibility:visible!important;position:relative!important;background:#fff!important;`;
-
-            const titleText = (card.querySelector('h2,h3,h4')?.textContent || '').toLowerCase();
-            const isTank = titleText.includes('nível') && titleText.includes('tanque');
-            const chartH = isTank ? 690 : 760;
-
-            clone.querySelectorAll('.chart-container-no-scroll, .chart-container').forEach(el => {
-                el.style.cssText += `;width:100%!important;max-width:none!important;min-width:0!important;height:${chartH}px!important;min-height:${chartH}px!important;box-sizing:border-box!important;overflow:visible!important;`;
-            });
-
-            // Aumenta também a tipografia HTML da exportação.
-            clone.querySelectorAll('h2,h3,h4').forEach(el => {
-                el.style.setProperty('font-size', '24px', 'important');
-                el.style.setProperty('line-height', '1.25', 'important');
-            });
-            clone.querySelectorAll('p, label, th, td, span').forEach(el => {
-                const cs = getComputedStyle(el);
-                const fs = parseFloat(cs.fontSize) || 12;
-                if (fs < 15) el.style.setProperty('font-size', Math.max(15, fs * 1.35) + 'px', 'important');
-            });
-
-            const sourceCanvases = Array.from(card.querySelectorAll('canvas'));
-            const clonedCanvases = Array.from(clone.querySelectorAll('canvas'));
-            sourceCanvases.forEach((sourceCanvas, i) => {
-                const target = clonedCanvases[i];
-                if (!target) return;
-                // Canvas de alta resolução e proporção controlada para deixar textos/rótulos realmente legíveis.
-                const targetW = Math.max(2600, width - 44);
-                const targetH = chartH;
-                target.width = targetW;
-                target.height = targetH;
-                target.style.cssText += `;display:block!important;width:100%!important;max-width:none!important;height:${targetH}px!important;min-width:0!important;box-sizing:border-box!important;`;
-                const ctx = target.getContext('2d');
-                if (ctx) {
-                    ctx.setTransform(1,0,0,1,0,0);
-                    ctx.clearRect(0,0,target.width,target.height);
-                    ctx.imageSmoothingEnabled = true;
-                    ctx.imageSmoothingQuality = 'high';
-                    const sw = sourceCanvas.width || 1, sh = sourceCanvas.height || 1;
-                    const scale = Math.min(targetW / sw, targetH / sh);
-                    const dw = sw * scale, dh = sh * scale;
-                    const dx = (targetW - dw) / 2, dy = (targetH - dh) / 2;
-                    ctx.drawImage(sourceCanvas, dx, dy, dw, dh);
-                }
-            });
-            return clone;
-        }
-
-        async function captureExportCard(card, widthOverride = null, heightOverride = null) {
-            if (!window.htmlToImage || typeof window.htmlToImage.toCanvas !== 'function') {
-                throw new Error('Biblioteca html-to-image não carregada.');
-            }
-            const rect = card.getBoundingClientRect();
-            const sourceWidth = widthOverride || Math.max(card.scrollWidth || 0, rect.width || 0, 300);
-            const titleText = (card.querySelector('h2,h3,h4')?.textContent || '').toLowerCase();
-            const isTank = titleText.includes('nível') && titleText.includes('tanque');
-            const sourceHeight = heightOverride || (isTank ? 780 : 850);
-
-            const stage = document.createElement('div');
-            stage.style.cssText = `position:fixed;left:-20000px;top:0;width:${sourceWidth}px;height:${sourceHeight}px;background:#fff;padding:0;margin:0;overflow:visible;box-sizing:border-box;pointer-events:none;`;
-            const clone = cloneForExport(card, sourceWidth, sourceHeight);
-            stage.appendChild(clone);
-            document.body.appendChild(stage);
             try {
-                if (document.fonts?.ready) { try { await document.fonts.ready; } catch (e) {} }
-                await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
-                return await window.htmlToImage.toCanvas(clone, {
-                    backgroundColor: '#ffffff',
-                    pixelRatio: 1.5,
-                    cacheBust: true,
-                    skipFonts: false,
-                    width: sourceWidth,
-                    height: sourceHeight,
-                    style: { margin: '0', transform: 'none', width: sourceWidth + 'px', height: sourceHeight + 'px' }
+                window.scrollTo(0, 0);
+                const { exportWidth, exportHeight } = await prepareExportElement(tabEl);
+                const canvas = await html2canvas(tabEl, {
+                    scale: 2,
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: '#f8fafc',
+                    logging: false,
+                    scrollX: 0,
+                    scrollY: 0,
+                    x: 0,
+                    y: 0,
+                    width: exportWidth,
+                    height: exportHeight,
+                    windowWidth: exportWidth + 80,
+                    windowHeight: exportHeight + 80,
+                    onclone: (doc) => {
+                        const cloned = doc.getElementById(tabId);
+                        if (cloned) {
+                            cloned.classList.add('export-mode');
+                            cloned.style.width = exportWidth + 'px';
+                            cloned.style.maxWidth = 'none';
+                            cloned.style.overflow = 'visible';
+                        }
+                    }
                 });
+
+                const image = canvas.toDataURL('image/png', 1.0);
+                const link = document.createElement('a');
+                link.download = `${tabName}_Captura_${new Date().toISOString().split('T')[0]}.png`;
+                link.href = image;
+                link.click();
+            } catch (err) {
+                console.error('Erro ao capturar imagem:', err);
+                alert('Ocorreu um erro ao realizar a captura da tela.');
             } finally {
-                stage.remove();
+                restoreExportElement(tabEl, originalStyle);
+                btn.innerHTML = originalContent;
+                btn.disabled = false;
             }
         }
 
-        function isTab4Export(tabName) {
-            return /aba[_ -]?4|entrada[_ -]?saida/i.test(String(tabName || ''));
-        }
+        async function downloadPDF(elementId, fileName, btn) {
+            const el = document.getElementById(elementId);
+            if (!el) return;
 
-        function downloadCanvasAsJPEG(canvas, fileName) {
-            const dataUrl = canvas.toDataURL('image/jpeg', 0.96);
-            const link = document.createElement('a');
-            link.download = fileName;
-            link.href = dataUrl;
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-        }
+            const origText = btn.innerHTML;
+            const originalStyle = {
+                width: el.style.width,
+                maxWidth: el.style.maxWidth,
+                overflow: el.style.overflow
+            };
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Gerando PDF...`;
+            btn.disabled = true;
 
-        function getTab4ExportMeta(title) {
-            const t = String(title || '').toLowerCase();
-            if (t.includes('volume total e horas') || t.includes('entrada')) {
-                return { section: 'ENTRADA DE ÁGUA', items: [['kpi4_totalVol','Volume de Entrada'],['kpi4_avgHours','Média de Horas Ligadas'],['kpi4_maxPeak','Pico de Volume em 1 Dia']] };
-            }
-            if (t.includes('nível água tanque') || t.includes('nivel água tanque')) {
-                return { section: 'NÍVEL DO TANQUE', items: [['nivelTanqueReguaValor','Nível do Tanque']] };
-            }
-            if (t.includes('vazão média')) return { section: 'VAZÃO MÉDIA DOS POÇOS POR DIA', items: [] };
-            if (t.includes('saída de água') || t.includes('saida de agua')) {
-                return { section: 'SAÍDA DE ÁGUA', items: [['kpi4_saidaVol','Volume de Saída'],['kpi4_saidaLocais','Locais/Blocos Irrigados'],['kpi4_saidaTempo','Tempo de Irrigação']] };
-            }
-            return { section: String(title || 'DADOS'), items: [] };
-        }
-
-        function getTab4ExportValue(id) {
-            const el = document.getElementById(id);
-            return el ? (el.textContent || '--').trim() : '--';
-        }
-
-        function roundRect(ctx,x,y,w,h,r){ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fill();}
-
-        async function composeTab4SectionCanvas(item, width = 3000) {
-            const meta = getTab4ExportMeta(item.title);
-            const title = String(item.title || '').toLowerCase();
-            const isTank = title.includes('nível') && title.includes('tanque');
-            const isVazao = title.includes('vazão média');
-            const isSaida = title.includes('saída de água') || title.includes('saida de agua');
-            const captureH = isTank ? 820 : (isVazao ? 900 : (isSaida ? 900 : 880));
-            const chart = await captureExportCard(item.card, width, captureH);
-            const headH = meta.items.length ? 245 : 165;
-            const bottom = 18;
-            const out = document.createElement('canvas');
-            out.width = width;
-            out.height = headH + chart.height + bottom;
-            const ctx = out.getContext('2d');
-            ctx.fillStyle = '#ffffff'; ctx.fillRect(0,0,out.width,out.height);
-            ctx.fillStyle = '#166534'; ctx.fillRect(0,0,14,out.height);
-            ctx.fillStyle = '#0f172a'; ctx.font = '700 46px Arial'; ctx.fillText(meta.section,48,55);
-            const range = getExportDateRange('content-entrada');
-            if(range){ctx.fillStyle='#64748b';ctx.font='600 21px Arial';ctx.fillText(`Período: ${range}`,48,91);}
-            ctx.fillStyle='#dbe3ec';ctx.fillRect(48,112,width-96,2);
-            if(meta.items.length){
-                const gap=22, top=135, boxH=92, boxW=(width-96-gap*(meta.items.length-1))/meta.items.length;
-                meta.items.forEach((it,i)=>{
-                    const x=48+i*(boxW+gap);
-                    ctx.fillStyle='#f8fafc';ctx.strokeStyle='#cbd5e1';ctx.lineWidth=2;
-                    ctx.beginPath();ctx.roundRect(x,top,boxW,boxH,12);ctx.fill();ctx.stroke();
-                    ctx.fillStyle='#64748b';ctx.font='700 17px Arial';ctx.fillText(it[1].toUpperCase(),x+18,top+29);
-                    ctx.fillStyle='#0f172a';ctx.font='700 34px Arial';ctx.fillText(getTab4ExportValue(it[0]),x+18,top+68);
+            try {
+                window.scrollTo(0, 0);
+                const { exportWidth, exportHeight } = await prepareExportElement(el);
+                const canvas = await html2canvas(el, {
+                    scale: 2,
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: '#f8fafc',
+                    logging: false,
+                    scrollX: 0,
+                    scrollY: 0,
+                    x: 0,
+                    y: 0,
+                    width: exportWidth,
+                    height: exportHeight,
+                    windowWidth: exportWidth + 80,
+                    windowHeight: exportHeight + 80,
+                    onclone: (doc) => {
+                        const cloned = doc.getElementById(elementId);
+                        if (cloned) {
+                            cloned.classList.add('export-mode');
+                            cloned.style.width = exportWidth + 'px';
+                            cloned.style.maxWidth = 'none';
+                            cloned.style.overflow = 'visible';
+                        }
+                    }
                 });
+
+                const imgData = canvas.toDataURL('image/png', 1.0);
+                const { jsPDF } = window.jspdf;
+                const imgWidth = canvas.width;
+                const imgHeight = canvas.height;
+
+                // Mantém toda a aba no PDF sem cortar as extremidades.
+                const orientation = imgWidth >= imgHeight ? 'l' : 'p';
+                const pdf = new jsPDF({
+                    orientation: orientation,
+                    unit: 'px',
+                    format: [imgWidth, imgHeight],
+                    compress: true
+                });
+
+                pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight, undefined, 'FAST');
+                pdf.save(`${fileName}_${new Date().toISOString().split('T')[0]}.pdf`);
+            } catch (e) {
+                console.error('Erro ao baixar PDF:', e);
+                alert('Não foi possível gerar o arquivo PDF.');
+            } finally {
+                restoreExportElement(el, originalStyle);
+                btn.innerHTML = origText;
+                btn.disabled = false;
             }
-            // Sem espaço morto: o gráfico começa logo após o cabeçalho e termina próximo ao limite da seção.
-            ctx.drawImage(chart,0,headH,width,chart.height);
-            return out;
-        }
-
-        async function composeExportJPEG(selected, tabId, tabName) {
-            const isTab4 = isTab4Export(tabName);
-            const outW = isTab4 ? 3600 : 3200;
-            const margin = isTab4 ? 28 : 40;
-            const gap = isTab4 ? 24 : 30;
-            const cards=[];
-            for(const item of selected){
-                cards.push({item,canvas:isTab4 ? await composeTab4SectionCanvas(item,outW-margin*2) : await captureExportCard(item,outW-margin*2,1250)});
-            }
-            const headerH=isTab4?185:200;
-            const totalH=margin+headerH+gap+cards.reduce((sum,c)=>sum+c.canvas.height,0)+gap*Math.max(0,cards.length-1)+margin;
-            const out=document.createElement('canvas');out.width=outW;out.height=totalH;
-            const ctx=out.getContext('2d');ctx.fillStyle='#eef2f7';ctx.fillRect(0,0,outW,totalH);
-            ctx.fillStyle='#166534';ctx.fillRect(0,0,outW,16);
-            ctx.fillStyle='#0f172a';ctx.font='700 62px Arial';ctx.fillText(isTab4?'RELATÓRIO — ENTRADA E SAÍDA DE ÁGUA':String(tabName||'RELATÓRIO').toUpperCase(),margin,92);
-            ctx.fillStyle='#64748b';ctx.font='600 27px Arial';
-            const range=getExportDateRange(tabId);ctx.fillText(range?`Período: ${range}`:'Relatório operacional',margin,140);
-            ctx.fillStyle='#cbd5e1';ctx.fillRect(margin,172,outW-margin*2,3);
-            let y=margin+headerH+gap;
-            cards.forEach(({canvas})=>{ctx.drawImage(canvas,margin,y,outW-margin*2,canvas.height);y+=canvas.height+gap;});
-            return out;
-        }
-
-        async function exportSelectedSectionsJPEG(selected, tabId, tabName, btn) {
-            const original=btn.innerHTML;btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Gerando JPEG...';
-            try{const canvas=await composeExportJPEG(selected,tabId,tabName);downloadCanvasAsJPEG(canvas,`${tabName}_${new Date().toISOString().split('T')[0]}.jpeg`);}
-            catch(e){console.error(e);alert(`Não foi possível gerar o JPEG. ${e?.message||'Tente novamente após os gráficos carregarem.'}`);}
-            finally{btn.innerHTML=original;btn.disabled=false;}
-        }
-
-        async function exportSelectedSectionsPDF(selected, tabId, tabName, btn) {
-            const original=btn.innerHTML;btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Gerando PDF...';
-            try{
-                const {jsPDF}=window.jspdf||{};if(!jsPDF)throw new Error('Biblioteca jsPDF não carregada.');
-                // PDF contínuo, retrato, com largura útil máxima e altura calculada automaticamente.
-                const pdfW=210, margin=4, contentW=pdfW-margin*2, gapMm=6;
-                const isTab4=isTab4Export(tabName);
-                const sections=[];
-                for(const item of selected) sections.push(isTab4?await composeTab4SectionCanvas(item,3400):await captureExportCard(item.card,3200,1250));
-                const heights=sections.map(c=>contentW*c.height/c.width);
-                const titleH=18;
-                const pdfH=Math.max(297,margin*2+titleH+gapMm+heights.reduce((a,b)=>a+b,0)+gapMm*Math.max(0,sections.length-1));
-                const pdf=new jsPDF({orientation:'portrait',unit:'mm',format:[pdfW,pdfH],compress:true});
-                pdf.setFillColor(245,247,250);pdf.rect(0,0,pdfW,pdfH,'F');
-                pdf.setFillColor(22,101,52);pdf.rect(0,0,pdfW,3,'F');
-                pdf.setTextColor(15,23,42);pdf.setFont('helvetica','bold');pdf.setFontSize(16);pdf.text(isTab4?'RELATÓRIO — ENTRADA E SAÍDA DE ÁGUA':String(tabName||'RELATÓRIO').toUpperCase(),margin,margin+8);
-                const range=getExportDateRange(tabId);if(range){pdf.setTextColor(100,116,139);pdf.setFont('helvetica','normal');pdf.setFontSize(8);pdf.text(`Período: ${range}`,margin,margin+14);}
-                let y=margin+titleH+gapMm;
-                sections.forEach((c,i)=>{const h=heights[i];pdf.addImage(c.toDataURL('image/jpeg',0.97),'JPEG',margin,y,contentW,h,undefined,'FAST');y+=h+gapMm;});
-                pdf.save(`${tabName}_${new Date().toISOString().split('T')[0]}.pdf`);
-            }catch(e){console.error(e);alert(`Não foi possível gerar o PDF. ${e?.message||'Tente novamente após os gráficos carregarem.'}`);}
-            finally{btn.innerHTML=original;btn.disabled=false;}
-        }
-
-        function captureTab(tabId, tabName, btn) {
-            showExportSelector(tabId, tabName, 'jpeg', btn);
-        }
-
-        function openImageExportMenu(tabId, tabName, btn) {
-            captureTab(tabId, tabName, btn);
-        }
-
-        function downloadPDF(elementId, fileName, btn) {
-            showExportSelector(elementId, fileName, 'pdf', btn);
         }
 
         function toggleDropdown(id) {
@@ -1870,18 +1633,15 @@
         function parseHours(val) {
             if (val === null || val === undefined || val === '') return 0;
             let str = String(val).trim();
-            let hours = 0;
+            
             let timeMatch = str.match(/(\d{1,2}):(\d{2})(?::(\d{2}))?/);
             if (timeMatch) {
                 let h = parseInt(timeMatch[1], 10) || 0;
                 let m = parseInt(timeMatch[2], 10) || 0;
                 let s = timeMatch[3] ? (parseInt(timeMatch[3], 10) || 0) : 0;
-                hours = h + (m / 60) + (s / 3600);
-            } else {
-                hours = parseBrazilianNumber(val);
+                return h + (m / 60) + (s / 3600);
             }
-            // Limite operacional: nunca exibir/calcular mais de 24 h por registro.
-            return Math.max(0, Math.min(24, Number(hours) || 0));
+            return parseBrazilianNumber(val);
         }
 
         function parseBrazilianNumber(val) {
@@ -2087,7 +1847,6 @@
             loadingIcon.className = "fa-solid fa-spinner fa-spin text-blue-400";
 
             const pEntrada = Promise.all(ENTRADA_SHEETS.map(url => fetchSingleSheet(url)));
-            const pVazaoDia = fetchSingleSheet(VAZAO_DIA_SHEET);
             const pSaida = fetchSingleSheet(SAIDA_SHEET);
             const pNivelAguaTanque = fetchSingleSheet(NIVEL_AGUA_TANQUE_SHEET);
             const pManutencao = fetchSingleSheet(MANUTENCAO_SHEET);
@@ -2099,23 +1858,17 @@
                 ? fetchSingleSheet(POCOS_ANALISE_SHEET).then(data => ({data, source:'url'}))
                 : Promise.resolve(null);
 
-            Promise.all([pEntrada, pVazaoDia, pSaida, pNivelAguaTanque, pManutencao, pPocosAnalise])
-                .then(([resultsEntrada, resultsVazaoDia, resultsSaida, resultsNivelAguaTanque, resultsManutencao, resultsPocosAnalise]) => {
+            Promise.all([pEntrada, pSaida, pNivelAguaTanque, pManutencao, pPocosAnalise])
+                .then(([resultsEntrada, resultsSaida, resultsNivelAguaTanque, resultsManutencao, resultsPocosAnalise]) => {
                     let combinedEntrada = [];
                     resultsEntrada.forEach(data => {
                         if (Array.isArray(data)) combinedEntrada = combinedEntrada.concat(data);
                     });
 
                     try {
-                        if (Array.isArray(resultsVazaoDia) && resultsVazaoDia.length) {
-                            globalVazaoDiaData = normalizeVazaoDiaSheetData(resultsVazaoDia);
-                        } else {
-                            globalVazaoDiaData = [];
-                        }
                         if (combinedEntrada.length > 0) {
                             globalRawData = cleanAndNormalizeData(combinedEntrada);
                         }
-                        globalVazaoMediaDiaData = Array.isArray(resultsVazaoDia) ? cleanAndNormalizeData(resultsVazaoDia) : [];
                         if (resultsSaida.length > 0) {
                             globalSaidaData = cleanAndNormalizeSaidaData(resultsSaida);
                         } else {
@@ -2194,7 +1947,7 @@
                 const wellFormatted = formatWellName(row[wellKey]);
                 const vazaoVal = parseBrazilianNumber(row[flowKey]);
                 const volumeVal = parseBrazilianNumber(row[volKey]);
-                const horasVal = Math.min(24, Math.max(0, parseHours(row[hourKey]))); 
+                const horasVal = parseHours(row[hourKey]); 
 
                 let volCalculado = (vazaoVal > 0 && horasVal > 0) ? (vazaoVal * horasVal) : volumeVal;
 
@@ -2419,25 +2172,6 @@
             }
             let d = new Date(cleaned);
             return isNaN(d.getTime()) ? null : d;
-        }
-
-        function normalizeVazaoDiaSheetData(data) {
-            const out = [];
-            (Array.isArray(data) ? data : []).forEach(row => {
-                const keys = Object.keys(row || {});
-                const norm = k => String(k || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
-                const dateKey = keys.find(k => { const nk = norm(k); return nk === 'data' || nk === 'date' || nk.startsWith('data '); }) || keys.find(k => norm(k).includes('data'));
-                const wellKey = keys.find(k => { const nk = norm(k); return nk.includes('poco') || nk.includes('well'); });
-                const vazaoKey = keys.find(k => norm(k).replace(/\s+/g,'') === 'vazao(l/h)') || keys.find(k => { const nk = norm(k); return nk.includes('vazao') && (nk.includes('l/h') || nk.includes('litros/h')); });
-                if (!dateKey || !wellKey || !vazaoKey) return;
-                const parsedDate = parsePortugueseDate(row[dateKey]);
-                const vazao = parseBrazilianNumber(row[vazaoKey]);
-                const well = formatWellName(row[wellKey]);
-                if (!parsedDate || !well || !Number.isFinite(vazao) || vazao <= 0) return;
-                const iso = `${parsedDate.getFullYear()}-${String(parsedDate.getMonth()+1).padStart(2,'0')}-${String(parsedDate.getDate()).padStart(2,'0')}`;
-                out.push({ DataObj: parsedDate, IsoDate: iso, DataFormatted: parsedDate.toLocaleDateString('pt-BR'), Poco: well, VazaoMediaDia: vazao });
-            });
-            return out.sort((a,b) => a.DataObj - b.DataObj || a.Poco.localeCompare(b.Poco, undefined, {numeric:true, sensitivity:'base'}));
         }
 
         function toggleSelectAll(tab, type, masterCheckbox) {
@@ -2696,9 +2430,8 @@
                 // Registros sem data de manutenção ainda devem aparecer no relatório.
                 // O filtro por mês só deve restringir registros que realmente possuem mês.
                 if (selectedMonths.length > 0 && d.MesLabel !== 'N/I' && !selectedMonths.includes(d.MesLabel)) return false;
-                const dia = String(d.IsoDate || d.DataFormatted || '').slice(0,10);
-                if (startDate && dia < startDate) return false;
-                if (endDate && dia > endDate) return false;
+                if (startDate && d.IsoDate < startDate) return false;
+                if (endDate && d.IsoDate > endDate) return false;
                 return true;
             });
 
@@ -2747,7 +2480,7 @@
             // Daily Chart
             const dates = Array.from(new Set(filtered.map(d => d.DataFormatted)));
             const wells = Array.from(new Set(filtered.map(d => d.Poco))).sort((a,b) => a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'}));
-            const colors = ['#166534', '#2563eb', '#d97706', '#64748b', '#7c3aed', '#0891b2', '#be185d', '#854d0e'];
+            const colors = ['#2563eb', '#059669', '#d97706', '#dc2626', '#8b5cf6', '#06b6d4', '#ec4899', '#f59e0b'];
 
             const datasetsDaily = wells.map((w, idx) => {
                 const dataMap = {};
@@ -2809,7 +2542,7 @@
             document.getElementById('kpi2_maxVolumeWell').innerText = wells.length > 0 ? `${wells.length} Poços` : '--';
 
             // Monthly Vol Chart
-            const colors = ['#166534', '#2563eb', '#d97706', '#64748b', '#7c3aed', '#0891b2', '#be185d', '#854d0e'];
+            const colors = ['#2563eb', '#059669', '#d97706', '#dc2626', '#8b5cf6', '#06b6d4', '#ec4899', '#f59e0b'];
             const datasetsVol = wells.map((w, idx) => {
                 const dataMap = {};
                 filtered.filter(d => d.Poco === w).forEach(d => {
@@ -3020,130 +2753,66 @@
 }
 
 function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
-    const fonte = Array.isArray(filteredEntrada) ? filteredEntrada : (Array.isArray(globalVazaoDiaData) ? globalVazaoDiaData : []);
-    const rows = fonte.filter(d => d && d.IsoDate && d.Poco && Number.isFinite(Number(d.VazaoMediaDia)) && Number(d.VazaoMediaDia) > 0);
-
-    // Consolida por DIA + POÇO. Se houver mais de um lançamento para o mesmo poço no dia,
-    // o gráfico mostra a média real daquele dia.
-    const agrupado = {};
-    rows.forEach(d => {
-        const date = String(d.IsoDate).slice(0, 10);
-        const key = `${date}___${d.Poco}`;
-        if (!agrupado[key]) agrupado[key] = { soma: 0, qtd: 0 };
-        agrupado[key].soma += Number(d.VazaoMediaDia);
-        agrupado[key].qtd += 1;
-    });
-
-    const dates = Array.from(new Set(rows.map(d => String(d.IsoDate).slice(0, 10)))).sort();
-    const wells = Array.from(new Set(rows.map(d => d.Poco)))
-        .sort((a,b) => a.localeCompare(b, undefined, {numeric:true, sensitivity:'base'}));
-
-    const byDateWell = {};
-    Object.keys(agrupado).forEach(key => {
-        byDateWell[key] = agrupado[key].soma / agrupado[key].qtd;
-    });
-
-    let chartData;
-    let xTitle = 'Data';
-
-    if (dates.length === 1) {
-        // Quando o usuário seleciona, por exemplo, 08/09 a 08/09,
-        // o eixo X passa a mostrar TODOS OS POÇOS, para comparar as vazões daquele dia.
-        xTitle = 'Poços';
-        chartData = {
-            labels: wells,
-            datasets: [{
-                label: `Vazão média em ${dates[0].split('-').reverse().join('/')}`,
-                data: wells.map(well => {
-                    const v = byDateWell[`${dates[0]}___${well}`];
-                    return Number.isFinite(v) ? Number(v.toFixed(0)) : null;
-                }),
-                borderWidth: 3,
-                tension: 0.25,
-                spanGaps: false,
-                pointRadius: 4,
-                pointHoverRadius: 6,
-                fill: false,
-                datalabels: {
-                    display: true,
-                    anchor: 'end',
-                    align: 'top',
-                    offset: 4,
-                    formatter: v => Number.isFinite(Number(v)) ? `${Number(v).toLocaleString('pt-BR')} L/h` : '',
-                    font: { size: 10, weight: 'bold' }
-                }
-            }]
-        };
-    } else {
-        // Para vários dias, mantém uma linha para cada poço e o eixo X em ordem cronológica.
-        chartData = {
-            labels: dates.map(d => {
-                const parts = d.split('-');
-                return parts.length === 3 ? `${parts[2]}/${parts[1]}` : d;
-            }),
-            datasets: wells.map(well => ({
-                label: well,
-                data: dates.map(date => {
-                    const v = byDateWell[`${date}___${well}`];
-                    return Number.isFinite(v) ? Number(v.toFixed(0)) : null;
-                }),
-                borderWidth: 2.5,
-                tension: 0.2,
-                spanGaps: false,
-                pointRadius: 3,
-                pointHoverRadius: 6,
-                fill: false,
-                datalabels: { display: false }
-            }))
-        };
-    }
-
-    renderChart('vazaoMediaDiaPocosChart', 'vazaoMediaDiaPocos', 'line', chartData, {
-        responsive: true,
-        maintainAspectRatio: false,
-        interaction: { mode: 'index', intersect: false },
-        scales: {
-            y: {
-                title: { display: true, text: 'Vazão média (L/h)' },
-                beginAtZero: false,
-                ticks: {
-                    callback: value => Number(value).toLocaleString('pt-BR')
-                }
-            },
-            x: {
-                title: { display: true, text: xTitle },
-                ticks: { autoSkip: dates.length > 1, maxRotation: 45, minRotation: 0 }
-            }
-        },
-        plugins: {
-            legend: { display: true, position: 'bottom', labels: { boxWidth: 12, font: { size: 9 } } },
-            tooltip: {
-                callbacks: {
-                    label: context => `${context.dataset.label}: ${Number(context.parsed.y).toLocaleString('pt-BR')} L/h`
-                }
-            },
-            datalabels: { display: false }
-        }
-    });
-}
-
-        function applySpecificVazaoDiaFilterTab4() {
-            const start = document.getElementById('vazaoDiaStartDateTab4')?.value || '';
-            const end = document.getElementById('vazaoDiaEndDateTab4')?.value || '';
-            const base = Array.isArray(globalVazaoDiaData) ? globalVazaoDiaData : [];
-            const filtered = base.filter(d => {
-                const iso = String(d.IsoDate || '').slice(0, 10);
-                return iso && (!start || iso >= start) && (!end || iso <= end);
+            // Vazão média efetiva = volume calculado (vazão × horas) ÷ horas trabalhadas.
+            // O cálculo é feito separadamente por poço e por dia.
+            const byDateWell = {};
+            filteredEntrada.forEach(d => {
+                const date = d.IsoDate || d.DataFormatted || '';
+                const well = d.Poco || '';
+                const volume = Number(d.VolumeCalculado);
+                const horas = Number(d.Horas);
+                if (!date || !well || !Number.isFinite(volume) || volume <= 0 || !Number.isFinite(horas) || horas <= 0) return;
+                const key = `${date}___${well}`;
+                if (!byDateWell[key]) byDateWell[key] = { date, well, volume: 0, horas: 0 };
+                byDateWell[key].volume += volume;
+                byDateWell[key].horas += horas;
             });
-            renderVazaoMediaDiaPocosTab4(filtered);
-        }
 
-        function resetSpecificVazaoDiaFilterTab4() {
-            const a = document.getElementById('vazaoDiaStartDateTab4');
-            const b = document.getElementById('vazaoDiaEndDateTab4');
-            if (a) a.value = '';
-            if (b) b.value = '';
-            applySpecificVazaoDiaFilterTab4();
+            const dates = Array.from(new Set(Object.values(byDateWell).map(x => x.date))).sort();
+            const wells = Array.from(new Set(Object.values(byDateWell).map(x => x.well)))
+                .sort((a,b) => a.localeCompare(b, undefined, {numeric:true, sensitivity:'base'}));
+
+            const datasets = wells.map(well => {
+                const data = dates.map(date => {
+                    const r = byDateWell[`${date}___${well}`];
+                    return r && r.horas > 0 ? Math.round(r.volume / r.horas) : null;
+                });
+                return {
+                    label: well,
+                    data,
+                    borderWidth: 2,
+                    tension: 0.2,
+                    spanGaps: true,
+                    pointRadius: 0,
+                    pointHoverRadius: 4,
+                    fill: false
+                };
+            });
+
+            renderChart('vazaoMediaDiaPocosChart', 'vazaoMediaDiaPocos', 'line', {
+                labels: dates.map(d => {
+                    const parts = d.split('-');
+                    return parts.length === 3 ? `${parts[2]}/${parts[1]}` : d;
+                }),
+                datasets
+            }, {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        title: { display: true, text: 'Vazão Média Calculada (L/h)' },
+                        beginAtZero: false
+                    }
+                },
+                plugins: {
+                    datalabels: { display: false },
+                    legend: {
+                        display: true,
+                        position: 'bottom',
+                        labels: { boxWidth: 12, font: { size: 9 } }
+                    }
+                }
+            });
         }
 
         function applyFiltersTab4() {
@@ -3156,24 +2825,23 @@ function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
             // Filtro Entrada
             let filteredEntrada = globalRawData.filter(d => {
                 if (selectedWells.length > 0 && !selectedWells.includes(d.Poco)) return false;
-                const dia = String(d.IsoDate || d.DataFormatted || '').slice(0,10);
-                if (startDate && dia < startDate) return false;
-                if (endDate && dia > endDate) return false;
+                if (startDate && d.IsoDate < startDate) return false;
+                if (endDate && d.IsoDate > endDate) return false;
                 return true;
             });
 
             const totalVolEntrada = filteredEntrada.reduce((acc, curr) => acc + curr.VolumeCalculado, 0);
-            const avgHours = filteredEntrada.length > 0 ? Math.min(24, filteredEntrada.reduce((acc, curr) => acc + Math.min(24, Number(curr.Horas) || 0), 0) / filteredEntrada.length) : 0;
+            const avgHours = filteredEntrada.length > 0 ? (filteredEntrada.reduce((acc, curr) => acc + curr.Horas, 0) / filteredEntrada.length) : 0;
             const maxPeakVol = filteredEntrada.length > 0 ? Math.max(...filteredEntrada.map(d => d.VolumeCalculado)) : 0;
 
             atualizarReguaNivelTanqueTab4(filteredEntrada);
-            applySpecificVazaoDiaFilterTab4();
+            renderVazaoMediaDiaPocosTab4(filteredEntrada);
 
             document.getElementById('kpi4_totalVol').innerText = `${Math.round(totalVolEntrada).toLocaleString('pt-BR')} L`;
             document.getElementById('kpi4_avgHours').innerText = `${avgHours.toFixed(1)} h/dia`;
             document.getElementById('kpi4_maxPeak').innerText = `${Math.round(maxPeakVol).toLocaleString('pt-BR')} L`;
 
-            // Gráfico Entrada de Água — volume em barras e horas em linha
+            // Gráfico Entrada de Água com Rótulos Visíveis no Topo das Barras
             const wellsEntrada = Array.from(new Set(filteredEntrada.map(d => d.Poco))).sort((a,b) => a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'}));
             const volByWell = wellsEntrada.map(w => {
                 const sub = filteredEntrada.filter(d => d.Poco === w);
@@ -3181,68 +2849,71 @@ function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
             });
             const hoursByWell = wellsEntrada.map(w => {
                 const sub = filteredEntrada.filter(d => d.Poco === w);
-                const byDay = {};
-                sub.forEach(d => {
-                    const day = String(d.IsoDate || d.DataFormatted || '').slice(0,10);
-                    byDay[day] = (byDay[day] || 0) + Math.min(24, Number(d.Horas) || 0);
-                });
-                const daily = Object.values(byDay);
-                const avgDailyH = daily.length ? daily.reduce((a,v) => a + Math.min(24, v), 0) / daily.length : 0;
-                return parseFloat(Math.min(24, avgDailyH).toFixed(1));
+                const totalH = sub.reduce((acc, curr) => acc + curr.Horas, 0);
+                return parseFloat(totalH.toFixed(1));
             });
-
-            const horasCor = (h) => {
-                const n = Number(h) || 0;
-                if (n >= 23) return { bg: '#dcfce7', border: '#86efac', text: '#166534' }; // 24 h
-                if (n >= 17) return { bg: '#dbeafe', border: '#93c5fd', text: '#1e40af' }; // 18 h
-                if (n >= 9) return { bg: '#ecfccb', border: '#bef264', text: '#3f6212' }; // 10 h
-                if (n >= 5) return { bg: '#fef3c7', border: '#fcd34d', text: '#92400e' }; // 6 h
-                if (n > 0) return { bg: '#f1f5f9', border: '#cbd5e1', text: '#475569' };
-                return { bg: '#f8fafc', border: '#e2e8f0', text: '#94a3b8' };
-            };
-            const horasTopo = document.getElementById('entradaHorasTopo');
-            if (horasTopo) {
-                horasTopo.innerHTML = wellsEntrada.map((w, i) => {
-                    const h = Number(hoursByWell[i] || 0);
-                    const c = horasCor(h);
-                    const hs = h.toLocaleString('pt-BR', { maximumFractionDigits: 1 });
-                    return `<span style="display:inline-flex;align-items:center;gap:6px;padding:5px 9px;border-radius:8px;border:1px solid ${c.border};background:${c.bg};color:${c.text};font-size:10px;font-weight:700;line-height:1.1;">${w}: ${hs} h</span>`;
-                }).join('');
-            }
 
             renderChart('entradaAguaChart', 'entradaAgua', 'bar', {
                 labels: wellsEntrada,
-                datasets: [{
-                    type: 'bar',
-                    label: 'Volume Total (L)',
-                    data: volByWell,
-                    backgroundColor: 'rgba(2, 132, 199, 0.85)',
-                    borderColor: '#0284c7',
-                    borderWidth: 1,
-                    borderRadius: 6,
-                    yAxisID: 'y'
-                }]
+                datasets: [
+                    {
+                        type: 'bar',
+                        label: 'Volume Total Jorado (L)',
+                        data: volByWell,
+                        backgroundColor: 'rgba(2, 132, 199, 0.85)',
+                        borderColor: '#0284c7',
+                        borderWidth: 1,
+                        borderRadius: 6,
+                        yAxisID: 'y'
+                    },
+                    {
+                        type: 'line',
+                        label: 'Horas Trabalhadas (h)',
+                        data: hoursByWell,
+                        borderColor: '#f59e0b',
+                        backgroundColor: '#f59e0b',
+                        borderWidth: 2,
+                        tension: 0.2,
+                        yAxisID: 'y1'
+                    }
+                ]
             }, {
                 responsive: true,
                 maintainAspectRatio: false,
-                interaction: { mode: 'index', intersect: false },
                 scales: {
                     y: {
-                        type: 'linear', position: 'left', beginAtZero: true,
+                        type: 'linear',
+                        position: 'left',
                         title: { display: true, text: 'Volume Total (L)' }
                     },
+                    y1: {
+                        type: 'linear',
+                        position: 'right',
+                        grid: { drawOnChartArea: false },
+                        title: { display: true, text: 'Horas (h)' }
+                    }
                 },
                 plugins: {
                     datalabels: {
                         display: true,
-                        anchor: 'end', align: 'top', offset: 4,
-                        formatter: function(val) { return `${Number(val).toLocaleString('pt-BR')} L`; },
-                        font: { size: 10, weight: 'bold' },
-                        color: '#334155',
-                        backgroundColor: 'rgba(255,255,255,0.92)', borderRadius: 4,
+                        anchor: 'end',
+                        align: 'top',
+                        offset: 6,
+                        formatter: function(val, context) {
+                            if (!val || val <= 0) return '';
+                            if (context.dataset.type === 'line') {
+                                return `${Number(val).toLocaleString('pt-BR', {minimumFractionDigits: 0, maximumFractionDigits: 1})} h`;
+                            }
+                            return `${Number(val).toLocaleString('pt-BR')} L`;
+                        },
+                        font: { size: 11, weight: 'bold' },
+                        color: function(context) {
+                            return context.dataset.type === 'line' ? '#d97706' : '#0369a1';
+                        },
+                        backgroundColor: 'rgba(255,255,255,0.92)',
+                        borderRadius: 4,
                         padding: {top: 2, bottom: 2, left: 4, right: 4}
-                    },
-                    legend: { display: false }
+                    }
                 }
             });
 
@@ -3251,9 +2922,8 @@ function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
                 if (selectedWells.length > 0 && d.Poco && !selectedWells.includes(d.Poco)) return false;
                 if (selectedLocais.length > 0 && !selectedLocais.includes(d.Local)) return false;
                 if (selectedTipoEmissor !== 'ALL' && d.TipoEmissor !== selectedTipoEmissor) return false;
-                const dia = String(d.IsoDate || d.DataFormatted || '').slice(0,10);
-                if (startDate && dia < startDate) return false;
-                if (endDate && dia > endDate) return false;
+                if (startDate && d.IsoDate < startDate) return false;
+                if (endDate && d.IsoDate > endDate) return false;
                 return true;
             });
 
@@ -3265,64 +2935,32 @@ function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
             document.getElementById('kpi4_saidaTempo').innerText = `${totalSaidaTempo.toFixed(1)} h`;
             document.getElementById('kpi4_saidaLocais').innerText = uniqueSaidaLocais;
 
-            // Gráfico Saída de Água por Bloco, separado por CULTURA
-            // Brócolis = verde suave | Tâmaras = azul suave | Fita gotejo = amarelo suave.
+            // Gráfico Saída de Água por Bloco
             const locaisSaida = Array.from(new Set(filteredSaida.map(d => d.Local))).sort((a,b) => a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'}));
-            const normalizarCultura = (v) => String(v || 'Sem Cultura').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-            const culturaNome = (v) => {
-                const n = normalizarCultura(v);
-                if (n.includes('brocol')) return 'Brócolis';
-                if (n.includes('tamar')) return 'Tâmaras';
-                if (n.includes('fita') || n.includes('gotej')) return 'Fita gotejo';
-                return String(v || 'Sem Cultura').trim() || 'Sem Cultura';
-            };
-            const culturaCor = (nome) => {
-                const n = normalizarCultura(nome);
-                if (n.includes('brocol')) return { bg: 'rgba(22, 101, 52, 0.82)', border: '#14532d', text: '#14532d' };
-                if (n.includes('tamar')) return { bg: 'rgba(147, 197, 253, 0.68)', border: '#93c5fd', text: '#1e40af' };
-                if (n.includes('fita') || n.includes('gotej')) return { bg: 'rgba(253, 224, 71, 0.62)', border: '#facc15', text: '#854d0e' };
-                return { bg: 'rgba(203, 213, 225, 0.65)', border: '#cbd5e1', text: '#475569' };
-            };
-            const culturasSaida = Array.from(new Set(filteredSaida.map(d => culturaNome(d.Cultura))))
-                .sort((a,b) => { const ordem = {'Brócolis':0,'Tâmaras':1,'Fita gotejo':2}; return (ordem[a] ?? 99) - (ordem[b] ?? 99) || a.localeCompare(b); });
-            const datasetsCulturaSaida = culturasSaida.map(cultura => {
-                const c = culturaCor(cultura);
-                return {
-                    label: cultura,
-                    data: locaisSaida.map(loc => Math.round(filteredSaida.filter(d => d.Local === loc && culturaNome(d.Cultura) === cultura).reduce((acc, curr) => acc + curr.VolumeCalculado, 0))),
-                    backgroundColor: c.bg,
-                    borderColor: c.border,
-                    borderWidth: 1,
-                    borderRadius: 5
-                };
+            const volSaidaByLocal = locaisSaida.map(loc => {
+                const sub = filteredSaida.filter(d => d.Local === loc);
+                return Math.round(sub.reduce((acc, curr) => acc + curr.VolumeCalculado, 0));
             });
 
             renderChart('saidaAguaChart', 'saidaAgua', 'bar', {
                 labels: locaisSaida,
-                datasets: datasetsCulturaSaida
+                datasets: [{
+                    label: 'Volume Irrigado por Bloco (L)',
+                    data: volSaidaByLocal,
+                    backgroundColor: 'rgba(16, 185, 129, 0.85)',
+                    borderRadius: 6
+                }]
             }, {
                 responsive: true,
                 maintainAspectRatio: false,
-                scales: {
-                    x: { stacked: false, ticks: { autoSkip: false, maxRotation: 45, minRotation: 0, font: { size: 11, weight: '600' } } },
-                    y: { beginAtZero: true, grace: '12%', title: { display: true, text: 'Volume Irrigado (L)' } }
-                },
-                layout: { padding: { top: 34, right: 18, left: 12, bottom: 18 } },
                 plugins: {
                     datalabels: {
                         anchor: 'end',
-                        align: 'top',
-                        offset: 6,
-                        clamp: true,
-                        clip: false,
+                        align: 'end',
                         formatter: (val) => val > 0 ? val.toLocaleString('pt-BR') : '',
                         font: { size: 10, weight: 'bold' },
-                        color: '#334155',
-                        backgroundColor: 'rgba(255,255,255,0.94)',
-                        borderRadius: 4,
-                        padding: { top: 3, right: 5, bottom: 3, left: 5 }
-                    },
-                    legend: { display: true, position: 'bottom', labels: { boxWidth: 14, font: { size: 10 } } }
+                        color: '#065f46'
+                    }
                 }
             });
 
@@ -3510,9 +3148,8 @@ function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
             let filtered = globalSaidaData.filter(d => {
                 if (selectedBlocos.length > 0 && !selectedBlocos.includes(d.Local)) return false;
                 if (selectedCiclos.length > 0 && !selectedCiclos.includes(d.Ciclo)) return false;
-                const dia = String(d.IsoDate || d.DataFormatted || '').slice(0,10);
-                if (startDate && dia < startDate) return false;
-                if (endDate && dia > endDate) return false;
+                if (startDate && d.IsoDate < startDate) return false;
+                if (endDate && d.IsoDate > endDate) return false;
                 return true;
             });
 
@@ -3570,7 +3207,7 @@ function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
             // Chart Volume Irrigado por Dia (Por Bloco)
             const dates = Array.from(new Set(filtered.map(d => d.DataFormatted)));
             const blocos = Array.from(new Set(filtered.map(d => d.Local))).sort((a,b) => a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'}));
-            const colors = ['#166534', '#2563eb', '#d97706', '#64748b', '#7c3aed', '#0891b2', '#be185d', '#854d0e'];
+            const colors = ['#2563eb', '#059669', '#d97706', '#dc2626', '#8b5cf6', '#06b6d4', '#ec4899', '#f59e0b'];
 
             const datasetsBloco = blocos.map((b, idx) => {
                 const dataMap = {};
@@ -3922,17 +3559,5 @@ function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
             // Pronta para receber interações ou autologin em desenvolvimento
         };
     </script>
-
-    <div id="exportSelectorModal" class="fixed inset-0 z-[9999] hidden items-center justify-center bg-slate-900/60 p-4" style="display:none;">
-        <div class="w-full max-w-xl rounded-2xl bg-white shadow-2xl border border-slate-200 overflow-hidden">
-            <div class="px-5 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
-                <div><h3 id="exportSelectorTitle" class="text-base font-extrabold text-slate-800">Selecionar dados para baixar</h3><p class="text-xs text-slate-500 mt-1">Marque somente os gráficos/quadro que deseja no arquivo.</p></div>
-                <button id="exportSelectorCancel" class="text-slate-400 hover:text-slate-700"><i class="fa-solid fa-xmark text-lg"></i></button>
-            </div>
-            <div class="p-5 max-h-[55vh] overflow-y-auto"><label class="flex items-center gap-2 mb-3 text-xs font-bold text-slate-600"><input id="exportSelectorSelectAll" type="checkbox" class="w-4 h-4" checked> Selecionar todos</label><div id="exportSelectorList" class="space-y-2"></div></div>
-            <div class="px-5 py-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-2"><button id="exportSelectorCancel2" class="px-4 py-2 rounded-lg border border-slate-300 text-sm font-semibold text-slate-700">Cancelar</button><button id="exportSelectorConfirm" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold"><i class="fa-solid fa-download mr-1"></i> Baixar selecionados</button></div>
-        </div>
-    </div>
-    <script>document.getElementById("exportSelectorCancel2").onclick=()=>{const m=document.getElementById("exportSelectorModal");m.classList.add("hidden");m.style.display="none";};</script>
 </body>
 </html>
