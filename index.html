@@ -1962,8 +1962,11 @@ Chart.register(dailyFlowLabelsPlugin);
             } else {
                 hours = parseBrazilianNumber(val);
             }
-            // Limite operacional: nunca exibir/calcular mais de 24 h por registro.
-            return Math.max(0, Math.min(24, Number(hours) || 0));
+            // Na Aba 04 o tempo de funcionamento deve seguir a hora inteira
+            // registrada na planilha (ex.: 6, 2, 13, 24).
+            // Não tratar 13,3 ou 24,4 como horas decimais para o cálculo de entrada.
+            // Primeiro limita a 24 h e depois considera somente a parte inteira.
+            return Math.floor(Math.max(0, Math.min(24, Number(hours) || 0)));
         }
 
         function parseBrazilianNumber(val) {
@@ -3249,7 +3252,10 @@ function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
             });
 
             const totalVolEntrada = filteredEntrada.reduce((acc, curr) => acc + curr.VolumeCalculado, 0);
-            const avgHours = filteredEntrada.length > 0 ? Math.min(24, filteredEntrada.reduce((acc, curr) => acc + Math.min(24, Number(curr.Horas) || 0), 0) / filteredEntrada.length) : 0;
+            const avgHoursRaw = filteredEntrada.length > 0
+                ? filteredEntrada.reduce((acc, curr) => acc + Math.floor(Math.min(24, Number(curr.Horas) || 0)), 0) / filteredEntrada.length
+                : 0;
+            const avgHours = Math.floor(avgHoursRaw);
             const maxPeakVol = filteredEntrada.length > 0 ? Math.max(...filteredEntrada.map(d => d.VolumeCalculado)) : 0;
 
             atualizarReguaNivelTanqueTab4(filteredEntrada);
@@ -3273,8 +3279,11 @@ function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
                     byDay[day] = (byDay[day] || 0) + Math.min(24, Number(d.Horas) || 0);
                 });
                 const daily = Object.values(byDay);
-                const avgDailyH = daily.length ? daily.reduce((a,v) => a + Math.min(24, v), 0) / daily.length : 0;
-                return parseFloat(Math.min(24, avgDailyH).toFixed(1));
+                // Exibição segue a hora inteira da planilha: 6h, 2h, 13h, 24h.
+                // Para o resumo por poço, usa a média diária apenas para consolidar
+                // o período selecionado, sem criar valores como 13,3 h ou 24,4 h.
+                const avgDailyH = daily.length ? daily.reduce((a,v) => a + Math.floor(Math.min(24, v)), 0) / daily.length : 0;
+                return Math.floor(Math.min(24, avgDailyH));
             });
 
             const horasCor = (h) => {
@@ -3291,7 +3300,7 @@ function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
                 horasTopo.innerHTML = wellsEntrada.map((w, i) => {
                     const h = Number(hoursByWell[i] || 0);
                     const c = horasCor(h);
-                    const hs = h.toLocaleString('pt-BR', { maximumFractionDigits: 1 });
+                    const hs = Math.floor(h);
                     return `<span style="display:inline-flex;align-items:center;gap:6px;padding:5px 9px;border-radius:8px;border:1px solid ${c.border};background:${c.bg};color:${c.text};font-size:10px;font-weight:700;line-height:1.1;">${w}: ${hs} h</span>`;
                 }).join('');
             }
