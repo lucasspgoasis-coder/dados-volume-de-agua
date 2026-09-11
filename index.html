@@ -2266,44 +2266,70 @@ Chart.register(dailyFlowLabelsPlugin);
 
         function cleanAndNormalizeData(data) {
             let normalized = [];
+            const vazaoPorDataPoco = new Map();
+
+            // A vazão usada na entrada deve ser a vazão média do MESMO DIA e do MESMO POÇO,
+            // proveniente da planilha "Vazão Média".
+            (Array.isArray(globalVazaoDiaData) ? globalVazaoDiaData : []).forEach(v => {
+                const key = `${String(v.IsoDate || '').slice(0,10)}|||${String(v.Poco || '').trim()}`;
+                if (key !== '|||') vazaoPorDataPoco.set(key, Number(v.VazaoMediaDia) || 0);
+            });
+
             data.forEach(row => {
                 const keys = Object.keys(row);
                 const findKey = (searchStrings) => keys.find(k => searchStrings.some(s => k.toLowerCase().trim().includes(s)));
-                
                 const dateKey = findKey(['data', 'date']);
                 const wellKey = findKey(['poço', 'poco', 'well', 'nome', 'estacao', 'estação']);
-                const flowKey = findKey(['vazao media', 'vazão média', 'vazao', 'vazão', 'flow', 'media', 'média', 'l/h', 'litros/h']);
                 const volKey = findKey(['volume total', 'volume', 'vol', 'm3', 'total', 'litros']);
                 const hourKey = findKey(['periodo', 'período', 'hora', 'ligad', 'tempo', 'funcionamento', 'hr']);
 
                 const wellFormatted = formatWellName(row[wellKey]);
-                const vazaoVal = parseBrazilianNumber(row[flowKey]);
+                const parsedDate = parsePortugueseDate(row[dateKey] || '');
+                if (!wellFormatted || !parsedDate) return;
+
+                const iso = `${parsedDate.getFullYear()}-${String(parsedDate.getMonth()+1).padStart(2,'0')}-${String(parsedDate.getDate()).padStart(2,'0')}`;
+                const horasVal = parseHoursInteiras(row[hourKey]);
+                const chave = `${iso}|||${wellFormatted}`;
+
+                // Primeiro usa a vazão média diária específica (data + poço).
+                // Se não existir, usa a coluna de vazão da própria linha como fallback.
+                const flowKey = findKey(['vazao media', 'vazão média', 'vazao', 'vazão', 'flow', 'media', 'média', 'l/h', 'litros/h']);
+                const vazaoDaLinha = parseBrazilianNumber(row[flowKey]);
+                const vazaoVal = vazaoPorDataPoco.get(chave) || vazaoDaLinha;
                 const volumeVal = parseBrazilianNumber(row[volKey]);
-                const horasVal = Math.min(24, Math.max(0, parseHours(row[hourKey]))); 
 
-                let volCalculado = (vazaoVal > 0 && horasVal > 0) ? (vazaoVal * horasVal) : volumeVal;
+                // REGRA DA ABA 04: volume = vazão média daquele dia/poço × período ligado.
+                const volCalculado = (vazaoVal > 0 && horasVal > 0) ? (vazaoVal * horasVal) : volumeVal;
 
-                if (wellFormatted && (vazaoVal > 0 || volumeVal > 0 || horasVal > 0)) {
-                    let parsedDate = parsePortugueseDate(row[dateKey] || '');
-                    if (parsedDate) {
-                        normalized.push({
-                            DataObj: parsedDate,
-                            DataFormatted: parsedDate.toLocaleDateString('pt-BR'),
-                            IsoDate: parsedDate.toISOString().split('T')[0],
-                            MesLabel: `${monthNames[parsedDate.getMonth()]} ${parsedDate.getFullYear()}`,
-                            MesNumero: parsedDate.getMonth(),
-                            SemanaNum: getWeekNumber(parsedDate),
-                            Ano: parsedDate.getFullYear(),
-                            Poco: wellFormatted,
-                            Vazao: vazaoVal,
-                            Volume: volumeVal > 0 ? volumeVal : volCalculado,
-                            Horas: horasVal,
-                            VolumeCalculado: volCalculado
-                        });
-                    }
+                if (vazaoVal > 0 || volumeVal > 0 || horasVal > 0) {
+                    normalized.push({
+                        DataObj: parsedDate,
+                        DataFormatted: parsedDate.toLocaleDateString('pt-BR'),
+                        IsoDate: iso,
+                        MesLabel: `${monthNames[parsedDate.getMonth()]} ${parsedDate.getFullYear()}`,
+                        MesNumero: parsedDate.getMonth(),
+                        SemanaNum: getWeekNumber(parsedDate),
+                        Ano: parsedDate.getFullYear(),
+                        Poco: wellFormatted,
+                        Vazao: vazaoVal,
+                        Volume: volumeVal > 0 ? volumeVal : volCalculado,
+                        Horas: horasVal,
+                        VolumeCalculado: volCalculado
+                    });
                 }
             });
             return normalized.sort((a, b) => a.DataObj - b.DataObj);
+        }
+
+        // O campo "Período" representa HORAS DE FUNCIONAMENTO.
+        // Na Aba 04 ele deve ser tratado como hora inteira: 24:00:00 = 24 h; 13:00:00 = 13 h; 6 = 6 h; 2 = 2 h.
+        function parseHoursInteiras(val) {
+            if (val === null || val === undefined || val === '') return 0;
+            const str = String(val).trim();
+            const m = str.match(/^(\d{1,2})(?::(\d{1,2}))?(?::(\d{1,2}))?/);
+            let h = m ? parseInt(m[1], 10) : Math.floor(parseBrazilianNumber(val));
+            if (!Number.isFinite(h)) h = 0;
+            return Math.max(0, Math.min(24, Math.floor(h)));
         }
 
         function cleanAndNormalizeSaidaData(data) {
@@ -3262,7 +3288,7 @@ function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
             applySpecificVazaoDiaFilterTab4();
 
             document.getElementById('kpi4_totalVol').innerText = `${Math.round(totalVolEntrada).toLocaleString('pt-BR')} L`;
-            document.getElementById('kpi4_avgHours').innerText = `${avgHours.toFixed(1)} h/dia`;
+            document.getElementById('kpi4_avgHours').innerText = `${avgHours} h/dia`;
             document.getElementById('kpi4_maxPeak').innerText = `${Math.round(maxPeakVol).toLocaleString('pt-BR')} L`;
 
             // Gráfico Entrada de Água — volume em barras e horas em linha
@@ -3273,17 +3299,9 @@ function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
             });
             const hoursByWell = wellsEntrada.map(w => {
                 const sub = filteredEntrada.filter(d => d.Poco === w);
-                const byDay = {};
-                sub.forEach(d => {
-                    const day = String(d.IsoDate || d.DataFormatted || '').slice(0,10);
-                    byDay[day] = (byDay[day] || 0) + Math.min(24, Number(d.Horas) || 0);
-                });
-                const daily = Object.values(byDay);
-                // Exibição segue a hora inteira da planilha: 6h, 2h, 13h, 24h.
-                // Para o resumo por poço, usa a média diária apenas para consolidar
-                // o período selecionado, sem criar valores como 13,3 h ou 24,4 h.
-                const avgDailyH = daily.length ? daily.reduce((a,v) => a + Math.floor(Math.min(24, v)), 0) / daily.length : 0;
-                return Math.floor(Math.min(24, avgDailyH));
+                // Total de horas do campo "Período" para o poço no período filtrado.
+                // Não faz média e não gera decimais: 24 h, 13 h, 6 h, 2 h etc.
+                return sub.reduce((total, d) => total + Math.floor(Number(d.Horas) || 0), 0);
             });
 
             const horasCor = (h) => {
