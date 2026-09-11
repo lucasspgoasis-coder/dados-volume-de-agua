@@ -3277,6 +3277,17 @@ function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
                 return true;
             });
 
+            // Um mesmo registro pode aparecer duplicado quando as fontes da Entrada
+            // são combinadas. Para o painel, cada POÇO + DATA representa um único
+            // período/vazão. Assim, ao selecionar 10/09 a conta aparece somente uma vez.
+            const registrosUnicosEntrada = new Map();
+            filteredEntrada.forEach(d => {
+                const dia = String(d.IsoDate).slice(0,10);
+                const chave = `${dia}|||${d.Poco}`;
+                if (!registrosUnicosEntrada.has(chave)) registrosUnicosEntrada.set(chave, d);
+            });
+            filteredEntrada = Array.from(registrosUnicosEntrada.values());
+
             const totalVolEntrada = filteredEntrada.reduce((acc, curr) => acc + curr.VolumeCalculado, 0);
             const avgHoursRaw = filteredEntrada.length > 0
                 ? filteredEntrada.reduce((acc, curr) => acc + Math.floor(Math.min(24, Number(curr.Horas) || 0)), 0) / filteredEntrada.length
