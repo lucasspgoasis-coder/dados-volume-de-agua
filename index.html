@@ -3299,9 +3299,16 @@ function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
             });
             const hoursByWell = wellsEntrada.map(w => {
                 const sub = filteredEntrada.filter(d => d.Poco === w);
-                // Total de horas do campo "Período" para o poço no período filtrado.
-                // Não faz média e não gera decimais: 24 h, 13 h, 6 h, 2 h etc.
-                return sub.reduce((total, d) => total + Math.floor(Number(d.Horas) || 0), 0);
+                // O campo "Período" NÃO deve ser somado entre dias.
+                // Ex.: se a planilha tem 24:00:00 em dois dias, o gráfico continua mostrando 24 h,
+                // e não 48 h. Quando houver períodos diferentes para o mesmo poço, mostra os valores
+                // distintos exatamente como registrados (ex.: 24 h / 6 h).
+                const periodos = Array.from(new Set(sub
+                    .map(d => Math.floor(Number(d.Horas) || 0))
+                    .filter(h => h >= 0 && h <= 24)
+                ));
+                periodos.sort((a,b) => b-a);
+                return periodos;
             });
 
             const horasCor = (h) => {
@@ -3316,10 +3323,28 @@ function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
             const horasTopo = document.getElementById('entradaHorasTopo');
             if (horasTopo) {
                 horasTopo.innerHTML = wellsEntrada.map((w, i) => {
-                    const h = Number(hoursByWell[i] || 0);
-                    const c = horasCor(h);
-                    const hs = Math.floor(h);
-                    return `<span style="display:inline-flex;align-items:center;gap:6px;padding:5px 9px;border-radius:8px;border:1px solid ${c.border};background:${c.bg};color:${c.text};font-size:10px;font-weight:700;line-height:1.1;">${w}: ${hs} h</span>`;
+                    const sub = filteredEntrada.filter(d => d.Poco === w);
+                    const periodos = Array.isArray(hoursByWell[i]) ? hoursByWell[i] : [];
+                    const hPrincipal = periodos.length ? periodos[0] : 0;
+                    const c = horasCor(hPrincipal);
+
+                    // Mostra o cálculo de cada poço separadamente:
+                    // Vazão média (L/h) × Período (h) = Volume calculado (L).
+                    // NÃO soma os períodos entre poços e NÃO transforma períodos iguais
+                    // de poços diferentes em um único tempo.
+                    const calculos = sub.map(d => {
+                        const vazao = Math.round(Number(d.Vazao) || 0);
+                        const horas = Math.floor(Number(d.Horas) || 0);
+                        const volume = Math.round(Number(d.VolumeCalculado) || 0);
+                        return `${vazao.toLocaleString('pt-BR')} L/h × ${horas} h = ${volume.toLocaleString('pt-BR')} L`;
+                    });
+                    const textoCalculo = calculos.length ? calculos.join('<br>') : 'Sem cálculo';
+                    const volumePoco = Math.round(sub.reduce((acc, curr) => acc + (Number(curr.VolumeCalculado) || 0), 0));
+                    const detalheVolume = calculos.length > 1
+                        ? `<br><span style="font-weight:800;">Volume do poço: ${volumePoco.toLocaleString('pt-BR')} L</span>`
+                        : '';
+
+                    return `<span title="${w}: ${textoCalculo.replace(/<br>/g, ' | ')}" style="display:inline-flex;flex-direction:column;align-items:flex-start;gap:3px;padding:6px 9px;border-radius:8px;border:1px solid ${c.border};background:${c.bg};color:${c.text};font-size:10px;font-weight:700;line-height:1.25;">${w}:<span>${textoCalculo}${detalheVolume}</span></span>`;
                 }).join('');
             }
 
