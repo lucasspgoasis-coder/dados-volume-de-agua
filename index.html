@@ -1590,26 +1590,129 @@ Chart.register(dailyFlowLabelsPlugin);
             try{if(document.fonts?.ready){try{await document.fonts.ready;}catch(e){}}await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));return await window.htmlToImage.toCanvas(clone,{backgroundColor:'#fff',pixelRatio:1,width,height,cacheBust:true,skipFonts:false,style:{margin:'0',transform:'none',width:width+'px',height:height+'px'}});}finally{stage.remove();restores.forEach(fn=>{try{fn();}catch(e){}});}
         }
 
-        async function composeSectionWithGeneralFields(item,tabId,tabName){
-            const out=document.createElement('canvas'); out.width=REPORT_PAGE_W; out.height=REPORT_PAGE_H;
-            const ctx=out.getContext('2d'); ctx.fillStyle='#f8fafc';ctx.fillRect(0,0,REPORT_PAGE_W,REPORT_PAGE_H);
-            const kpis=getReportGeneralFields(tabId);
-            const kpiY=REPORT_MARGIN,kpiH=92,kpiGap=14,kpiCount=Math.min(6,kpis.length);
-            const kpiW=kpiCount?(REPORT_PAGE_W-REPORT_MARGIN*2-kpiGap*(kpiCount-1))/kpiCount:0;
-            kpis.slice(0,6).forEach((k,i)=>{
-                const x=REPORT_MARGIN+i*(kpiW+kpiGap),y=kpiY;
-                ctx.fillStyle=(k.bg&&k.bg!=='rgba(0, 0, 0, 0)')?k.bg:'#fff';ctx.strokeStyle=k.border||'#dbe3ec';ctx.lineWidth=1.2;ctx.beginPath();ctx.roundRect(x,y,kpiW,kpiH,12);ctx.fill();ctx.stroke();
-                ctx.fillStyle=k.iconBg||'#eef2ff';ctx.beginPath();ctx.roundRect(x+14,y+20,40,40,9);ctx.fill();
-                ctx.fillStyle=k.iconColor||'#2563eb';ctx.font='700 18px Arial';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('●',x+34,y+40);ctx.textAlign='left';ctx.textBaseline='alphabetic';
-                ctx.fillStyle='#64748b';ctx.font='700 10px Arial';ctx.fillText(k.label.toUpperCase().slice(0,30),x+64,y+31);ctx.fillStyle='#0f172a';ctx.font='800 18px Arial';ctx.fillText(k.value.slice(0,25),x+64,y+57);
+        // Monta UMA folha exatamente no padrão da referência: 1280×720 px,
+        // margem externa de 24 px, campos gerais no topo e gráfico ocupando
+        // praticamente toda a área restante. O gráfico nunca é esticado:
+        // ele é redimensionado pelo próprio Chart.js para a área final.
+        async function composeSectionWithGeneralFields(item, tabId, tabName){
+            const W = REPORT_PAGE_W, H = REPORT_PAGE_H, M = REPORT_MARGIN;
+            const out = document.createElement('canvas');
+            out.width = W; out.height = H;
+            const ctx = out.getContext('2d');
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+
+            // Fundo da folha.
+            ctx.fillStyle = '#f8fafc';
+            ctx.fillRect(0, 0, W, H);
+
+            // Barra superior discreta, como no modelo.
+            ctx.fillStyle = '#e2e8f0';
+            ctx.fillRect(M, 1, W - M * 2, 1);
+
+            // Campos gerais (máximo 6, mantendo uma única linha).
+            const kpis = getReportGeneralFields(tabId).slice(0, 6);
+            const kpiGap = 12;
+            const kpiY = 24;
+            const kpiH = 92;
+            const kpiW = kpis.length
+                ? (W - M * 2 - kpiGap * (kpis.length - 1)) / kpis.length
+                : 0;
+
+            kpis.forEach((k, i) => {
+                const x = M + i * (kpiW + kpiGap), y = kpiY;
+                const bg = k.bg && k.bg !== 'rgba(0, 0, 0, 0)' ? k.bg : '#ffffff';
+                const border = k.border || '#dbe3ec';
+
+                ctx.fillStyle = bg;
+                ctx.strokeStyle = border;
+                ctx.lineWidth = 1.2;
+                ctx.beginPath();
+                ctx.roundRect(x, y, kpiW, kpiH, 12);
+                ctx.fill(); ctx.stroke();
+
+                // Ícone em caixa, mantendo o aspecto visual dos cards da tela.
+                ctx.fillStyle = k.iconBg || '#eef2ff';
+                ctx.beginPath();
+                ctx.roundRect(x + 14, y + 24, 42, 42, 9);
+                ctx.fill();
+                ctx.fillStyle = k.iconColor || '#2563eb';
+                ctx.font = '700 18px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('●', x + 35, y + 45);
+
+                // Texto centralizado verticalmente no card.
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'alphabetic';
+                ctx.fillStyle = '#64748b';
+                ctx.font = '700 10px Arial';
+                ctx.fillText(String(k.label || '').toUpperCase().slice(0, 30), x + 68, y + 38);
+                ctx.fillStyle = '#0f172a';
+                ctx.font = '800 18px Arial';
+                ctx.fillText(String(k.value || '--').slice(0, 28), x + 68, y + 64);
             });
-            const titleY=kpiY+kpiH+35;ctx.fillStyle='#0f172a';ctx.font='800 20px Arial';ctx.fillText(String(item.title||'GRÁFICO').trim(),REPORT_MARGIN,titleY);
-            const range=getExportDateRange(tabId);if(range){ctx.fillStyle='#64748b';ctx.font='600 11px Arial';ctx.fillText(`Período: ${range}`,REPORT_MARGIN,titleY+19);}
-            ctx.fillStyle='#dbe3ec';ctx.fillRect(REPORT_MARGIN,titleY+29,REPORT_PAGE_W-REPORT_MARGIN*2,1);
-            const chartY=titleY+40,chartH=REPORT_PAGE_H-chartY-REPORT_MARGIN;
-            const chartCanvas=await captureExportCard(item.card,2400,Math.max(500,chartH*2));
-            const maxW=REPORT_PAGE_W-REPORT_MARGIN*2,maxH=chartH,scale=Math.min(maxW/chartCanvas.width,maxH/chartCanvas.height),drawW=chartCanvas.width*scale,drawH=chartCanvas.height*scale,dx=REPORT_MARGIN+(maxW-drawW)/2,dy=chartY+(maxH-drawH)/2;
-            ctx.drawImage(chartCanvas,dx,dy,drawW,drawH);return out;
+
+            // Cabeçalho do gráfico.
+            const title = String(item.title || 'GRÁFICO').replace(/\s+/g, ' ').trim();
+            const titleY = kpiY + kpiH + 34;
+            ctx.fillStyle = '#0f172a';
+            ctx.font = '800 20px Arial';
+            ctx.textBaseline = 'alphabetic';
+            ctx.fillText(title, M, titleY);
+
+            const range = getExportDateRange(tabId);
+            if (range) {
+                ctx.fillStyle = '#64748b';
+                ctx.font = '600 11px Arial';
+                ctx.fillText(`Período: ${range}`, M, titleY + 18);
+            }
+
+            ctx.fillStyle = '#dbe3ec';
+            ctx.fillRect(M, titleY + 28, W - M * 2, 1);
+
+            // Área REAL disponível para o gráfico. A caixa mantém o gráfico
+            // dentro dos limites e evita que ele fique pequeno por causa de
+            // um canvas de captura com proporção incorreta.
+            const boxX = M;
+            const boxY = titleY + 40;
+            const boxW = W - M * 2;
+            const boxH = H - boxY - M;
+            const inner = 10;
+            const chartW = Math.floor(boxW - inner * 2);
+            const chartH = Math.floor(boxH - inner * 2);
+
+            ctx.fillStyle = '#ffffff';
+            ctx.strokeStyle = '#dbe3ec';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.roundRect(boxX, boxY, boxW, boxH, 10);
+            ctx.fill(); ctx.stroke();
+
+            const sourceCanvas = item.card?.querySelector('canvas');
+            if (!sourceCanvas) throw new Error('Gráfico não encontrado para exportação.');
+
+            const chart = (window.Chart && Chart.getChart) ? Chart.getChart(sourceCanvas) : null;
+            let snapshot;
+            let restore = () => {};
+            try {
+                // Renderiza o Chart.js exatamente no tamanho final da folha.
+                restore = prepareChartForExport(chart, chartW, chartH);
+                await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+                snapshot = document.createElement('canvas');
+                snapshot.width = chartW;
+                snapshot.height = chartH;
+                const sctx = snapshot.getContext('2d');
+                sctx.imageSmoothingEnabled = true;
+                sctx.imageSmoothingQuality = 'high';
+                sctx.drawImage(sourceCanvas, 0, 0, chartW, chartH);
+            } finally {
+                try { restore(); } catch(e) {}
+            }
+
+            // Sem distorção: o snapshot já tem exatamente a proporção da área.
+            ctx.drawImage(snapshot, boxX + inner, boxY + inner, chartW, chartH);
+            return out;
         }
 
         function downloadCanvasAsJPEG(canvas,fileName){const link=document.createElement('a');link.download=fileName;link.href=canvas.toDataURL('image/jpeg',0.96);document.body.appendChild(link);link.click();link.remove();}
