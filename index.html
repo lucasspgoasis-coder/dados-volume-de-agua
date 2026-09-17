@@ -1584,10 +1584,11 @@ Chart.register(dailyFlowLabelsPlugin);
                     if (axis === 'x') {
                         saveProp(a.ticks, 'autoSkip'); saveProp(a.ticks, 'maxRotation'); saveProp(a.ticks, 'minRotation'); saveProp(a.ticks, 'padding');
                         a.ticks.autoSkip = false;
-                        // Rótulos do eixo X ficam totalmente abaixo do gráfico, em 90 graus.
-                        a.ticks.maxRotation = 90;
-                        a.ticks.minRotation = 90;
-                        a.ticks.padding = 12;
+                        // Rótulos do eixo X ficam retos, deitados horizontalmente, abaixo do gráfico.
+                        a.ticks.maxRotation = 0;
+                        a.ticks.minRotation = 0;
+                        a.ticks.padding = 10;
+                        a.ticks.align = 'center';
                     }
                 });
                 setFont(o.plugins?.legend?.labels, 12, scale);
