@@ -1475,7 +1475,7 @@ Chart.register(dailyFlowLabelsPlugin);
         // sem alterar a altura de referência.
         const REPORT_PAGE_W = 1920;
         const REPORT_PAGE_H = 1080;
-        const REPORT_MARGIN = 56;
+        const REPORT_MARGIN = 70;
 
         function getExportableSections(tabId) {
             const tab = document.getElementById(tabId);
@@ -1582,10 +1582,12 @@ Chart.register(dailyFlowLabelsPlugin);
                     setFont(a.title, 14, scale);
                     // Mais espaço entre os rótulos do eixo X para evitar sobreposição.
                     if (axis === 'x') {
-                        saveProp(a.ticks, 'autoSkip'); saveProp(a.ticks, 'maxRotation'); saveProp(a.ticks, 'minRotation');
+                        saveProp(a.ticks, 'autoSkip'); saveProp(a.ticks, 'maxRotation'); saveProp(a.ticks, 'minRotation'); saveProp(a.ticks, 'padding');
                         a.ticks.autoSkip = false;
-                        a.ticks.maxRotation = 35;
-                        a.ticks.minRotation = 25;
+                        // Rótulos do eixo X ficam totalmente abaixo do gráfico, em 90 graus.
+                        a.ticks.maxRotation = 90;
+                        a.ticks.minRotation = 90;
+                        a.ticks.padding = 12;
                     }
                 });
                 setFont(o.plugins?.legend?.labels, 12, scale);
@@ -1809,14 +1811,14 @@ Chart.register(dailyFlowLabelsPlugin);
             }
             ctx.fillStyle='#dbe3ec';ctx.fillRect(M,separatorY,W-M*2,2);
 
-            const boxX=M,boxY=separatorY+22,boxW=W-M*2,boxH=H-boxY-M,inner=28;
+            const boxX=M,boxY=separatorY+22,boxW=W-M*2,boxH=H-boxY-M,inner=30,innerBottom=78;
             ctx.fillStyle='#fff';ctx.strokeStyle='#dbe3ec';ctx.lineWidth=2;ctx.beginPath();ctx.roundRect(boxX,boxY,boxW,boxH,14);ctx.fill();ctx.stroke();
             const sourceCanvas=item.card?.querySelector('canvas');if(!sourceCanvas)throw new Error('Gráfico não encontrado para exportação.');
             const chart=(window.Chart&&Chart.getChart)?Chart.getChart(sourceCanvas):null;let restore=()=>{};
             try{
-                restore=prepareChartForExport(chart,boxW-inner*2,boxH-inner*2);
+                restore=prepareChartForExport(chart,boxW-inner*2,Math.max(300,boxH-inner-innerBottom));
                 await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
-                ctx.drawImage(sourceCanvas,boxX+inner,boxY+inner,boxW-inner*2,boxH-inner*2);
+                ctx.drawImage(sourceCanvas,boxX+inner,boxY+inner,boxW-inner*2,boxH-inner-innerBottom);
             }finally{try{restore();}catch(e){}}
             return out;
         }
