@@ -1473,9 +1473,9 @@ Chart.register(dailyFlowLabelsPlugin);
         // Formato final: paisagem, 16:9, um gráfico + campos gerais por página/arquivo.
         // A largura foi ampliada ligeiramente para dar folga aos textos dos KPIs,
         // sem alterar a altura de referência.
-        const REPORT_PAGE_W = 1800;
-        const REPORT_PAGE_H = 720;
-        const REPORT_MARGIN = 36;
+        const REPORT_PAGE_W = 1920;
+        const REPORT_PAGE_H = 1080;
+        const REPORT_MARGIN = 48;
 
         function getExportableSections(tabId) {
             const tab = document.getElementById(tabId);
@@ -1510,7 +1510,9 @@ Chart.register(dailyFlowLabelsPlugin);
                     border: getComputedStyle(el).borderColor,
                     iconBg: iconBoxCS?.backgroundColor || '#eef2ff',
                     iconColor: iconCS?.color || iconBoxCS?.color || '#2563eb',
-                    iconClass: icon ? Array.from(icon.classList).find(c => c.startsWith('fa-') && c !== 'fa-solid' && c !== 'fa-regular') || '' : ''
+                    iconClass: icon ? Array.from(icon.classList).find(c => c.startsWith('fa-') && c !== 'fa-solid' && c !== 'fa-regular') || '' : '',
+                    iconEl: icon || null,
+                    iconBoxEl: iconBox || null
                 };
             }).filter(x => x.label);
         }
@@ -1715,43 +1717,82 @@ Chart.register(dailyFlowLabelsPlugin);
             return lines;
         }
 
+        async function captureSystemIcon(iconBoxEl, targetSize, fallbackColor, fallbackClass) {
+            // Captura o próprio elemento Font Awesome usado na tela, preservando exatamente
+            // o desenho, a classe, a espessura e o preenchimento do sistema.
+            if (iconBoxEl && window.htmlToImage?.toCanvas) {
+                try {
+                    const clone = iconBoxEl.cloneNode(true);
+                    clone.style.cssText += `;width:${targetSize}px!important;height:${targetSize}px!important;min-width:${targetSize}px!important;min-height:${targetSize}px!important;display:flex!important;align-items:center!important;justify-content:center!important;box-sizing:border-box!important;`;
+                    const icon = clone.querySelector('i');
+                    if (icon) {
+                        const sourceIcon = iconBoxEl.querySelector('i');
+                        const cs = sourceIcon ? getComputedStyle(sourceIcon) : null;
+                        icon.style.cssText += `;font-family:${cs?.fontFamily || 'Font Awesome 6 Free'}!important;font-size:${Math.max(20,targetSize*0.46)}px!important;line-height:1!important;font-weight:${cs?.fontWeight || '900'}!important;color:${cs?.color || fallbackColor}!important;display:block!important;`;
+                    }
+                    const stage=document.createElement('div');
+                    stage.style.cssText=`position:fixed;left:-30000px;top:0;width:${targetSize}px;height:${targetSize}px;overflow:hidden;background:transparent;`;
+                    stage.appendChild(clone);document.body.appendChild(stage);
+                    try { await document.fonts?.ready; } catch(e) {}
+                    await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+                    const c=await window.htmlToImage.toCanvas(clone,{backgroundColor:'transparent',pixelRatio:4,width:targetSize,height:targetSize,cacheBust:true,skipFonts:false});
+                    stage.remove();
+                    return c;
+                } catch(e) { console.warn('Captura do ícone do sistema:',e); }
+            }
+            const c=document.createElement('canvas');c.width=targetSize*4;c.height=targetSize*4;
+            drawReportIcon(c.getContext('2d'),fallbackClass,0,0,targetSize*4,fallbackColor);return c;
+        }
+
         async function composeSectionWithGeneralFields(item, tabId, tabName){
             const W=REPORT_PAGE_W,H=REPORT_PAGE_H,M=REPORT_MARGIN;
-            const out=document.createElement('canvas');out.width=W;out.height=H;const ctx=out.getContext('2d');
-            ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';ctx.fillStyle='#f8fafc';ctx.fillRect(0,0,W,H);
-            ctx.fillStyle='#e2e8f0';ctx.fillRect(M,1,W-M*2,1);
+            const out=document.createElement('canvas');out.width=W;out.height=H;
+            const ctx=out.getContext('2d');ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
+            ctx.fillStyle='#f8fafc';ctx.fillRect(0,0,W,H);
+            ctx.fillStyle='#e2e8f0';ctx.fillRect(M,1,W-M*2,2);
 
             const kpis=getReportGeneralFields(tabId).slice(0,6);
-            const kpiGap=24,kpiY=22,kpiH=116,kpiW=kpis.length?(W-M*2-kpiGap*(kpis.length-1))/kpis.length:0;
-            kpis.forEach((k,i)=>{
-                const x=M+i*(kpiW+kpiGap),y=kpiY;
-                ctx.fillStyle=k.bg&&k.bg!=='rgba(0, 0, 0, 0)'?k.bg:'#fff';ctx.strokeStyle=k.border||'#dbe3ec';ctx.lineWidth=1.2;
-                ctx.beginPath();ctx.roundRect(x,y,kpiW,kpiH,12);ctx.fill();ctx.stroke();
-                const iconSize=50,iconX=x+16,iconY=y+33;
-                ctx.fillStyle=k.iconBg||'#eef2ff';ctx.beginPath();ctx.roundRect(iconX,iconY,iconSize,iconSize,9);ctx.fill();
-                drawReportIcon(ctx,k.iconClass,iconX,iconY,iconSize,k.iconColor||'#2563eb');
-                const textX=iconX+iconSize+16,textW=Math.max(120,kpiW-(textX-x)-18);
+            const kpiGap=28,kpiY=30,kpiH=154,kpiW=kpis.length?(W-M*2-kpiGap*(kpis.length-1))/kpis.length:0;
+            for(let i=0;i<kpis.length;i++){
+                const k=kpis[i],x=M+i*(kpiW+kpiGap),y=kpiY;
+                ctx.fillStyle=k.bg&&k.bg!=='rgba(0, 0, 0, 0)'?k.bg:'#fff';ctx.strokeStyle=k.border||'#dbe3ec';ctx.lineWidth=2;
+                ctx.beginPath();ctx.roundRect(x,y,kpiW,kpiH,16);ctx.fill();ctx.stroke();
+
+                const iconSize=68,iconX=x+22,iconY=y+(kpiH-iconSize)/2;
+                ctx.fillStyle=k.iconBg||'#eef2ff';ctx.beginPath();ctx.roundRect(iconX,iconY,iconSize,iconSize,12);ctx.fill();
+                const iconCanvas=await captureSystemIcon(k.iconBoxEl,iconSize,k.iconColor||'#2563eb',k.iconClass||'');
+                ctx.drawImage(iconCanvas,iconX,iconY,iconSize,iconSize);
+
+                const textX=iconX+iconSize+24,textW=Math.max(180,kpiW-(textX-x)-24);
                 ctx.textAlign='left';ctx.textBaseline='alphabetic';
-                const labelFit=fitCanvasText(ctx,k.label,textW,11,'700',80);ctx.font=`700 ${labelFit.size}px Arial`;ctx.fillStyle='#64748b';
+                const labelFit=fitCanvasText(ctx,k.label,textW,16,'700',100);ctx.font=`700 ${labelFit.size}px Arial`;ctx.fillStyle='#64748b';
                 const labelLines=wrapCanvasText(ctx,String(labelFit.text).toUpperCase(),textW,2);
-                const labelStart=y+(labelLines.length===2?34:45);
-                labelLines.forEach((line,li)=>ctx.fillText(line,textX,labelStart+li*11));
-                const valueFit=fitCanvasText(ctx,k.value,textW,19,'800',60);ctx.font=`800 ${valueFit.size}px Arial`;ctx.fillStyle='#0f172a';
-                ctx.fillText(valueFit.text,textX,y+96);
-            });
+                const labelLineH=20;
+                const labelStart=y+(labelLines.length===2?48:62);
+                labelLines.forEach((line,li)=>ctx.fillText(line,textX,labelStart+li*labelLineH));
+                const valueFit=fitCanvasText(ctx,k.value,textW,28,'800',80);ctx.font=`800 ${valueFit.size}px Arial`;ctx.fillStyle='#0f172a';
+                ctx.fillText(valueFit.text,textX,y+125);
+            }
 
             const title=String(item.title||'GRÁFICO').replace(/\s+/g,' ').trim();
-            const titleY=kpiY+kpiH+26;ctx.fillStyle='#0f172a';ctx.font='800 20px Arial';ctx.textBaseline='alphabetic';ctx.fillText(title.slice(0,95),M,titleY);
-            const range=getExportDateRange(tabId);if(range){ctx.fillStyle='#64748b';ctx.font='600 11px Arial';ctx.fillText(`Período: ${range}`,M,titleY+18);}
-            ctx.fillStyle='#dbe3ec';ctx.fillRect(M,titleY+28,W-M*2,1);
+            const titleY=kpiY+kpiH+42;
+            ctx.fillStyle='#0f172a';ctx.font='800 30px Arial';ctx.textBaseline='alphabetic';ctx.fillText(title.slice(0,110),M,titleY);
+            const range=getExportDateRange(tabId);
+            if(range){
+                const badgeX=M,badgeY=titleY+18,badgeH=34;
+                ctx.fillStyle='#eef2ff';ctx.strokeStyle='#c7d2fe';ctx.lineWidth=1.5;ctx.beginPath();ctx.roundRect(badgeX,badgeY,Math.min(720,Math.max(250,ctx.measureText(`Período: ${range}`).width+40)),badgeH,9);ctx.fill();ctx.stroke();
+                ctx.fillStyle='#334155';ctx.font='700 17px Arial';ctx.fillText(`Período: ${range}`,badgeX+18,badgeY+23);
+            }
+            ctx.fillStyle='#dbe3ec';ctx.fillRect(M,titleY+64,W-M*2,2);
 
-            const boxX=M,boxY=titleY+38,boxW=W-M*2,boxH=H-boxY-M,inner=12,chartW=Math.floor(boxW-inner*2),chartH=Math.floor(boxH-inner*2);
-            ctx.fillStyle='#fff';ctx.strokeStyle='#dbe3ec';ctx.lineWidth=1;ctx.beginPath();ctx.roundRect(boxX,boxY,boxW,boxH,10);ctx.fill();ctx.stroke();
+            const boxX=M,boxY=titleY+78,boxW=W-M*2,boxH=H-boxY-M,inner=22;
+            ctx.fillStyle='#fff';ctx.strokeStyle='#dbe3ec';ctx.lineWidth=2;ctx.beginPath();ctx.roundRect(boxX,boxY,boxW,boxH,14);ctx.fill();ctx.stroke();
             const sourceCanvas=item.card?.querySelector('canvas');if(!sourceCanvas)throw new Error('Gráfico não encontrado para exportação.');
             const chart=(window.Chart&&Chart.getChart)?Chart.getChart(sourceCanvas):null;let restore=()=>{};
             try{
-                restore=prepareChartForExport(chart,chartW,chartH);await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
-                ctx.drawImage(sourceCanvas,boxX+inner,boxY+inner,chartW,chartH);
+                restore=prepareChartForExport(chart,boxW-inner*2,boxH-inner*2);
+                await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+                ctx.drawImage(sourceCanvas,boxX+inner,boxY+inner,boxW-inner*2,boxH-inner*2);
             }finally{try{restore();}catch(e){}}
             return out;
         }
@@ -1764,7 +1805,7 @@ Chart.register(dailyFlowLabelsPlugin);
         }
         async function exportSelectedSectionsPDF(selected,tabId,tabName,btn){
             const original=btn.innerHTML;btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Gerando PDF...';
-            try{const {jsPDF}=window.jspdf||{};if(!jsPDF)throw new Error('Biblioteca jsPDF não carregada.');const pdf=new jsPDF({orientation:'landscape',unit:'pt',format:[REPORT_PAGE_W,REPORT_PAGE_H],compress:true});for(let i=0;i<selected.length;i++){const canvas=await composeSectionWithGeneralFields(selected[i],tabId,tabName);if(i>0)pdf.addPage([REPORT_PAGE_W,REPORT_PAGE_H],'landscape');pdf.addImage(canvas.toDataURL('image/jpeg',0.97),'JPEG',0,0,REPORT_PAGE_W,REPORT_PAGE_H,undefined,'FAST');}pdf.save(`${tabName}_${new Date().toISOString().slice(0,10)}.pdf`);}
+            try{const {jsPDF}=window.jspdf||{};if(!jsPDF)throw new Error('Biblioteca jsPDF não carregada.');const pdf=new jsPDF({orientation:'landscape',unit:'pt',format:[REPORT_PAGE_W,REPORT_PAGE_H],compress:true});for(let i=0;i<selected.length;i++){const canvas=await composeSectionWithGeneralFields(selected[i],tabId,tabName);if(i>0)pdf.addPage([REPORT_PAGE_W,REPORT_PAGE_H],'landscape');pdf.addImage(canvas.toDataURL('image/png'),'PNG',0,0,REPORT_PAGE_W,REPORT_PAGE_H,undefined,'FAST');}pdf.save(`${tabName}_${new Date().toISOString().slice(0,10)}.pdf`);}
             catch(e){console.error(e);alert(`Não foi possível gerar o PDF. ${e?.message||'Tente novamente após os gráficos carregarem.'}`);}finally{btn.innerHTML=original;btn.disabled=false;}
         }
 
