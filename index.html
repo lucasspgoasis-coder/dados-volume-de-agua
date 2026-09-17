@@ -1470,11 +1470,12 @@ Chart.register(dailyFlowLabelsPlugin);
         }
 
         // ===== EXPORTAÇÃO DE RELATÓRIOS — PADRÃO DO PDF DE REFERÊNCIA =====
-        // Cada gráfico selecionado gera uma página/artefato independente em 1280×720.
-        // A página mantém margens, proporção 16:9 e os campos gerais (KPIs) da aba.
-        const REPORT_PAGE_W = 1280;
+        // Formato final: paisagem, 16:9, um gráfico + campos gerais por página/arquivo.
+        // A largura foi ampliada ligeiramente para dar folga aos textos dos KPIs,
+        // sem alterar a altura de referência.
+        const REPORT_PAGE_W = 1480;
         const REPORT_PAGE_H = 720;
-        const REPORT_MARGIN = 24;
+        const REPORT_MARGIN = 28;
 
         function getExportableSections(tabId) {
             const tab = document.getElementById(tabId);
@@ -1483,10 +1484,12 @@ Chart.register(dailyFlowLabelsPlugin);
                 const canvas = card.querySelector('canvas');
                 const r = card.getBoundingClientRect();
                 return !!canvas && r.width > 0 && r.height > 0;
-            }).map((card, index) => {
-                const title = card.querySelector('h2,h3,h4')?.textContent?.trim() || `Gráfico ${index + 1}`;
-                return { card, title, index, tabId };
-            });
+            }).map((card, index) => ({
+                card,
+                title: card.querySelector('h2,h3,h4')?.textContent?.trim() || `Gráfico ${index + 1}`,
+                index,
+                tabId
+            }));
         }
 
         function getReportGeneralFields(tabId) {
@@ -1495,28 +1498,31 @@ Chart.register(dailyFlowLabelsPlugin);
             return Array.from(tab.querySelectorAll('.kpi-compact-card')).filter(el => {
                 const r = el.getBoundingClientRect();
                 return r.width > 0 && r.height > 0 && !el.closest('.export-hide');
-            }).map(el => ({
-                label: (el.querySelector('p')?.textContent || '').trim(),
-                value: (el.querySelector('h3')?.textContent || '--').trim(),
-                bg: getComputedStyle(el).backgroundColor,
-                border: getComputedStyle(el).borderColor,
-                iconBg: el.querySelector('.w-10') ? getComputedStyle(el.querySelector('.w-10')).backgroundColor : '#eef2ff',
-                iconColor: el.querySelector('.w-10') ? getComputedStyle(el.querySelector('.w-10')).color : '#2563eb'
-            })).filter(x => x.label);
+            }).map(el => {
+                const icon = el.querySelector('i');
+                const iconBox = el.querySelector('.w-10');
+                const iconCS = icon ? getComputedStyle(icon) : null;
+                const iconBoxCS = iconBox ? getComputedStyle(iconBox) : null;
+                return {
+                    label: (el.querySelector('p')?.textContent || '').trim(),
+                    value: (el.querySelector('h3')?.textContent || '--').trim(),
+                    bg: getComputedStyle(el).backgroundColor,
+                    border: getComputedStyle(el).borderColor,
+                    iconBg: iconBoxCS?.backgroundColor || '#eef2ff',
+                    iconColor: iconCS?.color || iconBoxCS?.color || '#2563eb',
+                    iconClass: icon ? Array.from(icon.classList).find(c => c.startsWith('fa-') && c !== 'fa-solid' && c !== 'fa-regular') || '' : ''
+                };
+            }).filter(x => x.label);
         }
 
         function openReportExportMenu(tabId, tabName, btn) {
             const sections = getExportableSections(tabId);
-            if (!sections.length) {
-                alert('Não foram encontrados gráficos para exportar nesta aba.');
-                return;
-            }
+            if (!sections.length) { alert('Não foram encontrados gráficos para exportar nesta aba.'); return; }
             const modal = document.getElementById('exportSelectorModal');
             const list = document.getElementById('exportSelectorList');
             const title = document.getElementById('exportSelectorTitle');
             const confirm = document.getElementById('exportSelectorConfirm');
             if (!modal || !list || !confirm) return;
-
             title.textContent = `Baixar relatório — ${String(tabName || '').replace(/[_-]+/g,' ').toUpperCase()}`;
             list.innerHTML = sections.map((item, i) => `
                 <label class="export-option">
@@ -1524,13 +1530,9 @@ Chart.register(dailyFlowLabelsPlugin);
                     <span class="text-sm font-semibold text-slate-700">${escapeHtml(item.title)}</span>
                     <span class="ml-auto text-[10px] font-bold uppercase text-blue-500">GRÁFICO + CAMPOS GERAIS</span>
                 </label>`).join('');
-
             const selectAll = document.getElementById('exportSelectorSelectAll');
             if (selectAll) selectAll.checked = true;
             modal.classList.remove('hidden'); modal.style.display = 'flex';
-            window.__reportExportButton = btn;
-            window.__reportExportSections = sections;
-
             const close = () => { modal.classList.add('hidden'); modal.style.display = 'none'; };
             document.getElementById('exportSelectorCancel').onclick = close;
             document.getElementById('exportSelectorCancel2').onclick = close;
@@ -1545,13 +1547,9 @@ Chart.register(dailyFlowLabelsPlugin);
             };
         }
 
-        function escapeHtml(value) {
-            return String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[ch]));
-        }
-
+        function escapeHtml(value) { return String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[ch])); }
         function getExportDateRange(tabId) {
-            const tab = document.getElementById(tabId);
-            if (!tab) return '';
+            const tab = document.getElementById(tabId); if (!tab) return '';
             const dates = Array.from(tab.querySelectorAll('input[type="date"]')).map(el => el.value).filter(Boolean).sort();
             if (!dates.length) return '';
             const fmt = d => { const p = d.split('-'); return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : d; };
@@ -1563,166 +1561,135 @@ Chart.register(dailyFlowLabelsPlugin);
             const o = chart.options || {}, saved = [];
             const saveFont = obj => { if (obj?.font && typeof obj.font === 'object') saved.push({obj, font:{...obj.font}}); };
             const bump = (obj,min,scale) => { if(!obj) return; saveFont(obj); if(obj.font&&typeof obj.font==='object'){const n=Number(obj.font.size)||12;obj.font={...obj.font,size:Math.max(min,Math.round(n*scale))};} };
-            const scale=Math.max(1.35,Math.min(2.2,exportWidth/Math.max(700,chart.canvas.clientWidth||1000)));
+            const scale=Math.max(1.25,Math.min(2.0,exportWidth/Math.max(800,chart.canvas.clientWidth||1000)));
             try {
-                ['x','y'].forEach(axis=>{const a=o.scales?.[axis];if(a){bump(a.ticks,14,scale);bump(a.title,16,scale);}});
-                bump(o.plugins?.legend?.labels,13,scale); bump(o.plugins?.title,20,scale); if(o.plugins?.datalabels)bump(o.plugins.datalabels,13,scale);
+                ['x','y'].forEach(axis=>{const a=o.scales?.[axis];if(a){bump(a.ticks,13,scale);bump(a.title,15,scale);}});
+                bump(o.plugins?.legend?.labels,13,scale); bump(o.plugins?.title,19,scale); if(o.plugins?.datalabels)bump(o.plugins.datalabels,13,scale);
                 chart.canvas.style.width=exportWidth+'px'; chart.canvas.style.height=exportHeight+'px'; chart.resize(exportWidth,exportHeight); chart.update('none');
             } catch(e){console.warn('Ajuste de gráfico para exportação:',e);}
             return ()=>{saved.forEach(x=>{try{x.obj.font=x.font;}catch(e){}});try{chart.canvas.style.width='';chart.canvas.style.height='';chart.resize();chart.update('none');}catch(e){}};
         }
 
-        async function captureExportCard(card,width=2400,height=500){
-            if(!window.htmlToImage||typeof window.htmlToImage.toCanvas!=='function')throw new Error('Biblioteca html-to-image não carregada.');
-            const stage=document.createElement('div');
-            stage.style.cssText=`position:fixed;left:-20000px;top:0;width:${width}px;height:${height}px;background:#fff;padding:0;margin:0;overflow:hidden;box-sizing:border-box;pointer-events:none;`;
-            const clone=card.cloneNode(true); clone.classList.add('export-mode');
-            clone.style.cssText+=`;width:${width}px!important;min-width:${width}px!important;max-width:${width}px!important;height:${height}px!important;min-height:${height}px!important;margin:0!important;box-sizing:border-box!important;padding:24px!important;overflow:hidden!important;background:#fff!important;`;
-            clone.querySelectorAll('button,input,select,.print-hide,.export-hide,.export-controls,.filter-container,.filters').forEach(el=>el.style.setProperty('display','none','important'));
-            clone.querySelectorAll('.chart-scroll-wrapper,.overflow-x-auto,.overflow-y-auto').forEach(el=>{el.style.setProperty('overflow','visible','important');el.style.setProperty('width','100%','important');});
-            clone.querySelectorAll('.chart-container,.chart-container-large,.chart-container-no-scroll').forEach(el=>{el.style.setProperty('width','100%','important');el.style.setProperty('min-width','0','important');el.style.setProperty('height',Math.max(300,height-90)+'px','important');el.style.setProperty('min-height',Math.max(300,height-90)+'px','important');});
-            clone.querySelectorAll('h2,h3,h4').forEach(el=>{el.style.setProperty('font-size','26px','important');el.style.setProperty('line-height','1.2','important');});
-            clone.querySelectorAll('p,label,th,td').forEach(el=>{el.style.setProperty('font-size','14px','important');el.style.setProperty('line-height','1.25','important');});
-            const originals=Array.from(card.querySelectorAll('*')),copies=Array.from(clone.querySelectorAll('*'));
-            originals.forEach((el,i)=>{const cp=copies[i];if(!cp)return;const cs=getComputedStyle(el);if(cs.backgroundColor&&cs.backgroundColor!=='rgba(0, 0, 0, 0)')cp.style.setProperty('background-color',cs.backgroundColor,'important');if(cs.borderColor)cp.style.setProperty('border-color',cs.borderColor,'important');if(cs.color)cp.style.setProperty('color',cs.color,'important');if(cs.borderRadius)cp.style.setProperty('border-radius',cs.borderRadius,'important');});
-            const restores=Array.from(card.querySelectorAll('canvas')).map(c=>{try{return prepareChartForExport(Chart.getChart(c),width-48,Math.max(300,height-90));}catch(e){return()=>{};}});
-            stage.appendChild(clone);document.body.appendChild(stage);
-            try{if(document.fonts?.ready){try{await document.fonts.ready;}catch(e){}}await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));return await window.htmlToImage.toCanvas(clone,{backgroundColor:'#fff',pixelRatio:1,width,height,cacheBust:true,skipFonts:false,style:{margin:'0',transform:'none',width:width+'px',height:height+'px'}});}finally{stage.remove();restores.forEach(fn=>{try{fn();}catch(e){}});}
+        // Ícones desenhados diretamente no canvas: evita que o Font Awesome seja
+        // convertido em um ponto/quadrado quando html-to-image captura o relatório.
+        function drawReportIcon(ctx, iconClass, x, y, size, color) {
+            ctx.save();
+            ctx.strokeStyle = color; ctx.fillStyle = color;
+            ctx.lineWidth = Math.max(2, size * 0.055); ctx.lineCap='round'; ctx.lineJoin='round';
+            const c=x+size/2, cy=y+size/2, r=size*.30;
+            const has=n=>iconClass.includes(n);
+            if(has('droplet')||has('glass-water')){
+                ctx.beginPath();ctx.moveTo(c,y+5);ctx.bezierCurveTo(x+size-5,y+size*.43,x+size*.78,y+size-5,c,y+size-4);ctx.bezierCurveTo(x+size*.22,y+size-5,x+5,y+size*.43,c,y+5);ctx.fill();
+            } else if(has('seedling')){
+                ctx.beginPath();ctx.moveTo(c,y+size-7);ctx.lineTo(c,y+size*.43);ctx.stroke();
+                ctx.beginPath();ctx.ellipse(c-8,cy-5,9,5,-.55,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.ellipse(c+8,cy-12,9,5,.55,0,Math.PI*2);ctx.fill();
+            } else if(has('faucet')){
+                ctx.beginPath();ctx.moveTo(x+8,y+18);ctx.lineTo(x+size-9,y+18);ctx.lineTo(x+size-9,y+25);ctx.lineTo(x+size*.62,y+25);ctx.lineTo(x+size*.62,y+31);ctx.lineTo(x+size*.48,y+31);ctx.lineTo(x+size*.48,y+25);ctx.lineTo(x+18,y+25);ctx.lineTo(x+18,y+31);ctx.lineTo(x+8,y+31);ctx.closePath();ctx.fill();
+                ctx.beginPath();ctx.moveTo(x+16,y+18);ctx.lineTo(x+16,y+10);ctx.lineTo(x+size*.68,y+10);ctx.lineTo(x+size*.68,y+18);ctx.stroke();
+            } else if(has('gauge')){
+                ctx.beginPath();ctx.arc(c,cy+4,r,Math.PI,0);ctx.stroke();ctx.beginPath();ctx.moveTo(c,cy+4);ctx.lineTo(c+r*.55,cy-r*.55);ctx.stroke();ctx.beginPath();ctx.arc(c,cy+4,3,0,Math.PI*2);ctx.fill();
+            } else if(has('calendar')){
+                ctx.strokeRect(x+7,y+9,size-14,size-14);ctx.beginPath();ctx.moveTo(x+7,y+18);ctx.lineTo(x+size-7,y+18);ctx.moveTo(x+13,y+5);ctx.lineTo(x+13,y+12);ctx.moveTo(x+size-13,y+5);ctx.lineTo(x+size-13,y+12);ctx.stroke();
+                if(has('check')){ctx.beginPath();ctx.moveTo(x+13,y+27);ctx.lineTo(x+19,y+33);ctx.lineTo(x+31,y+21);ctx.stroke();}
+            } else if(has('chart')||has('trend')){
+                ctx.beginPath();ctx.moveTo(x+7,y+size-8);ctx.lineTo(x+7,y+8);ctx.lineTo(x+size-7,y+8);ctx.stroke();
+                if(has('trend')){ctx.beginPath();ctx.moveTo(x+12,y+30);ctx.lineTo(x+21,y+21);ctx.lineTo(x+27,y+25);ctx.lineTo(x+37,y+13);ctx.stroke();ctx.beginPath();ctx.moveTo(x+31,y+13);ctx.lineTo(x+37,y+13);ctx.lineTo(x+37,y+19);ctx.stroke();}
+                else {[0,1,2].forEach(i=>ctx.fillRect(x+13+i*10,y+size-9-(10+i*7),6,10+i*7));}
+            } else if(has('clock')||has('stopwatch')){
+                ctx.beginPath();ctx.arc(c,cy,r*.82,0,Math.PI*2);ctx.stroke();ctx.beginPath();ctx.moveTo(c,cy);ctx.lineTo(c,cy-r*.48);ctx.moveTo(c,cy);ctx.lineTo(c+r*.4,cy+r*.2);ctx.stroke();ctx.fillRect(c-5,y+2,10,3);
+            } else if(has('calculator')){
+                ctx.strokeRect(x+9,y+6,size-18,size-12);ctx.fillRect(x+14,y+12,size-28,9);[0,1,2].forEach(row=>[0,1,2].forEach(col=>ctx.fillRect(x+14+col*8,y+27+row*7,4,4)));
+            } else if(has('table')||has('list')){
+                ctx.strokeRect(x+6,y+7,size-12,size-14);ctx.beginPath();ctx.moveTo(x+6,y+18);ctx.lineTo(x+size-6,y+18);ctx.moveTo(x+6,y+29);ctx.lineTo(x+size-6,y+29);ctx.moveTo(x+18,y+7);ctx.lineTo(x+18,y+size-7);ctx.stroke();
+            } else if(has('screwdriver')||has('wrench')){
+                ctx.beginPath();ctx.moveTo(x+10,y+size-10);ctx.lineTo(x+size-11,y+11);ctx.stroke();ctx.beginPath();ctx.arc(x+size-10,y+10,6,0,Math.PI*2);ctx.stroke();
+            } else if(has('spray-can')){
+                ctx.strokeRect(x+13,y+12,size-20,size-14);ctx.fillRect(x+16,y+7,size-26,5);ctx.beginPath();ctx.moveTo(x+size-7,y+10);ctx.lineTo(x+size-2,y+7);ctx.stroke();
+            } else if(has('shower')){
+                ctx.beginPath();ctx.arc(c-4,cy-3,r,Math.PI*1.05,Math.PI*1.9);ctx.stroke();ctx.beginPath();ctx.moveTo(c-4,cy-3);ctx.lineTo(c+14,cy+10);ctx.stroke();[0,1,2].forEach(i=>{ctx.beginPath();ctx.moveTo(c+8+i*7,cy+15);ctx.lineTo(c+6+i*7,cy+22);ctx.stroke();});
+            } else if(has('power')){
+                ctx.beginPath();ctx.arc(c,cy+2,r,Math.PI*.2,Math.PI*1.8);ctx.stroke();ctx.beginPath();ctx.moveTo(c,y+6);ctx.lineTo(c,cy+8);ctx.stroke();
+            } else if(has('circle-check')){
+                ctx.beginPath();ctx.arc(c,cy,r,0,Math.PI*2);ctx.stroke();ctx.beginPath();ctx.moveTo(c-r*.55,cy);ctx.lineTo(c-r*.1,cy+r*.45);ctx.lineTo(c+r*.65,cy-r*.5);ctx.stroke();
+            } else if(has('scale-balanced')){
+                ctx.beginPath();ctx.moveTo(c,y+8);ctx.lineTo(c,y+size-8);ctx.moveTo(x+10,y+14);ctx.lineTo(x+size-10,y+14);ctx.stroke();ctx.beginPath();ctx.moveTo(x+15,y+15);ctx.lineTo(x+10,y+27);ctx.lineTo(x+20,y+27);ctx.closePath();ctx.stroke();ctx.beginPath();ctx.moveTo(x+size-15,y+15);ctx.lineTo(x+size-20,y+27);ctx.lineTo(x+size-10,y+27);ctx.closePath();ctx.stroke();
+            } else if(has('arrow')){
+                ctx.beginPath();ctx.moveTo(x+10,y+size-12);ctx.lineTo(x+size-11,y+11);ctx.stroke();ctx.beginPath();ctx.moveTo(x+size-20,y+11);ctx.lineTo(x+size-11,y+11);ctx.lineTo(x+size-11,y+20);ctx.stroke();
+            } else if(has('layer')){
+                ctx.beginPath();ctx.moveTo(c,y+7);ctx.lineTo(x+size-8,cy-5);ctx.lineTo(c,cy+4);ctx.lineTo(x+8,cy-5);ctx.closePath();ctx.stroke();ctx.beginPath();ctx.moveTo(x+12,cy+7);ctx.lineTo(c,cy+16);ctx.lineTo(x+size-12,cy+7);ctx.stroke();
+            } else if(has('map-location')){
+                ctx.beginPath();ctx.arc(c,cy-4,r*.75,0,Math.PI*2);ctx.stroke();ctx.beginPath();ctx.moveTo(c,cy+size*.34);ctx.lineTo(c-7,cy+size*.08);ctx.lineTo(c+7,cy+size*.08);ctx.closePath();ctx.stroke();ctx.beginPath();ctx.arc(c,cy-4,3,0,Math.PI*2);ctx.fill();
+            } else {
+                // Nunca usar apenas um ponto: ícone genérico visível para classes novas.
+                ctx.beginPath();ctx.roundRect(x+7,y+7,size-14,size-14,7);ctx.stroke();ctx.beginPath();ctx.moveTo(x+15,cy);ctx.lineTo(x+size-15,cy);ctx.moveTo(c,y+15);ctx.lineTo(c,y+size-15);ctx.stroke();
+            }
+            ctx.restore();
+        }
+        function fitCanvasText(ctx, text, maxWidth, baseSize, weight='700', maxChars=999) {
+            let value = String(text ?? '').trim();
+            if (value.length > maxChars) value = value.slice(0,maxChars-1)+'…';
+            let size = baseSize;
+            while (size >= 8) { ctx.font = `${weight} ${size}px Arial`; if (ctx.measureText(value).width <= maxWidth) return {text:value,size}; size -= 1; }
+            return {text:value,size:8};
         }
 
-        // Monta UMA folha exatamente no padrão da referência: 1280×720 px,
-        // margem externa de 24 px, campos gerais no topo e gráfico ocupando
-        // praticamente toda a área restante. O gráfico nunca é esticado:
-        // ele é redimensionado pelo próprio Chart.js para a área final.
+        function wrapCanvasText(ctx, text, maxWidth, maxLines=2) {
+            const words=String(text||'').split(/\s+/).filter(Boolean), lines=[]; let line='';
+            for(const word of words){const test=line?`${line} ${word}`:word;if(ctx.measureText(test).width<=maxWidth){line=test;}else{if(line)lines.push(line);line=word;if(lines.length===maxLines-1)break;}}
+            if(line && lines.length<maxLines) lines.push(line);
+            if(lines.length===maxLines && words.length && !String(text).endsWith(lines[lines.length-1])){
+                let last=lines[maxLines-1];while(last.length && ctx.measureText(last+'…').width>maxWidth)last=last.slice(0,-1);lines[maxLines-1]=last+'…';
+            }
+            return lines;
+        }
+
         async function composeSectionWithGeneralFields(item, tabId, tabName){
-            const W = REPORT_PAGE_W, H = REPORT_PAGE_H, M = REPORT_MARGIN;
-            const out = document.createElement('canvas');
-            out.width = W; out.height = H;
-            const ctx = out.getContext('2d');
-            ctx.imageSmoothingEnabled = true;
-            ctx.imageSmoothingQuality = 'high';
+            const W=REPORT_PAGE_W,H=REPORT_PAGE_H,M=REPORT_MARGIN;
+            const out=document.createElement('canvas');out.width=W;out.height=H;const ctx=out.getContext('2d');
+            ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';ctx.fillStyle='#f8fafc';ctx.fillRect(0,0,W,H);
+            ctx.fillStyle='#e2e8f0';ctx.fillRect(M,1,W-M*2,1);
 
-            // Fundo da folha.
-            ctx.fillStyle = '#f8fafc';
-            ctx.fillRect(0, 0, W, H);
-
-            // Barra superior discreta, como no modelo.
-            ctx.fillStyle = '#e2e8f0';
-            ctx.fillRect(M, 1, W - M * 2, 1);
-
-            // Campos gerais (máximo 6, mantendo uma única linha).
-            const kpis = getReportGeneralFields(tabId).slice(0, 6);
-            const kpiGap = 12;
-            const kpiY = 24;
-            const kpiH = 92;
-            const kpiW = kpis.length
-                ? (W - M * 2 - kpiGap * (kpis.length - 1)) / kpis.length
-                : 0;
-
-            kpis.forEach((k, i) => {
-                const x = M + i * (kpiW + kpiGap), y = kpiY;
-                const bg = k.bg && k.bg !== 'rgba(0, 0, 0, 0)' ? k.bg : '#ffffff';
-                const border = k.border || '#dbe3ec';
-
-                ctx.fillStyle = bg;
-                ctx.strokeStyle = border;
-                ctx.lineWidth = 1.2;
-                ctx.beginPath();
-                ctx.roundRect(x, y, kpiW, kpiH, 12);
-                ctx.fill(); ctx.stroke();
-
-                // Ícone em caixa, mantendo o aspecto visual dos cards da tela.
-                ctx.fillStyle = k.iconBg || '#eef2ff';
-                ctx.beginPath();
-                ctx.roundRect(x + 14, y + 24, 42, 42, 9);
-                ctx.fill();
-                ctx.fillStyle = k.iconColor || '#2563eb';
-                ctx.font = '700 18px Arial';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText('●', x + 35, y + 45);
-
-                // Texto centralizado verticalmente no card.
-                ctx.textAlign = 'left';
-                ctx.textBaseline = 'alphabetic';
-                ctx.fillStyle = '#64748b';
-                ctx.font = '700 10px Arial';
-                ctx.fillText(String(k.label || '').toUpperCase().slice(0, 30), x + 68, y + 38);
-                ctx.fillStyle = '#0f172a';
-                ctx.font = '800 18px Arial';
-                ctx.fillText(String(k.value || '--').slice(0, 28), x + 68, y + 64);
+            const kpis=getReportGeneralFields(tabId).slice(0,6);
+            const kpiGap=16,kpiY=20,kpiH=108,kpiW=kpis.length?(W-M*2-kpiGap*(kpis.length-1))/kpis.length:0;
+            kpis.forEach((k,i)=>{
+                const x=M+i*(kpiW+kpiGap),y=kpiY;
+                ctx.fillStyle=k.bg&&k.bg!=='rgba(0, 0, 0, 0)'?k.bg:'#fff';ctx.strokeStyle=k.border||'#dbe3ec';ctx.lineWidth=1.2;
+                ctx.beginPath();ctx.roundRect(x,y,kpiW,kpiH,12);ctx.fill();ctx.stroke();
+                const iconSize=46,iconX=x+14,iconY=y+31;
+                ctx.fillStyle=k.iconBg||'#eef2ff';ctx.beginPath();ctx.roundRect(iconX,iconY,iconSize,iconSize,9);ctx.fill();
+                drawReportIcon(ctx,k.iconClass,iconX,iconY,iconSize,k.iconColor||'#2563eb');
+                const textX=iconX+iconSize+14,textW=Math.max(95,kpiW-(textX-x)-14);
+                ctx.textAlign='left';ctx.textBaseline='alphabetic';
+                const labelFit=fitCanvasText(ctx,k.label,textW,10,'700',60);ctx.font=`700 ${labelFit.size}px Arial`;ctx.fillStyle='#64748b';
+                const labelLines=wrapCanvasText(ctx,String(labelFit.text).toUpperCase(),textW,2);
+                const labelStart=y+(labelLines.length===2?38:48);
+                labelLines.forEach((line,li)=>ctx.fillText(line,textX,labelStart+li*11));
+                const valueFit=fitCanvasText(ctx,k.value,textW,18,'800',42);ctx.font=`800 ${valueFit.size}px Arial`;ctx.fillStyle='#0f172a';
+                ctx.fillText(valueFit.text,textX,y+91);
             });
 
-            // Cabeçalho do gráfico.
-            const title = String(item.title || 'GRÁFICO').replace(/\s+/g, ' ').trim();
-            const titleY = kpiY + kpiH + 34;
-            ctx.fillStyle = '#0f172a';
-            ctx.font = '800 20px Arial';
-            ctx.textBaseline = 'alphabetic';
-            ctx.fillText(title, M, titleY);
+            const title=String(item.title||'GRÁFICO').replace(/\s+/g,' ').trim();
+            const titleY=kpiY+kpiH+28;ctx.fillStyle='#0f172a';ctx.font='800 20px Arial';ctx.textBaseline='alphabetic';ctx.fillText(title.slice(0,95),M,titleY);
+            const range=getExportDateRange(tabId);if(range){ctx.fillStyle='#64748b';ctx.font='600 11px Arial';ctx.fillText(`Período: ${range}`,M,titleY+18);}
+            ctx.fillStyle='#dbe3ec';ctx.fillRect(M,titleY+28,W-M*2,1);
 
-            const range = getExportDateRange(tabId);
-            if (range) {
-                ctx.fillStyle = '#64748b';
-                ctx.font = '600 11px Arial';
-                ctx.fillText(`Período: ${range}`, M, titleY + 18);
-            }
-
-            ctx.fillStyle = '#dbe3ec';
-            ctx.fillRect(M, titleY + 28, W - M * 2, 1);
-
-            // Área REAL disponível para o gráfico. A caixa mantém o gráfico
-            // dentro dos limites e evita que ele fique pequeno por causa de
-            // um canvas de captura com proporção incorreta.
-            const boxX = M;
-            const boxY = titleY + 40;
-            const boxW = W - M * 2;
-            const boxH = H - boxY - M;
-            const inner = 10;
-            const chartW = Math.floor(boxW - inner * 2);
-            const chartH = Math.floor(boxH - inner * 2);
-
-            ctx.fillStyle = '#ffffff';
-            ctx.strokeStyle = '#dbe3ec';
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            ctx.roundRect(boxX, boxY, boxW, boxH, 10);
-            ctx.fill(); ctx.stroke();
-
-            const sourceCanvas = item.card?.querySelector('canvas');
-            if (!sourceCanvas) throw new Error('Gráfico não encontrado para exportação.');
-
-            const chart = (window.Chart && Chart.getChart) ? Chart.getChart(sourceCanvas) : null;
-            let snapshot;
-            let restore = () => {};
-            try {
-                // Renderiza o Chart.js exatamente no tamanho final da folha.
-                restore = prepareChartForExport(chart, chartW, chartH);
-                await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
-                snapshot = document.createElement('canvas');
-                snapshot.width = chartW;
-                snapshot.height = chartH;
-                const sctx = snapshot.getContext('2d');
-                sctx.imageSmoothingEnabled = true;
-                sctx.imageSmoothingQuality = 'high';
-                sctx.drawImage(sourceCanvas, 0, 0, chartW, chartH);
-            } finally {
-                try { restore(); } catch(e) {}
-            }
-
-            // Sem distorção: o snapshot já tem exatamente a proporção da área.
-            ctx.drawImage(snapshot, boxX + inner, boxY + inner, chartW, chartH);
+            const boxX=M,boxY=titleY+40,boxW=W-M*2,boxH=H-boxY-M,inner=10,chartW=Math.floor(boxW-inner*2),chartH=Math.floor(boxH-inner*2);
+            ctx.fillStyle='#fff';ctx.strokeStyle='#dbe3ec';ctx.lineWidth=1;ctx.beginPath();ctx.roundRect(boxX,boxY,boxW,boxH,10);ctx.fill();ctx.stroke();
+            const sourceCanvas=item.card?.querySelector('canvas');if(!sourceCanvas)throw new Error('Gráfico não encontrado para exportação.');
+            const chart=(window.Chart&&Chart.getChart)?Chart.getChart(sourceCanvas):null;let restore=()=>{};
+            try{
+                restore=prepareChartForExport(chart,chartW,chartH);await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+                ctx.drawImage(sourceCanvas,boxX+inner,boxY+inner,chartW,chartH);
+            }finally{try{restore();}catch(e){}}
             return out;
         }
 
-        function downloadCanvasAsJPEG(canvas,fileName){const link=document.createElement('a');link.download=fileName;link.href=canvas.toDataURL('image/jpeg',0.96);document.body.appendChild(link);link.click();link.remove();}
-
+        function downloadCanvasAsJPEG(canvas,fileName){const link=document.createElement('a');link.download=fileName;link.href=canvas.toDataURL('image/jpeg',0.97);document.body.appendChild(link);link.click();link.remove();}
         async function exportSelectedSectionsJPEG(selected,tabId,tabName,btn){
             const original=btn.innerHTML;btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Gerando JPEG...';
             try{for(let i=0;i<selected.length;i++){const canvas=await composeSectionWithGeneralFields(selected[i],tabId,tabName);const safe=String(selected[i].title||`grafico_${i+1}`).replace(/[^a-z0-9áàâãéêíóôõúç _-]/gi,'').trim().replace(/\s+/g,'_').slice(0,80);downloadCanvasAsJPEG(canvas,`${tabName}_${safe}_${new Date().toISOString().slice(0,10)}.jpeg`);if(i<selected.length-1)await new Promise(r=>setTimeout(r,250));}}
             catch(e){console.error(e);alert(`Não foi possível gerar o JPEG. ${e?.message||'Tente novamente após os gráficos carregarem.'}`);}finally{btn.innerHTML=original;btn.disabled=false;}
         }
-
         async function exportSelectedSectionsPDF(selected,tabId,tabName,btn){
             const original=btn.innerHTML;btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Gerando PDF...';
             try{const {jsPDF}=window.jspdf||{};if(!jsPDF)throw new Error('Biblioteca jsPDF não carregada.');const pdf=new jsPDF({orientation:'landscape',unit:'pt',format:[REPORT_PAGE_W,REPORT_PAGE_H],compress:true});for(let i=0;i<selected.length;i++){const canvas=await composeSectionWithGeneralFields(selected[i],tabId,tabName);if(i>0)pdf.addPage([REPORT_PAGE_W,REPORT_PAGE_H],'landscape');pdf.addImage(canvas.toDataURL('image/jpeg',0.97),'JPEG',0,0,REPORT_PAGE_W,REPORT_PAGE_H,undefined,'FAST');}pdf.save(`${tabName}_${new Date().toISOString().slice(0,10)}.pdf`);}
