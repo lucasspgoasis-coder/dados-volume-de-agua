@@ -1473,9 +1473,9 @@ Chart.register(dailyFlowLabelsPlugin);
         // Formato final: paisagem, 16:9, um gráfico + campos gerais por página/arquivo.
         // A largura foi ampliada ligeiramente para dar folga aos textos dos KPIs,
         // sem alterar a altura de referência.
-        const REPORT_PAGE_W = 1480;
+        const REPORT_PAGE_W = 1800;
         const REPORT_PAGE_H = 720;
-        const REPORT_MARGIN = 28;
+        const REPORT_MARGIN = 36;
 
         function getExportableSections(tabId) {
             const tab = document.getElementById(tabId);
@@ -1559,15 +1559,61 @@ Chart.register(dailyFlowLabelsPlugin);
         function prepareChartForExport(chart, exportWidth, exportHeight) {
             if (!chart) return () => {};
             const o = chart.options || {}, saved = [];
-            const saveFont = obj => { if (obj?.font && typeof obj.font === 'object') saved.push({obj, font:{...obj.font}}); };
-            const bump = (obj,min,scale) => { if(!obj) return; saveFont(obj); if(obj.font&&typeof obj.font==='object'){const n=Number(obj.font.size)||12;obj.font={...obj.font,size:Math.max(min,Math.round(n*scale))};} };
-            const scale=Math.max(1.25,Math.min(2.0,exportWidth/Math.max(800,chart.canvas.clientWidth||1000)));
+            const saveProp = (obj, prop) => {
+                if (obj && Object.prototype.hasOwnProperty.call(obj, prop)) saved.push({obj, prop, value: obj[prop]});
+            };
+            const saveFont = obj => { if (obj?.font && typeof obj.font === 'object') saved.push({obj, prop:'font', value:{...obj.font}}); };
+            const setFont = (obj, min, scale) => {
+                if (!obj) return;
+                saveFont(obj);
+                if (obj.font && typeof obj.font === 'object') {
+                    const n = Number(obj.font.size) || 12;
+                    obj.font = {...obj.font, size: Math.max(min, Math.round(n * scale))};
+                }
+            };
+            const scale = Math.max(1.05, Math.min(1.65, exportWidth / Math.max(1000, chart.canvas.clientWidth || 1000)));
             try {
-                ['x','y'].forEach(axis=>{const a=o.scales?.[axis];if(a){bump(a.ticks,13,scale);bump(a.title,15,scale);}});
-                bump(o.plugins?.legend?.labels,13,scale); bump(o.plugins?.title,19,scale); if(o.plugins?.datalabels)bump(o.plugins.datalabels,13,scale);
-                chart.canvas.style.width=exportWidth+'px'; chart.canvas.style.height=exportHeight+'px'; chart.resize(exportWidth,exportHeight); chart.update('none');
-            } catch(e){console.warn('Ajuste de gráfico para exportação:',e);}
-            return ()=>{saved.forEach(x=>{try{x.obj.font=x.font;}catch(e){}});try{chart.canvas.style.width='';chart.canvas.style.height='';chart.resize();chart.update('none');}catch(e){}};
+                ['x','y'].forEach(axis => {
+                    const a = o.scales?.[axis];
+                    if (!a) return;
+                    setFont(a.ticks, 12, scale);
+                    setFont(a.title, 14, scale);
+                    // Mais espaço entre os rótulos do eixo X para evitar sobreposição.
+                    if (axis === 'x') {
+                        saveProp(a.ticks, 'autoSkip'); saveProp(a.ticks, 'maxRotation'); saveProp(a.ticks, 'minRotation');
+                        a.ticks.autoSkip = false;
+                        a.ticks.maxRotation = 35;
+                        a.ticks.minRotation = 25;
+                    }
+                });
+                setFont(o.plugins?.legend?.labels, 12, scale);
+                setFont(o.plugins?.title, 18, scale);
+                if (o.plugins?.datalabels) {
+                    const dl = o.plugins.datalabels;
+                    setFont(dl, 10, Math.min(1.35, scale));
+                    saveProp(dl, 'anchor'); saveProp(dl, 'align'); saveProp(dl, 'offset'); saveProp(dl, 'clamp'); saveProp(dl, 'clip'); saveProp(dl, 'padding');
+                    dl.anchor = 'end';
+                    dl.align = 'top';
+                    dl.offset = 5;
+                    dl.clamp = false;
+                    dl.clip = false;
+                    dl.padding = 1;
+                    // Reduz somente a fonte dos rótulos quando há muitas barras,
+                    // mantendo cada valor visível sem empilhar os números.
+                    const count = Math.max(...(chart.data?.datasets || []).map(ds => Array.isArray(ds.data) ? ds.data.length : 0), 0);
+                    const f = dl.font && typeof dl.font === 'object' ? dl.font : {};
+                    const base = Number(f.size) || 10;
+                    dl.font = {...f, size: Math.max(8, Math.min(13, count > 55 ? 8 : count > 40 ? 9 : count > 28 ? 10 : base))};
+                }
+                chart.canvas.style.width = exportWidth + 'px';
+                chart.canvas.style.height = exportHeight + 'px';
+                chart.resize(exportWidth, exportHeight);
+                chart.update('none');
+            } catch(e) { console.warn('Ajuste de gráfico para exportação:', e); }
+            return () => {
+                saved.forEach(x => { try { x.obj[x.prop] = x.value; } catch(e) {} });
+                try { chart.canvas.style.width=''; chart.canvas.style.height=''; chart.resize(); chart.update('none'); } catch(e) {}
+            };
         }
 
         // Ícones desenhados diretamente no canvas: evita que o Font Awesome seja
@@ -1619,6 +1665,32 @@ Chart.register(dailyFlowLabelsPlugin);
                 ctx.beginPath();ctx.moveTo(c,y+7);ctx.lineTo(x+size-8,cy-5);ctx.lineTo(c,cy+4);ctx.lineTo(x+8,cy-5);ctx.closePath();ctx.stroke();ctx.beginPath();ctx.moveTo(x+12,cy+7);ctx.lineTo(c,cy+16);ctx.lineTo(x+size-12,cy+7);ctx.stroke();
             } else if(has('map-location')){
                 ctx.beginPath();ctx.arc(c,cy-4,r*.75,0,Math.PI*2);ctx.stroke();ctx.beginPath();ctx.moveTo(c,cy+size*.34);ctx.lineTo(c-7,cy+size*.08);ctx.lineTo(c+7,cy+size*.08);ctx.closePath();ctx.stroke();ctx.beginPath();ctx.arc(c,cy-4,3,0,Math.PI*2);ctx.fill();
+            } else if(has('asterisk')){
+                for(let i=0;i<6;i++){const a=i*Math.PI/3;ctx.beginPath();ctx.moveTo(c-Math.cos(a)*r,cy-Math.sin(a)*r);ctx.lineTo(c+Math.cos(a)*r,cy+Math.sin(a)*r);ctx.stroke();}
+            } else if(has('triangle-exclamation')){
+                ctx.beginPath();ctx.moveTo(c,y+7);ctx.lineTo(x+size-7,y+size-7);ctx.lineTo(x+7,y+size-7);ctx.closePath();ctx.stroke();ctx.fillRect(c-2,cy-7,4,13);ctx.fillRect(c-2,cy+10,4,4);
+            } else if(has('code-branch')){
+                ctx.beginPath();ctx.moveTo(x+12,y+9);ctx.lineTo(x+12,y+size-10);ctx.moveTo(x+12,y+18);ctx.bezierCurveTo(x+12,y+size*.45,x+size-12,y+size*.35,x+size-12,y+size-10);ctx.stroke();ctx.beginPath();ctx.arc(x+12,y+9,4,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(x+size-12,y+size-10,4,0,Math.PI*2);ctx.fill();
+            } else if(has('filter')){
+                ctx.beginPath();ctx.moveTo(x+7,y+8);ctx.lineTo(x+size-7,y+8);ctx.lineTo(c+5,cy);ctx.lineTo(c+5,y+size-8);ctx.lineTo(c-5,y+size-8);ctx.lineTo(c-5,cy);ctx.closePath();ctx.fill();
+            } else if(has('download')){
+                ctx.beginPath();ctx.moveTo(c,y+7);ctx.lineTo(c,y+size-14);ctx.moveTo(c-9,y+size-23);ctx.lineTo(c,y+size-14);ctx.lineTo(c+9,y+size-23);ctx.stroke();ctx.strokeRect(x+8,y+size-11,size-16,5);
+            } else if(has('rotate-right')){
+                ctx.beginPath();ctx.arc(c,cy,r,Math.PI*.2,Math.PI*1.75);ctx.stroke();ctx.beginPath();ctx.moveTo(x+size-9,y+10);ctx.lineTo(x+size-9,y+22);ctx.lineTo(x+size-20,y+16);ctx.stroke();
+            } else if(has('arrow-down-short-wide')){
+                ctx.beginPath();ctx.moveTo(x+9,y+12);ctx.lineTo(x+size-9,y+12);ctx.moveTo(x+9,y+21);ctx.lineTo(x+size-16,y+21);ctx.moveTo(x+9,y+30);ctx.lineTo(x+size-23,y+30);ctx.stroke();ctx.beginPath();ctx.moveTo(c+7,y+10);ctx.lineTo(c+7,y+size-9);ctx.lineTo(c-1,y+size-17);ctx.moveTo(c+7,y+size-9);ctx.lineTo(c+15,y+size-17);ctx.stroke();
+            } else if(has('list-check')){
+                [11,22,33].forEach((yy,i)=>{ctx.strokeRect(x+7,y+yy-4,6,6);ctx.beginPath();ctx.moveTo(x+19,y+yy);ctx.lineTo(x+size-8,y+yy);ctx.stroke();if(i===0){ctx.beginPath();ctx.moveTo(x+8,y+yy);ctx.lineTo(x+10,y+yy+2);ctx.lineTo(x+13,y+yy-2);ctx.stroke();}});
+            } else if(has('layer-group')){
+                [0,1,2].forEach(i=>{const yy=y+10+i*10;ctx.beginPath();ctx.moveTo(c,yy);ctx.lineTo(x+size-8,yy+7);ctx.lineTo(c,yy+14);ctx.lineTo(x+8,yy+7);ctx.closePath();ctx.stroke();});
+            } else if(has('faucet-drip')){
+                ctx.beginPath();ctx.moveTo(x+8,y+18);ctx.lineTo(x+size-10,y+18);ctx.lineTo(x+size-10,y+25);ctx.lineTo(x+size*.62,y+25);ctx.lineTo(x+size*.62,y+32);ctx.lineTo(x+size*.48,y+32);ctx.lineTo(x+size*.48,y+25);ctx.lineTo(x+18,y+25);ctx.stroke();ctx.beginPath();ctx.moveTo(c,y+35);ctx.bezierCurveTo(c-8,y+45,c-7,y+size-5,c,y+size-5);ctx.bezierCurveTo(c+7,y+size-5,c+8,y+45,c,y+35);ctx.fill();
+            } else if(has('glass-water-droplet')){
+                ctx.strokeRect(x+10,y+12,size-20,size-17);ctx.beginPath();ctx.moveTo(x+10,y+22);ctx.lineTo(x+size-10,y+22);ctx.stroke();ctx.beginPath();ctx.moveTo(c+8,y+5);ctx.bezierCurveTo(x+size-2,y+18,x+size-5,y+31,c+8,y+35);ctx.bezierCurveTo(c,y+31,c+1,y+18,c+8,y+5);ctx.fill();
+            } else if(has('calendar-day')||has('calendar-days')){
+                ctx.strokeRect(x+7,y+9,size-14,size-14);ctx.beginPath();ctx.moveTo(x+7,y+18);ctx.lineTo(x+size-7,y+18);ctx.moveTo(x+13,y+5);ctx.lineTo(x+13,y+12);ctx.moveTo(x+size-13,y+5);ctx.lineTo(x+size-13,y+12);ctx.stroke();ctx.fillRect(x+13,y+24,6,6);ctx.fillRect(x+24,y+24,6,6);
+            } else if(has('chart-column')||has('chart-bar')||has('chart-area')||has('chart-line')){
+                ctx.beginPath();ctx.moveTo(x+7,y+size-8);ctx.lineTo(x+7,y+8);ctx.lineTo(x+size-7,y+8);ctx.stroke();ctx.fillRect(x+13,y+size-18,7,10);ctx.fillRect(x+24,y+size-27,7,19);ctx.fillRect(x+35,y+size-36,7,28);
             } else {
                 // Nunca usar apenas um ponto: ícone genérico visível para classes novas.
                 ctx.beginPath();ctx.roundRect(x+7,y+7,size-14,size-14,7);ctx.stroke();ctx.beginPath();ctx.moveTo(x+15,cy);ctx.lineTo(x+size-15,cy);ctx.moveTo(c,y+15);ctx.lineTo(c,y+size-15);ctx.stroke();
@@ -1650,30 +1722,30 @@ Chart.register(dailyFlowLabelsPlugin);
             ctx.fillStyle='#e2e8f0';ctx.fillRect(M,1,W-M*2,1);
 
             const kpis=getReportGeneralFields(tabId).slice(0,6);
-            const kpiGap=16,kpiY=20,kpiH=108,kpiW=kpis.length?(W-M*2-kpiGap*(kpis.length-1))/kpis.length:0;
+            const kpiGap=24,kpiY=22,kpiH=116,kpiW=kpis.length?(W-M*2-kpiGap*(kpis.length-1))/kpis.length:0;
             kpis.forEach((k,i)=>{
                 const x=M+i*(kpiW+kpiGap),y=kpiY;
                 ctx.fillStyle=k.bg&&k.bg!=='rgba(0, 0, 0, 0)'?k.bg:'#fff';ctx.strokeStyle=k.border||'#dbe3ec';ctx.lineWidth=1.2;
                 ctx.beginPath();ctx.roundRect(x,y,kpiW,kpiH,12);ctx.fill();ctx.stroke();
-                const iconSize=46,iconX=x+14,iconY=y+31;
+                const iconSize=50,iconX=x+16,iconY=y+33;
                 ctx.fillStyle=k.iconBg||'#eef2ff';ctx.beginPath();ctx.roundRect(iconX,iconY,iconSize,iconSize,9);ctx.fill();
                 drawReportIcon(ctx,k.iconClass,iconX,iconY,iconSize,k.iconColor||'#2563eb');
-                const textX=iconX+iconSize+14,textW=Math.max(95,kpiW-(textX-x)-14);
+                const textX=iconX+iconSize+16,textW=Math.max(120,kpiW-(textX-x)-18);
                 ctx.textAlign='left';ctx.textBaseline='alphabetic';
-                const labelFit=fitCanvasText(ctx,k.label,textW,10,'700',60);ctx.font=`700 ${labelFit.size}px Arial`;ctx.fillStyle='#64748b';
+                const labelFit=fitCanvasText(ctx,k.label,textW,11,'700',80);ctx.font=`700 ${labelFit.size}px Arial`;ctx.fillStyle='#64748b';
                 const labelLines=wrapCanvasText(ctx,String(labelFit.text).toUpperCase(),textW,2);
-                const labelStart=y+(labelLines.length===2?38:48);
+                const labelStart=y+(labelLines.length===2?34:45);
                 labelLines.forEach((line,li)=>ctx.fillText(line,textX,labelStart+li*11));
-                const valueFit=fitCanvasText(ctx,k.value,textW,18,'800',42);ctx.font=`800 ${valueFit.size}px Arial`;ctx.fillStyle='#0f172a';
-                ctx.fillText(valueFit.text,textX,y+91);
+                const valueFit=fitCanvasText(ctx,k.value,textW,19,'800',60);ctx.font=`800 ${valueFit.size}px Arial`;ctx.fillStyle='#0f172a';
+                ctx.fillText(valueFit.text,textX,y+96);
             });
 
             const title=String(item.title||'GRÁFICO').replace(/\s+/g,' ').trim();
-            const titleY=kpiY+kpiH+28;ctx.fillStyle='#0f172a';ctx.font='800 20px Arial';ctx.textBaseline='alphabetic';ctx.fillText(title.slice(0,95),M,titleY);
+            const titleY=kpiY+kpiH+26;ctx.fillStyle='#0f172a';ctx.font='800 20px Arial';ctx.textBaseline='alphabetic';ctx.fillText(title.slice(0,95),M,titleY);
             const range=getExportDateRange(tabId);if(range){ctx.fillStyle='#64748b';ctx.font='600 11px Arial';ctx.fillText(`Período: ${range}`,M,titleY+18);}
             ctx.fillStyle='#dbe3ec';ctx.fillRect(M,titleY+28,W-M*2,1);
 
-            const boxX=M,boxY=titleY+40,boxW=W-M*2,boxH=H-boxY-M,inner=10,chartW=Math.floor(boxW-inner*2),chartH=Math.floor(boxH-inner*2);
+            const boxX=M,boxY=titleY+38,boxW=W-M*2,boxH=H-boxY-M,inner=12,chartW=Math.floor(boxW-inner*2),chartH=Math.floor(boxH-inner*2);
             ctx.fillStyle='#fff';ctx.strokeStyle='#dbe3ec';ctx.lineWidth=1;ctx.beginPath();ctx.roundRect(boxX,boxY,boxW,boxH,10);ctx.fill();ctx.stroke();
             const sourceCanvas=item.card?.querySelector('canvas');if(!sourceCanvas)throw new Error('Gráfico não encontrado para exportação.');
             const chart=(window.Chart&&Chart.getChart)?Chart.getChart(sourceCanvas):null;let restore=()=>{};
