@@ -20,7 +20,6 @@
     <script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js"></script>
     
     <!-- jsPDF -->
-    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
     
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -193,7 +192,13 @@
 
         .export-modal-backdrop { position: fixed; inset: 0; z-index: 10000; background: rgba(15,23,42,.58); display:flex; align-items:center; justify-content:center; padding:20px; }
         .export-modal { width:min(560px,100%); max-height:85vh; overflow:auto; background:#fff; border-radius:16px; box-shadow:0 25px 70px rgba(15,23,42,.28); }
-        .export-option { display:flex; align-items:center; gap:10px; padding:10px 12px; border:1px solid #e2e8f0; border-radius:10px; cursor:pointer; background:#fff; }
+        .
+<label class="export-option" style="margin-top:8px;">
+  <input id="exportIncludeTables" type="checkbox" checked>
+  <span><strong>Baixar também as tabelas</strong><br>
+  <small class="text-slate-500">Inclui as tabelas da aba selecionada no relatório.</small></span>
+</label>
+export-option { display:flex; align-items:center; gap:10px; padding:10px 12px; border:1px solid #e2e8f0; border-radius:10px; cursor:pointer; background:#fff; }
         .export-option:hover { background:#f8fafc; border-color:#cbd5e1; }
         .export-option input { accent-color:#2563eb; }
         .export-temp { background:#f8fafc; padding:24px; box-sizing:border-box; }
@@ -349,7 +354,7 @@
                             <span class="text-slate-700 font-bold text-xs uppercase tracking-wide flex items-center gap-1.5">
                                 <i class="fa-solid fa-filter text-blue-600"></i> Filtros da Aba 1:
                             </span>
-                            <button onclick="openReportExportMenu('content-diario', 'aba_1_diario', this)" title="Baixar relatório em JPEG ou PDF" class="print-hide bg-white hover:bg-blue-50 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm"><i class="fa-solid fa-download text-blue-600"></i> Baixar relatório</button>
+                            <button onclick="printCurrentTab('content-diario', 'aba_1_diario', this)" title="Printar tela" class="print-hide bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm"><i class="fa-solid fa-print text-blue-600"></i> Printar tela</button>
                             
                         </div>
                         <div class="flex flex-wrap items-center gap-3">
@@ -455,7 +460,7 @@
                             <span class="text-slate-700 font-bold text-xs uppercase tracking-wide flex items-center gap-1.5">
                                 <i class="fa-solid fa-filter text-indigo-600"></i> Filtros da Aba 2:
                             </span>
-                            <button onclick="openReportExportMenu('content-mensal', 'aba_2_mensal', this)" title="Baixar relatório em JPEG ou PDF" class="print-hide bg-white hover:bg-blue-50 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm"><i class="fa-solid fa-download text-blue-600"></i> Baixar relatório</button>
+                            <button onclick="printCurrentTab('content-mensal', 'aba_2_mensal', this)" title="Printar tela" class="print-hide bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm"><i class="fa-solid fa-print text-blue-600"></i> Printar tela</button>
                             
                         </div>
                         <div class="flex flex-wrap items-center gap-3">
@@ -560,7 +565,7 @@
                             <span class="text-slate-700 font-bold text-xs uppercase tracking-wide flex items-center gap-1.5">
                                 <i class="fa-solid fa-filter text-orange-600"></i> Filtros de Consulta:
                             </span>
-                            <button onclick="openReportExportMenu('content-comparacao', 'aba_3_dados_tabulares', this)" title="Baixar relatório em JPEG ou PDF" class="print-hide bg-white hover:bg-blue-50 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm"><i class="fa-solid fa-download text-blue-600"></i> Baixar relatório</button>
+                            <button onclick="openImageExportMenu('content-comparacao', 'aba_3_dados_tabulares', this)" title="Baixar aba em JPEG" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm"><i class="fa-solid fa-file-image text-emerald-600"></i> Baixar JPEG</button>
                             
                         </div>
                         <div class="flex flex-wrap items-center gap-3">
@@ -671,7 +676,7 @@
                             <span class="text-slate-700 font-bold text-xs uppercase tracking-wide flex items-center gap-1.5">
                                 <i class="fa-solid fa-filter text-sky-600"></i> Filtros da Aba 4:
                             </span>
-                            <button onclick="openReportExportMenu('content-entrada', 'aba_4_entrada_saida', this)" title="Baixar relatório em JPEG ou PDF" class="print-hide bg-white hover:bg-blue-50 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm"><i class="fa-solid fa-download text-blue-600"></i> Baixar relatório</button>
+                            <button onclick="printCurrentTab('content-entrada', 'aba_4_entrada_saida', this)" title="Printar tela" class="print-hide bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm"><i class="fa-solid fa-print text-blue-600"></i> Printar tela</button>
                             
                         </div>
                         <div class="flex flex-wrap items-center gap-3">
@@ -1012,7 +1017,7 @@
                             <span class="text-slate-700 font-bold text-xs uppercase tracking-wide flex items-center gap-1.5">
                                 <i class="fa-solid fa-filter text-blue-600"></i> Filtros de Bloco, Ciclo e Período:
                             </span>
-                            <button onclick="openReportExportMenu('content-bloco', 'aba_5_resumo_bloco', this)" title="Baixar relatório em JPEG ou PDF" class="print-hide bg-white hover:bg-blue-50 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm"><i class="fa-solid fa-download text-blue-600"></i> Baixar relatório</button>
+                            <button onclick="printCurrentTab('content-bloco', 'aba_5_resumo_bloco', this)" title="Printar tela" class="print-hide bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm"><i class="fa-solid fa-print text-blue-600"></i> Printar tela</button>
                             
                         </div>
                         <div class="flex flex-wrap items-center gap-3">
@@ -1194,7 +1199,7 @@
                             <span class="text-slate-700 font-bold text-xs uppercase tracking-wide flex items-center gap-1.5">
                                 <i class="fa-solid fa-filter text-indigo-600"></i> Filtros de Manutenção:
                             </span>
-                            <button onclick="openReportExportMenu('content-manutencao', 'aba_6_manutencao_bombas', this)" title="Baixar relatório em JPEG ou PDF" class="print-hide bg-white hover:bg-blue-50 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm"><i class="fa-solid fa-download text-blue-600"></i> Baixar relatório</button>
+                            <button onclick="printCurrentTab('content-manutencao', 'aba_6_manutencao_bombas', this)" title="Printar tela" class="print-hide bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm"><i class="fa-solid fa-print text-blue-600"></i> Printar tela</button>
                             
                         </div>
 
@@ -1366,6 +1371,20 @@
     </div>
 
 
+    <div id="exportModal" class="export-modal-backdrop hidden">
+        <div class="export-modal">
+            <div class="p-5 border-b border-slate-200 flex items-center justify-between">
+                <div><h3 class="text-lg font-extrabold text-slate-800">Selecionar dados para o PDF</h3><p class="text-xs text-slate-500 mt-1">Escolha os blocos que deverão aparecer no arquivo. Os filtros da tela não serão exportados.</p></div>
+                <button type="button" onclick="closeExportModal()" class="text-slate-400 hover:text-slate-700 text-xl"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div id="exportOptions" class="p-5 space-y-2"></div>
+            <div class="p-5 pt-0 flex justify-end gap-2">
+                <button type="button" onclick="closeExportModal()" class="px-4 py-2 rounded-lg bg-slate-200 text-slate-700 text-sm font-semibold">Cancelar</button>
+                <button type="button" id="confirmPdfExport" class="px-4 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold"><i class="fa-solid fa-file-pdf mr-1"></i> Gerar PDF</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         Chart.register(ChartDataLabels);
 // Valores visíveis nos pontos do gráfico Vazão Média Diária Exata
@@ -1469,378 +1488,445 @@ Chart.register(dailyFlowLabelsPlugin);
             globalNivelAguaTanqueData = [];
         }
 
-        // ===== EXPORTAÇÃO DE RELATÓRIOS — PADRÃO DO PDF DE REFERÊNCIA =====
-        // Formato final: paisagem, 16:9, um gráfico + campos gerais por página/arquivo.
-        // A largura foi ampliada ligeiramente para dar folga aos textos dos KPIs,
-        // sem alterar a altura de referência.
-        const REPORT_PAGE_W = 1920;
-        const REPORT_PAGE_H = 1080;
-        const REPORT_MARGIN = 70;
-
-        function getExportableSections(tabId) {
+        
+function getExportTables(tabId){
+    const root = document.getElementById(tabId);
+    if(!root) return [];
+    return [...root.querySelectorAll('table')].filter(t => {
+        const s = getComputedStyle(t);
+        return s.display !== 'none' && s.visibility !== 'hidden' && t.offsetWidth > 0 && t.offsetHeight > 0;
+    });
+}
+function getExportableSections(tabId) {
             const tab = document.getElementById(tabId);
             if (!tab) return [];
             return Array.from(tab.querySelectorAll('.glass-card')).filter(card => {
-                const canvas = card.querySelector('canvas');
-                const r = card.getBoundingClientRect();
-                return !!canvas && r.width > 0 && r.height > 0;
-            }).map((card, index) => ({
-                card,
-                title: card.querySelector('h2,h3,h4')?.textContent?.trim() || `Gráfico ${index + 1}`,
-                index,
-                tabId
-            }));
+                return card.querySelector('canvas, table');
+            }).map((card, index) => {
+                const title = card.querySelector('h2,h3,h4')?.textContent?.trim() || `Gráfico ${index + 1}`;
+                return { card, title, index, tabId };
+            });
         }
 
-        function getReportGeneralFields(tabId) {
-            const tab = document.getElementById(tabId);
-            if (!tab) return [];
-            return Array.from(tab.querySelectorAll('.kpi-compact-card')).filter(el => {
-                const r = el.getBoundingClientRect();
-                return r.width > 0 && r.height > 0 && !el.closest('.export-hide');
-            }).map(el => {
-                const icon = el.querySelector('i');
-                const iconBox = el.querySelector('.w-10');
-                const iconCS = icon ? getComputedStyle(icon) : null;
-                const iconBoxCS = iconBox ? getComputedStyle(iconBox) : null;
-                return {
-                    label: (el.querySelector('p')?.textContent || '').trim(),
-                    value: (el.querySelector('h3')?.textContent || '--').trim(),
-                    bg: getComputedStyle(el).backgroundColor,
-                    border: getComputedStyle(el).borderColor,
-                    iconBg: iconBoxCS?.backgroundColor || '#eef2ff',
-                    iconColor: iconCS?.color || iconBoxCS?.color || '#2563eb',
-                    iconClass: icon ? Array.from(icon.classList).find(c => c.startsWith('fa-') && c !== 'fa-solid' && c !== 'fa-regular') || '' : '',
-                    iconEl: icon || null,
-                    iconBoxEl: iconBox || null
-                };
-            }).filter(x => x.label);
-        }
-
-        function openReportExportMenu(tabId, tabName, btn) {
+        function showExportSelector(tabId, tabName, format, btn) {
             const sections = getExportableSections(tabId);
-            if (!sections.length) { alert('Não foram encontrados gráficos para exportar nesta aba.'); return; }
+            if (!sections.length) {
+                alert('Não foram encontrados gráficos ou tabelas para exportar nesta aba.');
+                return;
+            }
             const modal = document.getElementById('exportSelectorModal');
             const list = document.getElementById('exportSelectorList');
             const title = document.getElementById('exportSelectorTitle');
             const confirm = document.getElementById('exportSelectorConfirm');
             if (!modal || !list || !confirm) return;
-            title.textContent = `Baixar relatório — ${String(tabName || '').replace(/[_-]+/g,' ').toUpperCase()}`;
+
+            title.textContent = `Selecionar dados para baixar — ${format.toUpperCase()}`;
             list.innerHTML = sections.map((item, i) => `
-                <label class="export-option">
+                <label class="flex items-center gap-3 p-3 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer">
                     <input type="checkbox" class="export-section-check w-4 h-4" data-index="${i}" checked>
-                    <span class="text-sm font-semibold text-slate-700">${escapeHtml(item.title)}</span>
-                    <span class="ml-auto text-[10px] font-bold uppercase text-blue-500">GRÁFICO + CAMPOS GERAIS</span>
+                    <span class="text-sm font-semibold text-slate-700">${item.title.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</span>
                 </label>`).join('');
-            const selectAll = document.getElementById('exportSelectorSelectAll');
-            if (selectAll) selectAll.checked = true;
+
+            document.getElementById('exportSelectorSelectAll').checked = true;
             modal.classList.remove('hidden'); modal.style.display = 'flex';
+
             const close = () => { modal.classList.add('hidden'); modal.style.display = 'none'; };
             document.getElementById('exportSelectorCancel').onclick = close;
-            document.getElementById('exportSelectorCancel2').onclick = close;
-            if (selectAll) selectAll.onchange = e => list.querySelectorAll('.export-section-check').forEach(c => c.checked = e.target.checked);
+            document.getElementById('exportSelectorSelectAll').onchange = e => {
+                list.querySelectorAll('.export-section-check').forEach(c => c.checked = e.target.checked);
+            };
             confirm.onclick = async () => {
-                const selected = Array.from(list.querySelectorAll('.export-section-check')).filter(c => c.checked).map(c => sections[Number(c.dataset.index)]);
-                if (!selected.length) { alert('Marque pelo menos um gráfico.'); return; }
-                const fmt = document.querySelector('input[name="exportFormat"]:checked')?.value || 'pdf';
+                const selected = Array.from(list.querySelectorAll('.export-section-check'))
+                    .filter(c => c.checked).map(c => sections[Number(c.dataset.index)]);
+                if (!selected.length) { alert('Selecione pelo menos um gráfico ou quadro.'); return; }
                 close();
-                if (fmt === 'jpeg') await exportSelectedSectionsJPEG(selected, tabId, tabName, btn);
+                if (format === 'jpeg') await exportSelectedSectionsJPEG(selected, tabId, tabName, btn);
                 else await exportSelectedSectionsPDF(selected, tabId, tabName, btn);
             };
         }
 
-        function escapeHtml(value) { return String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[ch])); }
         function getExportDateRange(tabId) {
-            const tab = document.getElementById(tabId); if (!tab) return '';
-            const dates = Array.from(tab.querySelectorAll('input[type="date"]')).map(el => el.value).filter(Boolean).sort();
+            const tab = document.getElementById(tabId);
+            if (!tab) return '';
+            const dates = Array.from(tab.querySelectorAll('input[type="date"]'))
+                .map(el => el.value).filter(Boolean).sort();
             if (!dates.length) return '';
-            const fmt = d => { const p = d.split('-'); return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : d; };
-            return dates.length === 1 || dates[0] === dates[dates.length - 1] ? fmt(dates[0]) : `${fmt(dates[0])} a ${fmt(dates[dates.length - 1])}`;
+            const fmt = d => {
+                const p = d.split('-');
+                return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : d;
+            };
+            return dates.length === 1 || dates[0] === dates[dates.length - 1]
+                ? fmt(dates[0])
+                : `${fmt(dates[0])} a ${fmt(dates[dates.length - 1])}`;
         }
 
-        function prepareChartForExport(chart, exportWidth, exportHeight) {
+        function getExportSummaryItems(tabId, tabName) {
+            const tab = document.getElementById(tabId);
+            if (!tab) return [];
+
+            // Na Aba 04 usamos os campos gerais principais, no mesmo conceito do
+            // relatório de referência enviado pelo usuário: entrada, horas, pico,
+            // nível do tanque e saída.
+            if (isTab4Export(tabName)) {
+                const ids = [
+                    ['kpi4_totalVol', 'Volume de Entrada'],
+                    ['kpi4_avgHours', 'Média de Horas Ligadas'],
+                    ['kpi4_maxPeak', 'Pico de Volume em 1 Dia'],
+                    ['nivelTanqueReguaValor', 'Nível do Tanque'],
+                    ['kpi4_saidaVol', 'Volume de Saída'],
+                    ['kpi4_saidaLocais', 'Locais/Blocos Irrigados'],
+                    ['kpi4_saidaTempo', 'Tempo de Irrigação']
+                ];
+                return ids.map(([id, label]) => {
+                    const el = document.getElementById(id);
+                    return el ? { label, value: (el.textContent || '--').trim() } : null;
+                }).filter(Boolean);
+            }
+
+            return Array.from(tab.querySelectorAll('.kpi-compact-card')).map(card => {
+                const label = card.querySelector('p')?.textContent?.trim();
+                const value = card.querySelector('h3')?.textContent?.trim();
+                return label && value ? { label, value } : null;
+            }).filter(Boolean).slice(0, 10);
+        }
+
+        function drawExportSummary(ctx, width, tabId, tabName, compact = false) {
+            const items = getExportSummaryItems(tabId, tabName);
+            const dateRange = getExportDateRange(tabId);
+            const title = isTab4Export(tabName) ? 'RELATÓRIO — ENTRADA E SAÍDA DE ÁGUA' : String(tabName || 'RELATÓRIO').replace(/[_-]+/g, ' ').toUpperCase();
+            const height = compact ? 180 : 150;
+
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, width, height);
+            ctx.fillStyle = '#0f172a';
+            ctx.font = `700 ${compact ? 26 : 30}px Arial`;
+            ctx.fillText(title, 24, compact ? 31 : 36);
+            if (dateRange) {
+                ctx.fillStyle = '#64748b';
+                ctx.font = `600 ${compact ? 15 : 17}px Arial`;
+                ctx.fillText(`Período: ${dateRange}`, 24, compact ? 54 : 61);
+            }
+
+            const cols = Math.min(4, Math.max(1, items.length));
+            const rows = Math.ceil(items.length / cols);
+            const top = compact ? 66 : 75;
+            const gap = 8;
+            const boxW = (width - 48 - gap * (cols - 1)) / cols;
+            const boxH = rows > 1 ? 42 : 48;
+
+            items.forEach((item, i) => {
+                const col = i % cols;
+                const row = Math.floor(i / cols);
+                const x = 24 + col * (boxW + gap);
+                const y = top + row * (boxH + gap);
+                ctx.fillStyle = '#f8fafc';
+                ctx.strokeStyle = '#dbe3ec';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.roundRect(x, y, boxW, boxH, 7);
+                ctx.fill(); ctx.stroke();
+                ctx.fillStyle = '#64748b';
+                ctx.font = `600 ${compact ? 10 : 11}px Arial`;
+                ctx.fillText(item.label, x + 9, y + 15);
+                ctx.fillStyle = '#0f172a';
+                ctx.font = `700 ${compact ? 15 : 17}px Arial`;
+                ctx.fillText(item.value, x + 9, y + 35);
+            });
+            return top + rows * (boxH + gap) + 8;
+        }
+
+        function cloneForExport(card, targetWidth = null, targetHeight = null) {
+            const clone = card.cloneNode(true);
+    clone.style.width = '100%';
+    clone.style.maxWidth = '100%';
+    clone.style.boxSizing = 'border-box';
+    clone.style.padding = '28px';
+    clone.querySelectorAll('h2,h3,h4').forEach(el => { el.style.fontSize = '30px'; el.style.lineHeight='1.2'; el.style.fontWeight='800'; });
+    clone.querySelectorAll('p,label,th,td').forEach(el => { el.style.fontSize = '18px'; el.style.lineHeight='1.35'; });
+    clone.querySelectorAll('span').forEach(el => { if ((el.textContent||'').trim()) el.style.fontSize = '17px'; });
+            clone.classList.add('export-mode');
+            const rect = card.getBoundingClientRect();
+            const width = targetWidth || Math.max(card.scrollWidth || 0, rect.width || 0, 300);
+            const height = targetHeight || Math.max(card.scrollHeight || 0, rect.height || 0, 500);
+
+            clone.style.cssText += `;box-sizing:border-box;width:${width}px!important;min-width:${width}px!important;max-width:${width}px!important;height:${height}px!important;min-height:${height}px!important;max-height:none!important;margin:0!important;padding:22px!important;overflow:visible!important;visibility:visible!important;position:relative!important;`;
+            // Mantém no relatório exportado a identidade visual real da página: fundo, borda, raio e sombra do card.
+            const cardCS = getComputedStyle(card);
+            clone.style.setProperty('background', cardCS.background || '#ffffff', 'important');
+            clone.style.setProperty('background-color', cardCS.backgroundColor || '#ffffff', 'important');
+            clone.style.setProperty('border', cardCS.border || 'none', 'important');
+            clone.style.setProperty('border-radius', cardCS.borderRadius || '12px', 'important');
+            clone.style.setProperty('box-shadow', cardCS.boxShadow || 'none', 'important');
+            clone.style.setProperty('color', cardCS.color || '#0f172a', 'important');
+
+            const titleText = (card.querySelector('h2,h3,h4')?.textContent || '').toLowerCase();
+            const isTank = titleText.includes('nível') && titleText.includes('tanque');
+            const chartH = isTank ? 690 : 760;
+
+            clone.querySelectorAll('.chart-container-no-scroll, .chart-container').forEach(el => {
+                el.style.cssText += `;width:100%!important;max-width:none!important;min-width:0!important;height:${chartH}px!important;min-height:${chartH}px!important;box-sizing:border-box!important;overflow:visible!important;`;
+            });
+
+            // Aumenta também a tipografia HTML da exportação.
+            clone.querySelectorAll('h2,h3,h4').forEach(el => {
+                el.style.setProperty('font-size', '24px', 'important');
+                el.style.setProperty('line-height', '1.25', 'important');
+            });
+            clone.querySelectorAll('p, label, th, td, span').forEach(el => {
+                const cs = getComputedStyle(el);
+                const fs = parseFloat(cs.fontSize) || 12;
+                if (fs < 15) el.style.setProperty('font-size', Math.max(15, fs * 1.35) + 'px', 'important');
+            });
+            // Reaplica aparência dos campos internos (KPI, badges e cabeçalhos) como na aba.
+            const originals = card.querySelectorAll('*');
+            const copies = clone.querySelectorAll('*');
+            originals.forEach((el, i) => {
+                const cp = copies[i]; if (!cp) return;
+                const cs = getComputedStyle(el);
+                if (cs.backgroundColor && cs.backgroundColor !== 'rgba(0, 0, 0, 0)') cp.style.setProperty('background-color', cs.backgroundColor, 'important');
+                if (cs.borderStyle !== 'none' && cs.borderColor) cp.style.setProperty('border-color', cs.borderColor, 'important');
+                if (cs.color) cp.style.setProperty('color', cs.color, 'important');
+                if (cs.borderRadius) cp.style.setProperty('border-radius', cs.borderRadius, 'important');
+            });
+
+            const sourceCanvases = Array.from(card.querySelectorAll('canvas'));
+            const clonedCanvases = Array.from(clone.querySelectorAll('canvas'));
+            sourceCanvases.forEach((sourceCanvas, i) => {
+                const target = clonedCanvases[i];
+                if (!target) return;
+                // Canvas de alta resolução e proporção controlada para deixar textos/rótulos realmente legíveis.
+                const targetW = Math.max(2600, width - 44);
+                const targetH = chartH;
+                target.width = targetW;
+                target.height = targetH;
+                target.style.cssText += `;display:block!important;width:100%!important;max-width:none!important;height:${targetH}px!important;min-width:0!important;box-sizing:border-box!important;`;
+                const ctx = target.getContext('2d');
+                if (ctx) {
+                    ctx.setTransform(1,0,0,1,0,0);
+                    ctx.clearRect(0,0,target.width,target.height);
+                    ctx.imageSmoothingEnabled = true;
+                    ctx.imageSmoothingQuality = 'high';
+                    const sw = sourceCanvas.width || 1, sh = sourceCanvas.height || 1;
+                    const scale = Math.min(targetW / sw, targetH / sh);
+                    const dw = sw * scale, dh = sh * scale;
+                    const dx = (targetW - dw) / 2, dy = (targetH - dh) / 2;
+                    ctx.drawImage(sourceCanvas, dx, dy, dw, dh);
+                }
+            });
+            return clone;
+        }
+
+        
+        function shortDateLabel(value){
+            const s=String(value ?? '').trim();
+            const m=s.match(/^(\d{1,2})\/(\d{1,2})(?:\/(?:\d{2}|\d{4}))?$/);
+            if(m) return `${m[1].padStart(2,'0')}/${m[2].padStart(2,'0')}`;
+            return value;
+        }
+function prepareChartForExport(chart, exportWidth, exportHeight) {
             if (!chart) return () => {};
-            const o = chart.options || {}, saved = [];
-            const saveProp = (obj, prop) => {
-                if (obj && Object.prototype.hasOwnProperty.call(obj, prop)) saved.push({obj, prop, value: obj[prop]});
-            };
-            const saveFont = obj => { if (obj?.font && typeof obj.font === 'object') saved.push({obj, prop:'font', value:{...obj.font}}); };
-            const setFont = (obj, min, scale) => {
-                if (!obj) return;
-                saveFont(obj);
-                if (obj.font && typeof obj.font === 'object') {
-                    const n = Number(obj.font.size) || 12;
-                    obj.font = {...obj.font, size: Math.max(min, Math.round(n * scale))};
-                }
-            };
-            const scale = Math.max(1.05, Math.min(1.65, exportWidth / Math.max(1000, chart.canvas.clientWidth || 1000)));
+            const o = chart.options || {};
+            const saved = [];
+            const saveFont = (obj) => { if (obj?.font && typeof obj.font === 'object') saved.push({obj, font:{...obj.font}}); };
+            const bump = (obj, min, scale) => { if (!obj) return; saveFont(obj); if (obj.font && typeof obj.font === 'object') { const n=Number(obj.font.size)||12; obj.font={...obj.font,size:Math.max(min,Math.round(n*scale))}; } };
+            const scale=Math.max(1.8,Math.min(3.0,exportWidth/Math.max(700,chart.canvas.clientWidth||1000)));
             try {
-                ['x','y'].forEach(axis => {
-                    const a = o.scales?.[axis];
-                    if (!a) return;
-                    setFont(a.ticks, 12, scale);
-                    setFont(a.title, 14, scale);
-                    // Mais espaço entre os rótulos do eixo X para evitar sobreposição.
-                    if (axis === 'x') {
-                        saveProp(a.ticks, 'autoSkip'); saveProp(a.ticks, 'maxRotation'); saveProp(a.ticks, 'minRotation'); saveProp(a.ticks, 'padding');
-                        a.ticks.autoSkip = false;
-                        // Rótulos do eixo X ficam retos, deitados horizontalmente, abaixo do gráfico.
-                        a.ticks.maxRotation = 0;
-                        a.ticks.minRotation = 0;
-                        a.ticks.padding = 10;
-                        a.ticks.align = 'center';
-                    }
+                ['x','y'].forEach(axis=>{const a=o.scales?.[axis]; if(a){bump(a.ticks,18,scale);bump(a.title,20,scale);}});
+                const exportX=o.scales?.x; if(exportX?.ticks){ exportX.ticks.autoSkip=false; exportX.ticks.maxRotation=0; exportX.ticks.minRotation=0; exportX.ticks.padding=10; exportX.ticks.align='center'; exportX.ticks.callback=(value)=>shortDateLabel(value); }
+                bump(o.plugins?.legend?.labels,16,scale); bump(o.plugins?.title,24,scale); bump(o.plugins?.subtitle,18,scale);
+                if(o.plugins?.datalabels) bump(o.plugins.datalabels,16,scale);
+                chart.canvas.style.width=exportWidth+'px'; chart.canvas.style.height=exportHeight+'px';
+                chart.resize(exportWidth,exportHeight); chart.update('none');
+            } catch(e) { console.warn('Ajuste de gráfico para exportação:',e); }
+            return ()=>{ saved.forEach(x=>{try{x.obj.font=x.font;}catch(e){}}); try{chart.canvas.style.width='';chart.canvas.style.height='';chart.resize();chart.update('none');}catch(e){} };
+        }
+
+        async function captureExportCard(card, widthOverride = null, heightOverride = null) {
+            if (!window.htmlToImage || typeof window.htmlToImage.toCanvas !== 'function') {
+                throw new Error('Biblioteca html-to-image não carregada.');
+            }
+            const rect = card.getBoundingClientRect();
+            const sourceWidth = widthOverride || Math.max(card.scrollWidth || 0, rect.width || 0, 300);
+            const titleText = (card.querySelector('h2,h3,h4')?.textContent || '').toLowerCase();
+            const isTank = titleText.includes('nível') && titleText.includes('tanque');
+            const sourceHeight = heightOverride || (isTank ? 780 : 850);
+
+            const stage = document.createElement('div');
+            stage.style.cssText = `position:fixed;left:-20000px;top:0;width:${sourceWidth}px;height:${sourceHeight}px;background:#fff;padding:0;margin:0;overflow:visible;box-sizing:border-box;pointer-events:none;`;
+            const restores = Array.from(card.querySelectorAll('canvas')).map(c => { try { return prepareChartForExport(Chart.getChart(c), sourceWidth - 44, sourceHeight - 90); } catch(e) { return () => {}; } });
+            const clone = cloneForExport(card, sourceWidth, sourceHeight);
+            stage.appendChild(clone);
+            document.body.appendChild(stage);
+            try {
+                if (document.fonts?.ready) { try { await document.fonts.ready; } catch (e) {} }
+                await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+                return await window.htmlToImage.toCanvas(clone, {
+                    backgroundColor: '#ffffff',
+                    pixelRatio: 2,
+                    cacheBust: true,
+                    skipFonts: false,
+                    width: sourceWidth,
+                    height: sourceHeight,
+                    style: { margin: '0', transform: 'none', width: sourceWidth + 'px', height: sourceHeight + 'px' }
                 });
-                setFont(o.plugins?.legend?.labels, 12, scale);
-                setFont(o.plugins?.title, 18, scale);
-                if (o.plugins?.datalabels) {
-                    const dl = o.plugins.datalabels;
-                    setFont(dl, 10, Math.min(1.35, scale));
-                    saveProp(dl, 'anchor'); saveProp(dl, 'align'); saveProp(dl, 'offset'); saveProp(dl, 'clamp'); saveProp(dl, 'clip'); saveProp(dl, 'padding');
-                    dl.anchor = 'end';
-                    dl.align = 'top';
-                    dl.offset = 5;
-                    dl.clamp = false;
-                    dl.clip = false;
-                    dl.padding = 1;
-                    // Reduz somente a fonte dos rótulos quando há muitas barras,
-                    // mantendo cada valor visível sem empilhar os números.
-                    const count = Math.max(...(chart.data?.datasets || []).map(ds => Array.isArray(ds.data) ? ds.data.length : 0), 0);
-                    const f = dl.font && typeof dl.font === 'object' ? dl.font : {};
-                    const base = Number(f.size) || 10;
-                    dl.font = {...f, size: Math.max(8, Math.min(13, count > 55 ? 8 : count > 40 ? 9 : count > 28 ? 10 : base))};
-                }
-                chart.canvas.style.width = exportWidth + 'px';
-                chart.canvas.style.height = exportHeight + 'px';
-                chart.resize(exportWidth, exportHeight);
-                chart.update('none');
-            } catch(e) { console.warn('Ajuste de gráfico para exportação:', e); }
-            return () => {
-                saved.forEach(x => { try { x.obj[x.prop] = x.value; } catch(e) {} });
-                try { chart.canvas.style.width=''; chart.canvas.style.height=''; chart.resize(); chart.update('none'); } catch(e) {}
-            };
+            } finally {
+                stage.remove();
+                restores.forEach(fn => { try { fn(); } catch(e) {} });
+            }
         }
 
-        // Ícones desenhados diretamente no canvas: evita que o Font Awesome seja
-        // convertido em um ponto/quadrado quando html-to-image captura o relatório.
-        function drawReportIcon(ctx, iconClass, x, y, size, color) {
-            ctx.save();
-            ctx.strokeStyle = color; ctx.fillStyle = color;
-            ctx.lineWidth = Math.max(2, size * 0.055); ctx.lineCap='round'; ctx.lineJoin='round';
-            const c=x+size/2, cy=y+size/2, r=size*.30;
-            const has=n=>iconClass.includes(n);
-            if(has('droplet')||has('glass-water')){
-                ctx.beginPath();ctx.moveTo(c,y+5);ctx.bezierCurveTo(x+size-5,y+size*.43,x+size*.78,y+size-5,c,y+size-4);ctx.bezierCurveTo(x+size*.22,y+size-5,x+5,y+size*.43,c,y+5);ctx.fill();
-            } else if(has('seedling')){
-                ctx.beginPath();ctx.moveTo(c,y+size-7);ctx.lineTo(c,y+size*.43);ctx.stroke();
-                ctx.beginPath();ctx.ellipse(c-8,cy-5,9,5,-.55,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.ellipse(c+8,cy-12,9,5,.55,0,Math.PI*2);ctx.fill();
-            } else if(has('faucet')){
-                ctx.beginPath();ctx.moveTo(x+8,y+18);ctx.lineTo(x+size-9,y+18);ctx.lineTo(x+size-9,y+25);ctx.lineTo(x+size*.62,y+25);ctx.lineTo(x+size*.62,y+31);ctx.lineTo(x+size*.48,y+31);ctx.lineTo(x+size*.48,y+25);ctx.lineTo(x+18,y+25);ctx.lineTo(x+18,y+31);ctx.lineTo(x+8,y+31);ctx.closePath();ctx.fill();
-                ctx.beginPath();ctx.moveTo(x+16,y+18);ctx.lineTo(x+16,y+10);ctx.lineTo(x+size*.68,y+10);ctx.lineTo(x+size*.68,y+18);ctx.stroke();
-            } else if(has('gauge')){
-                ctx.beginPath();ctx.arc(c,cy+4,r,Math.PI,0);ctx.stroke();ctx.beginPath();ctx.moveTo(c,cy+4);ctx.lineTo(c+r*.55,cy-r*.55);ctx.stroke();ctx.beginPath();ctx.arc(c,cy+4,3,0,Math.PI*2);ctx.fill();
-            } else if(has('calendar')){
-                ctx.strokeRect(x+7,y+9,size-14,size-14);ctx.beginPath();ctx.moveTo(x+7,y+18);ctx.lineTo(x+size-7,y+18);ctx.moveTo(x+13,y+5);ctx.lineTo(x+13,y+12);ctx.moveTo(x+size-13,y+5);ctx.lineTo(x+size-13,y+12);ctx.stroke();
-                if(has('check')){ctx.beginPath();ctx.moveTo(x+13,y+27);ctx.lineTo(x+19,y+33);ctx.lineTo(x+31,y+21);ctx.stroke();}
-            } else if(has('chart')||has('trend')){
-                ctx.beginPath();ctx.moveTo(x+7,y+size-8);ctx.lineTo(x+7,y+8);ctx.lineTo(x+size-7,y+8);ctx.stroke();
-                if(has('trend')){ctx.beginPath();ctx.moveTo(x+12,y+30);ctx.lineTo(x+21,y+21);ctx.lineTo(x+27,y+25);ctx.lineTo(x+37,y+13);ctx.stroke();ctx.beginPath();ctx.moveTo(x+31,y+13);ctx.lineTo(x+37,y+13);ctx.lineTo(x+37,y+19);ctx.stroke();}
-                else {[0,1,2].forEach(i=>ctx.fillRect(x+13+i*10,y+size-9-(10+i*7),6,10+i*7));}
-            } else if(has('clock')||has('stopwatch')){
-                ctx.beginPath();ctx.arc(c,cy,r*.82,0,Math.PI*2);ctx.stroke();ctx.beginPath();ctx.moveTo(c,cy);ctx.lineTo(c,cy-r*.48);ctx.moveTo(c,cy);ctx.lineTo(c+r*.4,cy+r*.2);ctx.stroke();ctx.fillRect(c-5,y+2,10,3);
-            } else if(has('calculator')){
-                ctx.strokeRect(x+9,y+6,size-18,size-12);ctx.fillRect(x+14,y+12,size-28,9);[0,1,2].forEach(row=>[0,1,2].forEach(col=>ctx.fillRect(x+14+col*8,y+27+row*7,4,4)));
-            } else if(has('table')||has('list')){
-                ctx.strokeRect(x+6,y+7,size-12,size-14);ctx.beginPath();ctx.moveTo(x+6,y+18);ctx.lineTo(x+size-6,y+18);ctx.moveTo(x+6,y+29);ctx.lineTo(x+size-6,y+29);ctx.moveTo(x+18,y+7);ctx.lineTo(x+18,y+size-7);ctx.stroke();
-            } else if(has('screwdriver')||has('wrench')){
-                ctx.beginPath();ctx.moveTo(x+10,y+size-10);ctx.lineTo(x+size-11,y+11);ctx.stroke();ctx.beginPath();ctx.arc(x+size-10,y+10,6,0,Math.PI*2);ctx.stroke();
-            } else if(has('spray-can')){
-                ctx.strokeRect(x+13,y+12,size-20,size-14);ctx.fillRect(x+16,y+7,size-26,5);ctx.beginPath();ctx.moveTo(x+size-7,y+10);ctx.lineTo(x+size-2,y+7);ctx.stroke();
-            } else if(has('shower')){
-                ctx.beginPath();ctx.arc(c-4,cy-3,r,Math.PI*1.05,Math.PI*1.9);ctx.stroke();ctx.beginPath();ctx.moveTo(c-4,cy-3);ctx.lineTo(c+14,cy+10);ctx.stroke();[0,1,2].forEach(i=>{ctx.beginPath();ctx.moveTo(c+8+i*7,cy+15);ctx.lineTo(c+6+i*7,cy+22);ctx.stroke();});
-            } else if(has('power')){
-                ctx.beginPath();ctx.arc(c,cy+2,r,Math.PI*.2,Math.PI*1.8);ctx.stroke();ctx.beginPath();ctx.moveTo(c,y+6);ctx.lineTo(c,cy+8);ctx.stroke();
-            } else if(has('circle-check')){
-                ctx.beginPath();ctx.arc(c,cy,r,0,Math.PI*2);ctx.stroke();ctx.beginPath();ctx.moveTo(c-r*.55,cy);ctx.lineTo(c-r*.1,cy+r*.45);ctx.lineTo(c+r*.65,cy-r*.5);ctx.stroke();
-            } else if(has('scale-balanced')){
-                ctx.beginPath();ctx.moveTo(c,y+8);ctx.lineTo(c,y+size-8);ctx.moveTo(x+10,y+14);ctx.lineTo(x+size-10,y+14);ctx.stroke();ctx.beginPath();ctx.moveTo(x+15,y+15);ctx.lineTo(x+10,y+27);ctx.lineTo(x+20,y+27);ctx.closePath();ctx.stroke();ctx.beginPath();ctx.moveTo(x+size-15,y+15);ctx.lineTo(x+size-20,y+27);ctx.lineTo(x+size-10,y+27);ctx.closePath();ctx.stroke();
-            } else if(has('arrow')){
-                ctx.beginPath();ctx.moveTo(x+10,y+size-12);ctx.lineTo(x+size-11,y+11);ctx.stroke();ctx.beginPath();ctx.moveTo(x+size-20,y+11);ctx.lineTo(x+size-11,y+11);ctx.lineTo(x+size-11,y+20);ctx.stroke();
-            } else if(has('layer')){
-                ctx.beginPath();ctx.moveTo(c,y+7);ctx.lineTo(x+size-8,cy-5);ctx.lineTo(c,cy+4);ctx.lineTo(x+8,cy-5);ctx.closePath();ctx.stroke();ctx.beginPath();ctx.moveTo(x+12,cy+7);ctx.lineTo(c,cy+16);ctx.lineTo(x+size-12,cy+7);ctx.stroke();
-            } else if(has('map-location')){
-                ctx.beginPath();ctx.arc(c,cy-4,r*.75,0,Math.PI*2);ctx.stroke();ctx.beginPath();ctx.moveTo(c,cy+size*.34);ctx.lineTo(c-7,cy+size*.08);ctx.lineTo(c+7,cy+size*.08);ctx.closePath();ctx.stroke();ctx.beginPath();ctx.arc(c,cy-4,3,0,Math.PI*2);ctx.fill();
-            } else if(has('asterisk')){
-                for(let i=0;i<6;i++){const a=i*Math.PI/3;ctx.beginPath();ctx.moveTo(c-Math.cos(a)*r,cy-Math.sin(a)*r);ctx.lineTo(c+Math.cos(a)*r,cy+Math.sin(a)*r);ctx.stroke();}
-            } else if(has('triangle-exclamation')){
-                ctx.beginPath();ctx.moveTo(c,y+7);ctx.lineTo(x+size-7,y+size-7);ctx.lineTo(x+7,y+size-7);ctx.closePath();ctx.stroke();ctx.fillRect(c-2,cy-7,4,13);ctx.fillRect(c-2,cy+10,4,4);
-            } else if(has('code-branch')){
-                ctx.beginPath();ctx.moveTo(x+12,y+9);ctx.lineTo(x+12,y+size-10);ctx.moveTo(x+12,y+18);ctx.bezierCurveTo(x+12,y+size*.45,x+size-12,y+size*.35,x+size-12,y+size-10);ctx.stroke();ctx.beginPath();ctx.arc(x+12,y+9,4,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(x+size-12,y+size-10,4,0,Math.PI*2);ctx.fill();
-            } else if(has('filter')){
-                ctx.beginPath();ctx.moveTo(x+7,y+8);ctx.lineTo(x+size-7,y+8);ctx.lineTo(c+5,cy);ctx.lineTo(c+5,y+size-8);ctx.lineTo(c-5,y+size-8);ctx.lineTo(c-5,cy);ctx.closePath();ctx.fill();
-            } else if(has('download')){
-                ctx.beginPath();ctx.moveTo(c,y+7);ctx.lineTo(c,y+size-14);ctx.moveTo(c-9,y+size-23);ctx.lineTo(c,y+size-14);ctx.lineTo(c+9,y+size-23);ctx.stroke();ctx.strokeRect(x+8,y+size-11,size-16,5);
-            } else if(has('rotate-right')){
-                ctx.beginPath();ctx.arc(c,cy,r,Math.PI*.2,Math.PI*1.75);ctx.stroke();ctx.beginPath();ctx.moveTo(x+size-9,y+10);ctx.lineTo(x+size-9,y+22);ctx.lineTo(x+size-20,y+16);ctx.stroke();
-            } else if(has('arrow-down-short-wide')){
-                ctx.beginPath();ctx.moveTo(x+9,y+12);ctx.lineTo(x+size-9,y+12);ctx.moveTo(x+9,y+21);ctx.lineTo(x+size-16,y+21);ctx.moveTo(x+9,y+30);ctx.lineTo(x+size-23,y+30);ctx.stroke();ctx.beginPath();ctx.moveTo(c+7,y+10);ctx.lineTo(c+7,y+size-9);ctx.lineTo(c-1,y+size-17);ctx.moveTo(c+7,y+size-9);ctx.lineTo(c+15,y+size-17);ctx.stroke();
-            } else if(has('list-check')){
-                [11,22,33].forEach((yy,i)=>{ctx.strokeRect(x+7,y+yy-4,6,6);ctx.beginPath();ctx.moveTo(x+19,y+yy);ctx.lineTo(x+size-8,y+yy);ctx.stroke();if(i===0){ctx.beginPath();ctx.moveTo(x+8,y+yy);ctx.lineTo(x+10,y+yy+2);ctx.lineTo(x+13,y+yy-2);ctx.stroke();}});
-            } else if(has('layer-group')){
-                [0,1,2].forEach(i=>{const yy=y+10+i*10;ctx.beginPath();ctx.moveTo(c,yy);ctx.lineTo(x+size-8,yy+7);ctx.lineTo(c,yy+14);ctx.lineTo(x+8,yy+7);ctx.closePath();ctx.stroke();});
-            } else if(has('faucet-drip')){
-                ctx.beginPath();ctx.moveTo(x+8,y+18);ctx.lineTo(x+size-10,y+18);ctx.lineTo(x+size-10,y+25);ctx.lineTo(x+size*.62,y+25);ctx.lineTo(x+size*.62,y+32);ctx.lineTo(x+size*.48,y+32);ctx.lineTo(x+size*.48,y+25);ctx.lineTo(x+18,y+25);ctx.stroke();ctx.beginPath();ctx.moveTo(c,y+35);ctx.bezierCurveTo(c-8,y+45,c-7,y+size-5,c,y+size-5);ctx.bezierCurveTo(c+7,y+size-5,c+8,y+45,c,y+35);ctx.fill();
-            } else if(has('glass-water-droplet')){
-                ctx.strokeRect(x+10,y+12,size-20,size-17);ctx.beginPath();ctx.moveTo(x+10,y+22);ctx.lineTo(x+size-10,y+22);ctx.stroke();ctx.beginPath();ctx.moveTo(c+8,y+5);ctx.bezierCurveTo(x+size-2,y+18,x+size-5,y+31,c+8,y+35);ctx.bezierCurveTo(c,y+31,c+1,y+18,c+8,y+5);ctx.fill();
-            } else if(has('calendar-day')||has('calendar-days')){
-                ctx.strokeRect(x+7,y+9,size-14,size-14);ctx.beginPath();ctx.moveTo(x+7,y+18);ctx.lineTo(x+size-7,y+18);ctx.moveTo(x+13,y+5);ctx.lineTo(x+13,y+12);ctx.moveTo(x+size-13,y+5);ctx.lineTo(x+size-13,y+12);ctx.stroke();ctx.fillRect(x+13,y+24,6,6);ctx.fillRect(x+24,y+24,6,6);
-            } else if(has('chart-column')||has('chart-bar')||has('chart-area')||has('chart-line')){
-                ctx.beginPath();ctx.moveTo(x+7,y+size-8);ctx.lineTo(x+7,y+8);ctx.lineTo(x+size-7,y+8);ctx.stroke();ctx.fillRect(x+13,y+size-18,7,10);ctx.fillRect(x+24,y+size-27,7,19);ctx.fillRect(x+35,y+size-36,7,28);
-            } else {
-                // Nunca usar apenas um ponto: ícone genérico visível para classes novas.
-                ctx.beginPath();ctx.roundRect(x+7,y+7,size-14,size-14,7);ctx.stroke();ctx.beginPath();ctx.moveTo(x+15,cy);ctx.lineTo(x+size-15,cy);ctx.moveTo(c,y+15);ctx.lineTo(c,y+size-15);ctx.stroke();
-            }
-            ctx.restore();
-        }
-        function fitCanvasText(ctx, text, maxWidth, baseSize, weight='700', maxChars=999) {
-            let value = String(text ?? '').trim();
-            if (value.length > maxChars) value = value.slice(0,maxChars-1)+'…';
-            let size = baseSize;
-            while (size >= 8) { ctx.font = `${weight} ${size}px Arial`; if (ctx.measureText(value).width <= maxWidth) return {text:value,size}; size -= 1; }
-            return {text:value,size:8};
+        function isTab4Export(tabName) {
+            return /aba[_ -]?4|entrada[_ -]?saida/i.test(String(tabName || ''));
         }
 
-        function wrapCanvasText(ctx, text, maxWidth, maxLines=2) {
-            const words=String(text||'').split(/\s+/).filter(Boolean), lines=[]; let line='';
-            for(const word of words){const test=line?`${line} ${word}`:word;if(ctx.measureText(test).width<=maxWidth){line=test;}else{if(line)lines.push(line);line=word;if(lines.length===maxLines-1)break;}}
-            if(line && lines.length<maxLines) lines.push(line);
-            if(lines.length===maxLines && words.length && !String(text).endsWith(lines[lines.length-1])){
-                let last=lines[maxLines-1];while(last.length && ctx.measureText(last+'…').width>maxWidth)last=last.slice(0,-1);lines[maxLines-1]=last+'…';
-            }
-            return lines;
+        function downloadCanvasAsJPEG(canvas, fileName) {
+            const dataUrl = canvas.toDataURL('image/jpeg', 1.0);
+            const link = document.createElement('a');
+            link.download = fileName;
+            link.href = dataUrl;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
         }
 
-        async function captureSystemIcon(iconBoxEl, targetSize, fallbackColor, fallbackClass) {
-            // Renderiza o MESMO glifo Font Awesome usado na tela. O conteúdo do ::before
-            // contém o Unicode oficial do ícone (ex.: \f043), evitando pontos/quadrados.
-            const scale = 4;
-            const c = document.createElement('canvas');
-            c.width = targetSize * scale; c.height = targetSize * scale;
-            const ctx = c.getContext('2d');
-            ctx.clearRect(0,0,c.width,c.height);
-            const icon = iconBoxEl?.querySelector('i');
-            try { await document.fonts?.ready; } catch(e) {}
-            if (icon) {
-                const cs = getComputedStyle(icon);
-                const pseudo = getComputedStyle(icon, '::before');
-                let content = pseudo?.content || '';
-                content = content.replace(/^['"]|['"]$/g,'').trim();
-                if (content && content !== 'none' && content !== 'normal') {
-                    // CSS content pode vir como \\fxxx; converte para o caractere real.
-                    if (/^\\[0-9a-fA-F]{4,6}$/.test(content)) {
-                        const hex = content.slice(1);
-                        content = String.fromCodePoint(parseInt(hex,16));
-                    }
-                    const family = cs.fontFamily || pseudo.fontFamily || 'Font Awesome 6 Free';
-                    const weight = cs.fontWeight || pseudo.fontWeight || '900';
-                    const size = Math.round(targetSize * 0.48 * scale);
-                    ctx.save();
-                    ctx.font = `${weight} ${size}px ${family}`;
-                    ctx.fillStyle = cs.color || pseudo.color || fallbackColor || '#2563eb';
-                    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-                    ctx.fillText(content, c.width/2, c.height/2 + size*0.02);
-                    ctx.restore();
-                    return c;
-                }
+        function getTab4ExportMeta(title) {
+            const t = String(title || '').toLowerCase();
+            if (t.includes('volume total e horas') || t.includes('entrada')) {
+                return { section: 'ENTRADA DE ÁGUA', items: [['kpi4_totalVol','Volume de Entrada'],['kpi4_avgHours','Média de Horas Ligadas'],['kpi4_maxPeak','Pico de Volume em 1 Dia']] };
             }
-            // Fallback apenas se o glifo não estiver disponível.
-            drawReportIcon(ctx, fallbackClass || '', 0, 0, c.width, fallbackColor || '#2563eb');
-            return c;
+            if (t.includes('nível água tanque') || t.includes('nivel água tanque')) {
+                return { section: 'NÍVEL DO TANQUE', items: [['nivelTanqueReguaValor','Nível do Tanque']] };
+            }
+            if (t.includes('vazão média')) return { section: 'VAZÃO MÉDIA DOS POÇOS POR DIA', items: [] };
+            if (t.includes('saída de água') || t.includes('saida de agua')) {
+                return { section: 'SAÍDA DE ÁGUA', items: [['kpi4_saidaVol','Volume de Saída'],['kpi4_saidaLocais','Locais/Blocos Irrigados'],['kpi4_saidaTempo','Tempo de Irrigação']] };
+            }
+            return { section: String(title || 'DADOS'), items: [] };
         }
 
-        async function composeSectionWithGeneralFields(item, tabId, tabName){
-            const W=REPORT_PAGE_W,H=REPORT_PAGE_H,M=REPORT_MARGIN;
-            const out=document.createElement('canvas');out.width=W;out.height=H;
-            const ctx=out.getContext('2d');ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
-            ctx.fillStyle='#f8fafc';ctx.fillRect(0,0,W,H);
+        function getTab4ExportValue(id) {
+            const el = document.getElementById(id);
+            return el ? (el.textContent || '--').trim() : '--';
+        }
 
-            const kpis=getReportGeneralFields(tabId).slice(0,6);
-            // Dois níveis de KPIs (3 por linha): muito mais largura por campo e nenhum texto apertado.
-            const cols=Math.min(3,Math.max(1,kpis.length));
-            const rows=Math.ceil(kpis.length/cols);
-            const kpiGapX=28,kpiGapY=22,kpiY=28,kpiH=126;
-            const kpiW=(W-M*2-kpiGapX*(cols-1))/cols;
-            for(let i=0;i<kpis.length;i++){
-                const k=kpis[i],col=i%cols,row=Math.floor(i/cols);
-                const x=M+col*(kpiW+kpiGapX),y=kpiY+row*(kpiH+kpiGapY);
-                ctx.fillStyle=k.bg&&k.bg!=='rgba(0, 0, 0, 0)'?k.bg:'#fff';
-                ctx.strokeStyle=k.border||'#dbe3ec';ctx.lineWidth=2;
-                ctx.beginPath();ctx.roundRect(x,y,kpiW,kpiH,16);ctx.fill();ctx.stroke();
+        function roundRect(ctx,x,y,w,h,r){ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fill();}
 
-                const iconSize=64,iconX=x+22,iconY=y+(kpiH-iconSize)/2;
-                ctx.fillStyle=k.iconBg||'#eef2ff';ctx.beginPath();ctx.roundRect(iconX,iconY,iconSize,iconSize,12);ctx.fill();
-                const iconCanvas=await captureSystemIcon(k.iconBoxEl,iconSize,k.iconColor||'#2563eb',k.iconClass||'');
-                ctx.drawImage(iconCanvas,iconX,iconY,iconSize,iconSize);
-
-                const textX=iconX+iconSize+22,textW=kpiW-(textX-x)-22;
-                ctx.textAlign='left';ctx.textBaseline='alphabetic';
-                const label=String(k.label||'').toUpperCase();
-                const labelFit=fitCanvasText(ctx,label,textW,17,'700',120);
-                ctx.font=`700 ${labelFit.size}px Arial`;ctx.fillStyle='#64748b';
-                const labelLines=wrapCanvasText(ctx,labelFit.text,textW,2);
-                const labelLineH=Math.max(20,labelFit.size+4);
-                const labelStart=y+(labelLines.length===2?45:57);
-                labelLines.forEach((line,li)=>ctx.fillText(line,textX,labelStart+li*labelLineH));
-                const valueFit=fitCanvasText(ctx,k.value,textW,31,'800',90);
-                ctx.font=`800 ${valueFit.size}px Arial`;ctx.fillStyle='#0f172a';
-                ctx.fillText(valueFit.text,textX,y+102);
+        async function composeTab4SectionCanvas(item, width = 3000) {
+            const meta = getTab4ExportMeta(item.title);
+            const title = String(item.title || '').toLowerCase();
+            const isTank = title.includes('nível') && title.includes('tanque');
+            const isVazao = title.includes('vazão média');
+            const isSaida = title.includes('saída de água') || title.includes('saida de agua');
+            const captureH = isTank ? 820 : (isVazao ? 900 : (isSaida ? 900 : 880));
+            const chart = await captureExportCard(item.card, width, captureH);
+            const headH = meta.items.length ? 275 : 175;
+            const bottom = 18;
+            const out = document.createElement('canvas');
+            out.width = width;
+            out.height = headH + chart.height + bottom;
+            const ctx = out.getContext('2d');
+            ctx.fillStyle = '#ffffff'; ctx.fillRect(0,0,out.width,out.height);
+            ctx.fillStyle = '#166534'; ctx.fillRect(0,0,14,out.height);
+            ctx.fillStyle = '#0f172a'; ctx.font = '700 46px Arial'; ctx.fillText(meta.section,48,55);
+            const range = getExportDateRange('content-entrada');
+            if(range){ctx.fillStyle='#64748b';ctx.font='600 21px Arial';ctx.fillText(`Período: ${range}`,48,91);}
+            ctx.fillStyle='#dbe3ec';ctx.fillRect(48,112,width-96,2);
+            if(meta.items.length){
+                const gap=22, top=135, boxH=92, boxW=(width-96-gap*(meta.items.length-1))/meta.items.length;
+                meta.items.forEach((it,i)=>{
+                    const x=48+i*(boxW+gap);
+                    ctx.fillStyle='#f8fafc';ctx.strokeStyle='#cbd5e1';ctx.lineWidth=2;
+                    ctx.beginPath();ctx.roundRect(x,top,boxW,boxH,12);ctx.fill();ctx.stroke();
+                    ctx.fillStyle='#475569';ctx.font='700 25px Arial';ctx.fillText(it[1].toUpperCase(),x+18,top+29);
+                    ctx.fillStyle='#0f172a';ctx.font='700 50px Arial';ctx.fillText(getTab4ExportValue(it[0]),x+18,top+68);
+                });
             }
-
-            const kpiBottom=kpis.length ? kpiY+rows*kpiH+(rows-1)*kpiGapY : kpiY;
-            const title=String(item.title||'GRÁFICO').replace(/\s+/g,' ').trim();
-            const titleY=kpiBottom+44;
-            ctx.fillStyle='#0f172a';ctx.font='800 32px Arial';ctx.textBaseline='alphabetic';ctx.fillText(title.slice(0,120),M,titleY);
-            const range=getExportDateRange(tabId);
-            let separatorY=titleY+24;
-            if(range){
-                const dateText=`Período: ${range}`;
-                ctx.font='700 19px Arial';
-                const badgeW=Math.min(900,Math.max(280,ctx.measureText(dateText).width+42)),badgeH=40,badgeY=titleY+16;
-                ctx.fillStyle='#eef2ff';ctx.strokeStyle='#c7d2fe';ctx.lineWidth=1.5;
-                ctx.beginPath();ctx.roundRect(M,badgeY,badgeW,badgeH,10);ctx.fill();ctx.stroke();
-                ctx.fillStyle='#334155';ctx.fillText(dateText,M+20,badgeY+27);separatorY=badgeY+badgeH+18;
-            }
-            ctx.fillStyle='#dbe3ec';ctx.fillRect(M,separatorY,W-M*2,2);
-
-            const boxX=M,boxY=separatorY+22,boxW=W-M*2,boxH=H-boxY-M,inner=30,innerBottom=78;
-            ctx.fillStyle='#fff';ctx.strokeStyle='#dbe3ec';ctx.lineWidth=2;ctx.beginPath();ctx.roundRect(boxX,boxY,boxW,boxH,14);ctx.fill();ctx.stroke();
-            const sourceCanvas=item.card?.querySelector('canvas');if(!sourceCanvas)throw new Error('Gráfico não encontrado para exportação.');
-            const chart=(window.Chart&&Chart.getChart)?Chart.getChart(sourceCanvas):null;let restore=()=>{};
-            try{
-                restore=prepareChartForExport(chart,boxW-inner*2,Math.max(300,boxH-inner-innerBottom));
-                await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
-                ctx.drawImage(sourceCanvas,boxX+inner,boxY+inner,boxW-inner*2,boxH-inner-innerBottom);
-            }finally{try{restore();}catch(e){}}
+            // Sem espaço morto: o gráfico começa logo após o cabeçalho e termina próximo ao limite da seção.
+            ctx.drawImage(chart,0,headH,width,chart.height);
             return out;
         }
 
-        function downloadCanvasAsJPEG(canvas,fileName){const link=document.createElement('a');link.download=fileName;link.href=canvas.toDataURL('image/jpeg',0.97);document.body.appendChild(link);link.click();link.remove();}
-        async function exportSelectedSectionsJPEG(selected,tabId,tabName,btn){
+        async function composeExportJPEG(selected, tabId, tabName) {
+            const isTab4 = isTab4Export(tabName);
+            const outW = isTab4 ? 3600 : 3200;
+            const margin = isTab4 ? 28 : 40;
+            const gap = isTab4 ? 24 : 30;
+            const cards=[];
+            for(const item of selected){
+                cards.push({item,canvas:isTab4 ? await composeTab4SectionCanvas(item,outW-margin*2) : await captureExportCard(item,outW-margin*2,1250)});
+            }
+            const headerH=isTab4?185:200;
+            const totalH=margin+headerH+gap+cards.reduce((sum,c)=>sum+c.canvas.height,0)+gap*Math.max(0,cards.length-1)+margin;
+            const out=document.createElement('canvas');out.width=outW;out.height=totalH;
+            const ctx=out.getContext('2d');ctx.fillStyle='#eef2f7';ctx.fillRect(0,0,outW,totalH);
+            ctx.fillStyle='#166534';ctx.fillRect(0,0,outW,16);
+            ctx.fillStyle='#0f172a';ctx.font='700 62px Arial';ctx.fillText(isTab4?'RELATÓRIO — ENTRADA E SAÍDA DE ÁGUA':String(tabName||'RELATÓRIO').toUpperCase(),margin,92);
+            ctx.fillStyle='#64748b';ctx.font='600 27px Arial';
+            const range=getExportDateRange(tabId);ctx.fillText(range?`Período: ${range}`:'Relatório operacional',margin,140);
+            ctx.fillStyle='#cbd5e1';ctx.fillRect(margin,172,outW-margin*2,3);
+            let y=margin+headerH+gap;
+            cards.forEach(({canvas})=>{ctx.drawImage(canvas,margin,y,outW-margin*2,canvas.height);y+=canvas.height+gap;});
+            return out;
+        }
+
+        async function exportSelectedSectionsJPEG(selected, tabId, tabName, btn) {
             const original=btn.innerHTML;btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Gerando JPEG...';
-            try{for(let i=0;i<selected.length;i++){const canvas=await composeSectionWithGeneralFields(selected[i],tabId,tabName);const safe=String(selected[i].title||`grafico_${i+1}`).replace(/[^a-z0-9áàâãéêíóôõúç _-]/gi,'').trim().replace(/\s+/g,'_').slice(0,80);downloadCanvasAsJPEG(canvas,`${tabName}_${safe}_${new Date().toISOString().slice(0,10)}.jpeg`);if(i<selected.length-1)await new Promise(r=>setTimeout(r,250));}}
-            catch(e){console.error(e);alert(`Não foi possível gerar o JPEG. ${e?.message||'Tente novamente após os gráficos carregarem.'}`);}finally{btn.innerHTML=original;btn.disabled=false;}
+            try{const canvas=await composeExportJPEG(selected,tabId,tabName);downloadCanvasAsJPEG(canvas,`${tabName}_${new Date().toISOString().split('T')[0]}.jpeg`);}
+            catch(e){console.error(e);alert(`Não foi possível gerar o JPEG. ${e?.message||'Tente novamente após os gráficos carregarem.'}`);}
+            finally{btn.innerHTML=original;btn.disabled=false;}
         }
-        async function exportSelectedSectionsPDF(selected,tabId,tabName,btn){
+
+        async function exportSelectedSectionsPDF(selected, tabId, tabName, btn) {
             const original=btn.innerHTML;btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Gerando PDF...';
-            try{const {jsPDF}=window.jspdf||{};if(!jsPDF)throw new Error('Biblioteca jsPDF não carregada.');const pdf=new jsPDF({orientation:'landscape',unit:'pt',format:[REPORT_PAGE_W,REPORT_PAGE_H],compress:true});for(let i=0;i<selected.length;i++){const canvas=await composeSectionWithGeneralFields(selected[i],tabId,tabName);if(i>0)pdf.addPage([REPORT_PAGE_W,REPORT_PAGE_H],'landscape');pdf.addImage(canvas.toDataURL('image/png'),'PNG',0,0,REPORT_PAGE_W,REPORT_PAGE_H,undefined,'FAST');}pdf.save(`${tabName}_${new Date().toISOString().slice(0,10)}.pdf`);}
-            catch(e){console.error(e);alert(`Não foi possível gerar o PDF. ${e?.message||'Tente novamente após os gráficos carregarem.'}`);}finally{btn.innerHTML=original;btn.disabled=false;}
+            try{
+                const {jsPDF}=window.jspdf||{};if(!jsPDF)throw new Error('Biblioteca jsPDF não carregada.');
+                // PDF contínuo, retrato, com largura útil máxima e altura calculada automaticamente.
+                const pdfW=210, margin=4, contentW=pdfW-margin*2, gapMm=6;
+                const isTab4=isTab4Export(tabName);
+                const sections=[];
+                for(const item of selected) sections.push(isTab4?await composeTab4SectionCanvas(item,3400):await captureExportCard(item.card,3200,1250));
+                const heights=sections.map(c=>contentW*c.height/c.width);
+                const titleH=18;
+                const pdfH=Math.max(297,margin*2+titleH+gapMm+heights.reduce((a,b)=>a+b,0)+gapMm*Math.max(0,sections.length-1));
+                const pdf=new jsPDF({orientation:'portrait',unit:'mm',format:[pdfW,pdfH],compress:true});
+                pdf.setFillColor(245,247,250);pdf.rect(0,0,pdfW,pdfH,'F');
+                pdf.setFillColor(22,101,52);pdf.rect(0,0,pdfW,3,'F');
+                pdf.setTextColor(15,23,42);pdf.setFont('helvetica','bold');pdf.setFontSize(16);pdf.text(isTab4?'RELATÓRIO — ENTRADA E SAÍDA DE ÁGUA':String(tabName||'RELATÓRIO').toUpperCase(),margin,margin+8);
+                const range=getExportDateRange(tabId);if(range){pdf.setTextColor(100,116,139);pdf.setFont('helvetica','normal');pdf.setFontSize(8);pdf.text(`Período: ${range}`,margin,margin+14);}
+                let y=margin+titleH+gapMm;
+                sections.forEach((c,i)=>{const h=heights[i];pdf.addImage(c.toDataURL('image/jpeg', 1.0),'JPEG',margin,y,contentW,h,undefined,'FAST');y+=h+gapMm;});
+                pdf.save(`${tabName}_${new Date().toISOString().split('T')[0]}.pdf`);
+            }catch(e){console.error(e);alert(`Não foi possível gerar o PDF. ${e?.message||'Tente novamente após os gráficos carregarem.'}`);}
+            finally{btn.innerHTML=original;btn.disabled=false;}
         }
 
-        function captureTab(tabId,tabName,btn){openReportExportMenu(tabId,tabName,btn);}
-        function openImageExportMenu(tabId,tabName,btn){openReportExportMenu(tabId,tabName,btn);}
-        function downloadPDF(elementId,fileName,btn){openReportExportMenu(elementId,fileName,btn);}
+        function captureTab(tabId, tabName, btn) {
+            showExportSelector(tabId, tabName, 'jpeg', btn);
+        }
 
-function toggleDropdown(id) {
+        function openImageExportMenu(tabId, tabName, btn) {
+            captureTab(tabId, tabName, btn);
+        }
+
+        function downloadPDF(elementId, fileName, btn) {
+            showExportSelector(elementId, fileName, 'pdf', btn);
+        }
+
+        function printCurrentTab(tabId, fileName, btn) {
+    const tab = document.getElementById(tabId);
+    if (!tab) return;
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('print-target'));
+    tab.classList.add('print-target');
+    document.body.classList.add('printing');
+    // Give Chart.js time to finish rendering before the browser print snapshot.
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            setTimeout(() => { window.print(); }, 250);
+        });
+    });
+    const cleanup = () => { document.body.classList.remove('printing'); tab.classList.remove('print-target'); window.removeEventListener('afterprint', cleanup); };
+    window.addEventListener('afterprint', cleanup);
+}function toggleDropdown(id) {
             document.getElementById(id).classList.toggle('hidden');
         }
 
@@ -3160,7 +3246,7 @@ function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
             },
             x: {
                 title: { display: true, text: xTitle },
-                ticks: { autoSkip: dates.length > 1, maxRotation: 45, minRotation: 0 }
+                ticks: { autoSkip: dates.length > 1, maxRotation: 0, minRotation: 0, padding: 8, callback: value => shortDateLabel(value) }
             }
         },
         plugins: {
@@ -3390,7 +3476,7 @@ function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
                 responsive: true,
                 maintainAspectRatio: false,
                 scales: {
-                    x: { stacked: false, ticks: { autoSkip: false, maxRotation: 45, minRotation: 0, font: { size: 11, weight: '600' } } },
+                    x: { stacked: false, ticks: { autoSkip: false, maxRotation: 0, minRotation: 0, padding: 8, callback: value => shortDateLabel(value), font: { size: 11, weight: '600' } } },
                     y: { beginAtZero: true, grace: '12%', title: { display: true, text: 'Volume Irrigado (L)' } }
                 },
                 layout: { padding: { top: 34, right: 18, left: 12, bottom: 18 } },
@@ -3796,7 +3882,7 @@ function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
             }, {
                 responsive:true, maintainAspectRatio:false,
                 scales:{
-                    x:{ticks:{font:{size:12,weight:'700'},maxRotation:55,minRotation:35,padding:8}},
+                    x:{ticks:{font:{size:12,weight:'700'},maxRotation:0,minRotation:0,padding:8,callback:value=>shortDateLabel(value)}},
                     y:{beginAtZero:true,ticks:{font:{size:12,weight:'700'},padding:6}}
                 },
                 plugins:{
@@ -3894,7 +3980,7 @@ function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
             renderChart('medidoresR2R3Chart','medidoresR2R3','line',{labels:all,datasets:[
                 {label:'R2',data:dataR2,borderColor:'#16a34a',backgroundColor:'#16a34a',pointRadius:6,tension:0,spanGaps:false,borderWidth:3},
                 {label:'R3',data:dataR3,borderColor:'#dc2626',backgroundColor:'#dc2626',pointRadius:6,tension:0,spanGaps:false,borderWidth:3}
-            ]},{responsive:true,maintainAspectRatio:false,scales:{x:{ticks:{autoSkip:false,maxRotation:55,minRotation:35,font:{size:10,weight:'600'}}},y:{min:-.25,max:1.25,ticks:{stepSize:1,callback:v=>v===1?'R2':v===0?'R3':''},title:{display:true,text:'Medidor'}}},plugins:{legend:{position:'top'},datalabels:{display:true,align:'top',offset:4,font:{size:9,weight:'bold'},formatter:(v,ctx)=>v===null?'':ctx.dataset.label}}});
+            ]},{responsive:true,maintainAspectRatio:false,scales:{x:{ticks:{autoSkip:false,maxRotation:0,minRotation:0,padding:8,callback:value=>shortDateLabel(value),font:{size:10,weight:'600'}}},y:{min:-.25,max:1.25,ticks:{stepSize:1,callback:v=>v===1?'R2':v===0?'R3':''},title:{display:true,text:'Medidor'}}},plugins:{legend:{position:'top'},datalabels:{display:true,align:'top',offset:4,font:{size:9,weight:'bold'},formatter:(v,ctx)=>v===null?'':ctx.dataset.label}}});
         }
 
         function applyFiltersTab6() {
@@ -4010,27 +4096,16 @@ function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
     </script>
 
     <div id="exportSelectorModal" class="fixed inset-0 z-[9999] hidden items-center justify-center bg-slate-900/60 p-4" style="display:none;">
-        <div class="w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden">
-            <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
-                <div><h3 id="exportSelectorTitle" class="text-base font-extrabold text-slate-800">Baixar relatório</h3><p class="text-xs text-slate-500 mt-1">Marque os gráficos desejados. Cada gráfico será baixado junto com os campos gerais da aba, no mesmo padrão 1280×720 do PDF de referência.</p></div>
+        <div class="w-full max-w-xl rounded-2xl bg-white shadow-2xl border border-slate-200 overflow-hidden">
+            <div class="px-5 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+                <div><h3 id="exportSelectorTitle" class="text-base font-extrabold text-slate-800">Selecionar dados para baixar</h3><p class="text-xs text-slate-500 mt-1">Marque somente os gráficos/quadro que deseja no arquivo.</p></div>
                 <button id="exportSelectorCancel" class="text-slate-400 hover:text-slate-700"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
-            <div class="px-5 pt-4">
-                <div class="grid grid-cols-2 gap-3">
-                    <label class="export-option"><input type="radio" name="exportFormat" value="pdf" checked><span><b class="text-sm">PDF</b><small class="block text-[11px] text-slate-500">Cada gráfico/quadro em uma folha 1280×720</small></span></label>
-                    <label class="export-option"><input type="radio" name="exportFormat" value="jpeg"><span><b class="text-sm">JPEG</b><small class="block text-[11px] text-slate-500">Cada gráfico selecionado gera um JPEG 1280×720</small></span></label>
-                </div>
-            </div>
-            <div class="p-5 max-h-[50vh] overflow-y-auto">
-                <label class="flex items-center gap-2 mb-3 text-xs font-bold text-slate-600"><input id="exportSelectorSelectAll" type="checkbox" class="w-4 h-4" checked> Selecionar todos</label>
-                <div id="exportSelectorList" class="space-y-2"></div>
-            </div>
-            <div class="px-5 py-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-2">
-                <button id="exportSelectorCancel2" class="px-4 py-2 rounded-lg border border-slate-300 text-sm font-semibold text-slate-700">Cancelar</button>
-                <button id="exportSelectorConfirm" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold"><i class="fa-solid fa-download mr-1"></i> Baixar selecionados</button>
-            </div>
+            <div class="p-5 max-h-[55vh] overflow-y-auto"><label class="flex items-center gap-2 mb-3 text-xs font-bold text-slate-600"><input id="exportSelectorSelectAll" type="checkbox" class="w-4 h-4" checked> Selecionar todos</label><div id="exportSelectorList" class="space-y-2"></div></div>
+            <div class="px-5 py-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-2"><button id="exportSelectorCancel2" class="px-4 py-2 rounded-lg border border-slate-300 text-sm font-semibold text-slate-700">Cancelar</button><button id="exportSelectorConfirm" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold"><i class="fa-solid fa-download mr-1"></i> Baixar selecionados</button></div>
         </div>
     </div>
+    <script>document.getElementById("exportSelectorCancel2").onclick=()=>{const m=document.getElementById("exportSelectorModal");m.classList.add("hidden");m.style.display="none";};</script>
 
 <style>
 @media print { body.printing .tab-content.print-target { display:block!important; } body.printing .print-hide, body.printing button, body.printing input, body.printing select, body.printing .filter-container, body.printing .filters { display:none!important; } body.printing .glass-card { break-inside:avoid; page-break-inside:avoid; } }
