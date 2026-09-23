@@ -630,39 +630,14 @@
                         <span id="tab3ChartInfo" class="text-[11px] font-semibold text-slate-500">--</span>
                     </div>
                     <div class="chart-scroll-wrapper mt-3">
-                        <div id="tab3DailyChartContainer" class="chart-container-large" style="height:620px; min-width:1500px;">
+                        <div id="tab3DailyChartContainer" class="chart-container-large" style="height:760px; min-width:1200px;">
                             <canvas id="tab3DailyFlowChart"></canvas>
                         </div>
                     </div>
                 </div>
 
 
-                <!-- Dados tabulares da mesma fonte usada no gráfico da Aba 03 -->
-                <div class="glass-card p-5 mt-4">
-                    <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
-                        <div>
-                            <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
-                                <i class="fa-solid fa-table-list text-orange-500"></i> Dados Tabulares — Controle de Vazão dos Poços
-                            </h3>
-                            <p class="text-xs text-slate-500">Os dados abaixo são puxados da mesma planilha de controle de vazão usada no gráfico acima.</p>
-                        </div>
-                        <span id="tab3TableInfo" class="text-[11px] font-semibold text-slate-500">--</span>
-                    </div>
-                    <div class="overflow-x-auto max-h-[560px] overflow-y-auto border border-slate-200 rounded-lg">
-                        <table class="w-full border-collapse text-sm">
-                            <thead class="sticky top-0 z-10">
-                                <tr class="bg-slate-100 text-slate-700 uppercase text-xs tracking-wider border-b border-slate-200">
-                                    <th class="py-3 px-4 text-left">Data</th>
-                                    <th class="py-3 px-4 text-left">Poço</th>
-                                    <th class="py-3 px-4 text-right">Vazão Média (L/h)</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tab3TableBody" class="divide-y divide-slate-100 text-slate-700">
-                                <tr><td colspan="3" class="py-8 text-center text-slate-400">Carregando dados do Controle de Vazão dos Poços...</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+
 
             </div>
 
@@ -3104,8 +3079,8 @@ function toggleDropdown(id) {
         }
 
         function applyFiltersTab3() {
-            // ABA 03: fonte única = planilha de Controle de Vazão dos Poços,
-            // a mesma fonte usada para montar o gráfico de vazão diária.
+            // ABA 03: fonte única = planilha de Controle de Vazão dos Poços.
+            // O gráfico mostra a vazão registrada/retirada em cada poço em cada dia.
             const source = Array.isArray(globalVazaoDiaData) ? globalVazaoDiaData : [];
             const selectedWells = Array.from(document.querySelectorAll('.well-chk-3:checked')).map(c => c.value);
             const selectedMonths = Array.from(document.querySelectorAll('.month-chk-3:checked')).map(c => c.value);
@@ -3119,8 +3094,7 @@ function toggleDropdown(id) {
                 return Number(d.VazaoMediaDia) > 0;
             });
 
-            // Consolida por DATA + POÇO para que gráfico e tabela mostrem exatamente
-            // a mesma informação diária. Se houver mais de um registro, calcula a média.
+            // Consolida registros repetidos do mesmo DATA + POÇO.
             const grouped = new Map();
             filtered.forEach(d => {
                 const key = `${d.IsoDate}___${d.Poco}`;
@@ -3130,101 +3104,86 @@ function toggleDropdown(id) {
                 g.count++;
             });
 
-            const groupedRows = Array.from(grouped.values()).map(g => ({
+            const rows = Array.from(grouped.values()).map(g => ({
                 iso: g.iso,
                 poco: g.poco,
                 value: g.sum / Math.max(1, g.count)
             })).sort((a,b) => a.iso.localeCompare(b.iso) || a.poco.localeCompare(b.poco, undefined, {numeric:true, sensitivity:'base'}));
 
-            const datesIso = Array.from(new Set(groupedRows.map(r => r.iso))).sort();
-            const wells = Array.from(new Set(groupedRows.map(r => r.poco))).sort((a,b) => a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'}));
             const displayDate = iso => {
                 const d = new Date(iso + 'T00:00:00');
-                return Number.isNaN(d.getTime()) ? iso : d.toLocaleDateString('pt-BR', { day:'2-digit', month:'long', year:'numeric' });
+                return Number.isNaN(d.getTime()) ? iso : d.toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric' });
             };
 
-            const values = new Map();
-            groupedRows.forEach(g => values.set(`${g.iso}___${g.poco}`, g.value));
+            const labels = rows.map(r => `${r.poco}  •  ${displayDate(r.iso)}`);
+            const values = rows.map(r => Math.round(r.value));
 
-            const colors = ['#166534','#2563eb','#f59e0b','#64748b','#7c3aed','#0891b2','#be185d','#854d0e','#15803d','#1d4ed8','#ea580c','#475569','#9333ea','#0f766e'];
-            const datasets = wells.map((w, idx) => {
-                const c = colors[idx % colors.length];
-                return {
-                    label: w,
-                    data: datesIso.map(iso => values.has(`${iso}___${w}`) ? Math.round(values.get(`${iso}___${w}`)) : null),
-                    backgroundColor: c,
-                    borderColor: c,
-                    borderWidth: 1,
-                    borderRadius: 4,
-                    maxBarThickness: 32,
-                    categoryPercentage: 0.78,
-                    barPercentage: 0.86
-                };
-            });
-
+            // Mantém o gráfico legível mesmo quando houver muitos poços/dias.
             const container = document.getElementById('tab3DailyChartContainer');
             if (container) {
-                const width = Math.max(1500, datesIso.length * Math.max(250, wells.length * 24));
-                container.style.width = `${width}px`;
-                container.style.minWidth = `${width}px`;
+                const height = Math.max(620, rows.length * 38 + 120);
+                container.style.height = `${height}px`;
+                container.style.minWidth = '1200px';
+                container.style.width = '100%';
             }
 
             renderChart('tab3DailyFlowChart', 'tab3DailyFlow', 'bar', {
-                labels: datesIso.map(displayDate),
-                datasets
+                labels,
+                datasets: [{
+                    label: 'Vazão registrada',
+                    data: values,
+                    backgroundColor: '#f97316',
+                    borderColor: '#ea580c',
+                    borderWidth: 1,
+                    borderRadius: 5,
+                    barPercentage: 0.72,
+                    categoryPercentage: 0.82,
+                    maxBarThickness: 30
+                }]
             }, {
+                indexAxis: 'y',
                 responsive: true,
                 maintainAspectRatio: false,
-                interaction: { mode: 'index', intersect: false },
+                interaction: { mode: 'nearest', intersect: true },
                 scales: {
                     x: {
-                        title: { display: true, text: 'Data' },
-                        stacked: false,
-                        grid: { display: false },
-                        ticks: { maxRotation: 0, minRotation: 0, font: { size: 10, weight: '600' } }
-                    },
-                    y: {
                         beginAtZero: true,
                         title: { display: true, text: 'Vazão (L/h)' },
                         ticks: { callback: v => Number(v).toLocaleString('pt-BR') },
                         grid: { color: 'rgba(148,163,184,.20)' }
+                    },
+                    y: {
+                        title: { display: true, text: 'Poço / Data' },
+                        grid: { display: false },
+                        ticks: { font: { size: 10, weight: '600' } }
                     }
                 },
                 plugins: {
                     legend: { position: 'top', labels: { usePointStyle: true, pointStyle: 'rectRounded', padding: 16, font: { size: 10.5, weight: '600' } } },
-                    tooltip: { callbacks: { label: ctx => ctx.raw == null ? `${ctx.dataset.label}: sem leitura` : `${ctx.dataset.label}: ${Number(ctx.raw).toLocaleString('pt-BR')} L/h` } },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => `${Number(ctx.raw).toLocaleString('pt-BR')} L/h`
+                        }
+                    },
                     datalabels: {
                         display: ctx => ctx.raw != null,
-                        formatter: value => Number(value).toLocaleString('pt-BR'),
+                        formatter: value => `${Number(value).toLocaleString('pt-BR')} L/h`,
                         color: '#1e293b',
                         anchor: 'end',
-                        align: 'top',
-                        offset: 3,
+                        align: 'right',
+                        offset: 4,
                         clamp: true,
                         font: { size: 9, weight: '700' }
                     }
                 }
             });
 
-            // Tabela da Aba 03: usa exatamente os mesmos dados consolidados do gráfico.
-            const tbody = document.getElementById('tab3TableBody');
-            if (tbody) {
-                if (!groupedRows.length) {
-                    tbody.innerHTML = '<tr><td colspan="3" class="py-8 text-center text-slate-400">Nenhum dado encontrado no Controle de Vazão dos Poços para os filtros selecionados.</td></tr>';
-                } else {
-                    tbody.innerHTML = groupedRows.map(r => `
-                        <tr class="hover:bg-slate-50 transition">
-                            <td class="py-2.5 px-4 text-left font-medium">${displayDate(r.iso)}</td>
-                            <td class="py-2.5 px-4 text-left font-semibold">${r.poco}</td>
-                            <td class="py-2.5 px-4 text-right font-bold">${Math.round(r.value).toLocaleString('pt-BR')} L/h</td>
-                        </tr>`).join('');
-                }
-            }
-
             const info = document.getElementById('tab3ChartInfo');
-            if (info) info.textContent = `${datesIso.length} ${datesIso.length === 1 ? 'dia' : 'dias'} · ${wells.length} ${wells.length === 1 ? 'poço' : 'poços'}`;
-            const tableInfo = document.getElementById('tab3TableInfo');
-            if (tableInfo) tableInfo.textContent = `${groupedRows.length} registros diários`;
+            const dates = Array.from(new Set(rows.map(r => r.iso)));
+            const wells = Array.from(new Set(rows.map(r => r.poco)));
+            if (info) info.textContent = rows.length
+                ? `${dates.length} ${dates.length === 1 ? 'dia' : 'dias'} · ${wells.length} ${wells.length === 1 ? 'poço' : 'poços'} · ${rows.length} registros`
+                : 'Nenhum dado encontrado na planilha Controle de Vazão dos Poços';
         }
 
         function resetFiltersTab3() {
