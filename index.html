@@ -418,14 +418,6 @@
                             </div>
 
                             <div class="relative">
-                                <label class="block text-[11px] font-semibold text-slate-500 mb-0.5">Data inicial</label>
-                                <input type="date" id="tab3StartDate" onchange="applyFiltersTab3()" class="bg-white border border-slate-300 rounded-lg text-xs px-3 py-1.5 shadow-sm w-40">
-                            </div>
-                            <div class="relative">
-                                <label class="block text-[11px] font-semibold text-slate-500 mb-0.5">Data final</label>
-                                <input type="date" id="tab3EndDate" onchange="applyFiltersTab3()" class="bg-white border border-slate-300 rounded-lg text-xs px-3 py-1.5 shadow-sm w-40">
-                            </div>
-                            <div class="relative">
                                 <label class="block text-[11px] font-semibold text-slate-500 mb-0.5">Meses</label>
                                 <button type="button" onclick="toggleDropdown('dropdownMonthTab1')" class="bg-white border border-slate-300 rounded-lg text-xs px-3 py-1.5 shadow-sm w-44 flex justify-between items-center">
                                     <span id="labelMonthTab1">Todos os Meses</span>
@@ -618,6 +610,14 @@
                                     <div class="p-2 flex flex-col gap-1" id="monthCheckboxesTab3"></div>
                                 </div>
                             </div>
+                            <div>
+                                <label class="block text-[11px] font-semibold text-slate-500 mb-0.5">Data inicial</label>
+                                <input type="date" id="tab3StartDate" onchange="applyFiltersTab3()" class="bg-white border border-slate-300 rounded-lg text-xs px-3 py-1.5 shadow-sm w-40">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-semibold text-slate-500 mb-0.5">Data final</label>
+                                <input type="date" id="tab3EndDate" onchange="applyFiltersTab3()" class="bg-white border border-slate-300 rounded-lg text-xs px-3 py-1.5 shadow-sm w-40">
+                            </div>
                             <div class="flex items-end">
                                 <button onclick="resetFiltersTab3()" class="mt-4 bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1">
                                     <i class="fa-solid fa-xmark"></i> Limpar
@@ -637,8 +637,8 @@
                         </div>
                         <span id="tab3ChartInfo" class="text-[11px] font-semibold text-slate-500">--</span>
                     </div>
-                    <div class="chart-scroll-wrapper mt-3">
-                        <div id="tab3DailyChartContainer" class="chart-container-large" style="height:620px; min-width:1200px;">
+                    <div class="mt-3 w-full overflow-hidden">
+                        <div id="tab3DailyChartContainer" class="chart-container" style="height:520px; width:100%;">
                             <canvas id="tab3DailyFlowChart"></canvas>
                         </div>
                     </div>
@@ -3130,13 +3130,13 @@ function toggleDropdown(id) {
             const labels = rows.map(r => `${r.poco}  •  ${displayDate(r.iso)}`);
             const values = rows.map(r => Math.round(r.value));
 
-            // Mantém o gráfico legível mesmo quando houver muitos poços/dias.
+            // A Aba 03 permanece em um tamanho fixo, como os demais gráficos.
+            // O período inicial/final controla quantos dias aparecem, evitando uma página enorme.
             const container = document.getElementById('tab3DailyChartContainer');
             if (container) {
-                const height = Math.max(620, rows.length * 38 + 120);
-                container.style.height = `${height}px`;
-                container.style.minWidth = '1200px';
+                container.style.height = '520px';
                 container.style.width = '100%';
+                container.style.minWidth = '0';
             }
 
             renderChart('tab3DailyFlowChart', 'tab3DailyFlow', 'bar', {
@@ -3183,11 +3183,13 @@ function toggleDropdown(id) {
                         color: '#1e293b',
                         anchor: 'end',
                         align: 'right',
-                        offset: 6,
-                        clamp: false,
+                        offset: 5,
+                        clamp: true,
                         clip: false,
-                        padding: 2,
+                        padding: {top: 2, bottom: 2, left: 4, right: 4},
                         color: '#0f172a',
+                        backgroundColor: 'rgba(255,255,255,.88)',
+                        borderRadius: 4,
                         font: { size: 10, weight: '700' }
                     }
                 }
