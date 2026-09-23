@@ -65,6 +65,14 @@
             height: 480px;
             width: 100%;
         }
+
+        .schedule-chip {
+            display:inline-flex; align-items:center; gap:.45rem; padding:.45rem .65rem;
+            border:1px solid #dbe3ef; border-radius:.65rem; background:#f8fafc;
+            font-size:.72rem; color:#334155;
+        }
+        .schedule-chip button { color:#94a3b8; }
+        .schedule-chip button:hover { color:#dc2626; }
         
         ::-webkit-scrollbar { width: 8px; height: 10px; }
         ::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 8px; }
@@ -309,6 +317,45 @@
                 </nav>
             </div>
 
+            <!-- ENVIO DE GRÁFICO POR E-MAIL — CONFIGURAÇÃO GLOBAL PARA TODAS AS ABAS -->
+            <div class="glass-card p-5 mb-6 border-blue-200 bg-gradient-to-r from-white to-blue-50/40">
+                <div class="flex items-center justify-between gap-3 flex-wrap mb-3">
+                    <div>
+                        <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                            <i class="fa-solid fa-envelope-circle-check text-blue-600"></i> Enviar gráfico por e-mail
+                        </h3>
+                        <p class="text-xs text-slate-500 mt-1">Escolha qualquer gráfico de qualquer aba. O envio inclui o gráfico e os campos gerais disponíveis na aba selecionada.</p>
+                    </div>
+                    <span class="text-[10px] font-bold uppercase tracking-wide px-2 py-1 rounded-full bg-blue-100 text-blue-700">Configuração geral do sistema</span>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
+                    <div class="md:col-span-1">
+                        <label for="globalEmail" class="block text-[11px] font-semibold text-slate-500 mb-1">E-mail destinatário</label>
+                        <input id="globalEmail" type="email" placeholder="exemplo@empresa.com" class="w-full bg-white border border-slate-300 rounded-lg text-sm px-3 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label for="globalChart" class="block text-[11px] font-semibold text-slate-500 mb-1">Gráfico que será enviado</label>
+                        <select id="globalChart" class="w-full bg-white border border-slate-300 rounded-lg text-sm px-3 py-2 shadow-sm"></select>
+                    </div>
+                    <div>
+                        <label class="flex items-center gap-2 bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs font-semibold text-slate-600 cursor-pointer h-[38px]">
+                            <input id="globalIncludeFields" type="checkbox" checked class="w-4 h-4 text-blue-600 rounded">
+                            Incluir campos gerais
+                        </label>
+                    </div>
+                    <div>
+                        <button onclick="sendSelectedChartByEmail()" class="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-4 py-2 text-sm font-bold transition flex items-center justify-center gap-2 h-[38px]">
+                            <i class="fa-solid fa-paper-plane"></i> Enviar gráfico
+                        </button>
+                    </div>
+                </div>
+                <div class="flex flex-wrap gap-2 mt-3">
+                    <button type="button" onclick="saveGlobalEmail()" class="bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-lg px-3 py-1.5 text-xs font-semibold"><i class="fa-solid fa-floppy-disk mr-1"></i> Salvar e-mail</button>
+                    <button type="button" onclick="copySelectedChartImage()" class="bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-lg px-3 py-1.5 text-xs font-semibold"><i class="fa-solid fa-copy mr-1"></i> Copiar gráfico</button>
+                    <span id="globalEmailNotice" class="text-[11px] text-slate-500 self-center"></span>
+                </div>
+            </div>
+
             <!-- TAB 1: DIÁRIO -->
             <div id="content-diario" class="space-y-6">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -412,24 +459,6 @@
                 <div class="glass-card p-5">
                     <h3 class="text-base font-bold text-slate-800">Vazão Média Diária Exata</h3>
                     <div class="chart-scroll-wrapper mt-3"><div class="chart-container"><canvas id="dailyFlowChart"></canvas></div></div>
-                </div>
-
-                <!-- NOVO GRÁFICO: VAZÃO REAL REGISTRADA POR POÇO E POR DATA -->
-                <div class="glass-card p-5 border-slate-200 bg-gradient-to-br from-white to-slate-50/70">
-                    <div class="flex justify-between items-start gap-3 flex-wrap mb-2">
-                        <div>
-                            <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
-                                <i class="fa-solid fa-chart-column text-cyan-600"></i> Vazão Registrada por Poço e Data
-                            </h3>
-                            <p class="text-xs text-slate-500 mt-1">Cada barra representa uma leitura da planilha de Vazão Média, mostrando <b>Poço + data + vazão</b>. Ao selecionar várias datas, todos os registros aparecem individualmente, sem sobreposição.</p>
-                        </div>
-                        <div id="vazaoDiaResumoTab1" class="text-[11px] font-semibold text-slate-500 bg-white border border-slate-200 rounded-lg px-3 py-1.5 shadow-sm">-- registros</div>
-                    </div>
-                    <div id="vazaoDiaTab1Scroll" class="chart-scroll-wrapper mt-3">
-                        <div id="vazaoDiaTab1ChartContainer" class="relative" style="height:260px; min-width:100%;">
-                            <canvas id="vazaoDiaTab1Chart"></canvas>
-                        </div>
-                    </div>
                 </div>
             </div>
 
@@ -538,48 +567,15 @@
                 </div>
             </div>
 
-            <!-- TAB 3: COMPARAÇÃO / TABELAS -->
+            <!-- TAB 3: VAZÃO DIÁRIA DOS POÇOS -->
             <div id="content-comparacao" class="hidden space-y-6">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="kpi-compact-card bg-amber-50 border-amber-200 flex items-center gap-3.5">
-                        <div class="w-10 h-10 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
-                            <i class="fa-solid fa-list-check text-lg"></i>
-                        </div>
-                        <div>
-                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Total de Registros</p>
-                            <h3 id="kpi3_totalRecords" class="text-xl font-bold text-amber-900">--</h3>
-                        </div>
-                    </div>
-
-                    <div class="kpi-compact-card bg-orange-50 border-orange-200 flex items-center gap-3.5">
-                        <div class="w-10 h-10 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center shrink-0">
-                            <i class="fa-solid fa-calculator text-lg"></i>
-                        </div>
-                        <div>
-                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Média Geral Tabulada</p>
-                            <h3 id="kpi3_avgFlow" class="text-xl font-bold text-orange-900">-- L/h</h3>
-                        </div>
-                    </div>
-
-                    <div class="kpi-compact-card bg-teal-50 border-teal-200 flex items-center gap-3.5">
-                        <div class="w-10 h-10 rounded-lg bg-teal-100 text-teal-600 flex items-center justify-center shrink-0">
-                            <i class="fa-solid fa-glass-water text-lg"></i>
-                        </div>
-                        <div>
-                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Volume Médio p/ Registro</p>
-                            <h3 id="kpi3_avgVolPerRecord" class="text-xl font-bold text-teal-900">-- L</h3>
-                        </div>
-                    </div>
-                </div>
-
                 <div class="glass-card p-4 bg-slate-50/80 border-slate-200">
                     <div class="flex flex-wrap items-center justify-between gap-4">
                         <div class="flex items-center gap-2">
                             <span class="text-slate-700 font-bold text-xs uppercase tracking-wide flex items-center gap-1.5">
-                                <i class="fa-solid fa-filter text-orange-600"></i> Filtros de Consulta:
+                                <i class="fa-solid fa-filter text-orange-600"></i> Filtros de Consulta
                             </span>
-                            <button onclick="openReportExportMenu('content-comparacao', 'aba_3_dados_tabulares', this)" title="Baixar relatório em JPEG ou PDF" class="print-hide bg-white hover:bg-blue-50 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm"><i class="fa-solid fa-download text-blue-600"></i> Baixar relatório</button>
-                            
+                            <button onclick="openReportExportMenu('content-comparacao', 'aba_3_vazao_diaria', this)" title="Baixar gráfico em JPEG ou PDF" class="print-hide bg-white hover:bg-blue-50 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm"><i class="fa-solid fa-download text-blue-600"></i> Baixar gráfico</button>
                         </div>
                         <div class="flex flex-wrap items-center gap-3">
                             <div class="relative">
@@ -624,28 +620,23 @@
                 </div>
 
                 <div class="glass-card p-5">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
-                            <i class="fa-solid fa-table-list text-orange-500"></i> Resumo Tabular dos Dados
-                        </h3>
+                    <div class="flex items-center justify-between mb-2 flex-wrap gap-2">
+                        <div>
+                            <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                                <i class="fa-solid fa-chart-column text-orange-500"></i> Vazão dos Poços por Dia
+                            </h3>
+                            <p class="text-xs text-slate-500">Barras verticais por poço e por dia. As datas aparecem em ordem cronológica, com o mês escrito por extenso.</p>
+                        </div>
+                        <span id="tab3ChartInfo" class="text-[11px] font-semibold text-slate-500">--</span>
                     </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse text-sm">
-                            <thead>
-                                <tr class="bg-slate-100/80 text-slate-700 uppercase text-xs tracking-wider border-b border-slate-200">
-                                    <th class="py-3 px-4 min-w-[120px]">Poço</th>
-                                    <th class="py-3 px-4 min-w-[140px]">Mês / Ano</th>
-                                    <th class="py-3 px-4 text-right min-w-[160px] whitespace-nowrap">Vazão Média (L/h)</th>
-                                    <th class="py-3 px-4 text-right min-w-[160px] whitespace-nowrap">Volume Total (L)</th>
-                                    <th class="py-3 px-4 text-center min-w-[140px]">Registros</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tab3TableBody" class="divide-y divide-slate-100 text-slate-700">
-                                <tr><td colspan="5" class="py-6 text-center text-slate-400">Carregando dados...</td></tr>
-                            </tbody>
-                        </table>
+                    <div class="chart-scroll-wrapper mt-3">
+                        <div id="tab3DailyChartContainer" class="chart-container-large" style="height:620px; min-width:1500px;">
+                            <canvas id="tab3DailyFlowChart"></canvas>
+                        </div>
                     </div>
                 </div>
+
+
             </div>
 
             <!-- TAB 4: ENTRADA / SAÍDA (ATUALIZADA COM COMPONENTES DE EMISSORES) -->
@@ -1386,23 +1377,6 @@
 
     <script>
         Chart.register(ChartDataLabels);
-// Valores visíveis nos pontos do gráfico Vazão Média Diária Exata
-const dailyFlowLabelsPlugin = {
-    id: 'dailyFlowLabelsPlugin',
-    afterDatasetsDraw(chart) {
-        if (chart.canvas && chart.canvas.id === 'dailyFlowChart') {
-            const ctx = chart.ctx;
-            ctx.save(); ctx.font = 'bold 11px Inter, Arial'; ctx.textAlign='center'; ctx.textBaseline='bottom'; ctx.fillStyle='#334155';
-            chart.data.datasets.forEach((ds, di) => {
-                const meta=chart.getDatasetMeta(di);
-                meta.data.forEach((pt,i)=>{ const v=ds.data[i]; if(v==null || !Number.isFinite(Number(v))) return; ctx.fillText(Number(v).toLocaleString('pt-BR')+' L/h', pt.x, pt.y-8); });
-            }); ctx.restore();
-        }
-    }
-};
-Chart.register(dailyFlowLabelsPlugin);
-
-
         const VAZAO_DIA_SHEET = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSafB5fd5osyELyMS1T-pVO-WbL25l53ICs1dmVMgByrAlQsqSHT2YscIE-ClYrJvzPS-dGZSp25ysi/pub?output=csv";
 
         const ENTRADA_SHEETS = [
@@ -2807,22 +2781,34 @@ function toggleDropdown(id) {
                 }
             });
 
-            // Daily Chart
-            const dates = Array.from(new Set(filtered.map(d => d.DataFormatted)));
+            // Daily Chart — formato visual semelhante ao modelo de referência:
+            // linhas com marcadores e etiquetas coloridas/legíveis em cada ponto.
+            const dateMap = new Map();
+            filtered.forEach(d => { if (d.IsoDate) dateMap.set(d.IsoDate, d.DataObj || new Date(d.IsoDate + 'T00:00:00')); });
+            const datesIso = Array.from(dateMap.keys()).sort();
+            const dates = datesIso.map(iso => {
+                const dt = dateMap.get(iso);
+                return dt ? dt.toLocaleDateString('pt-BR') : iso.split('-').reverse().join('/');
+            });
             const wells = Array.from(new Set(filtered.map(d => d.Poco))).sort((a,b) => a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'}));
-            const colors = ['#166534', '#2563eb', '#d97706', '#64748b', '#7c3aed', '#0891b2', '#be185d', '#854d0e'];
+            const colors = ['#166534','#2563eb','#f59e0b','#64748b','#7c3aed','#0891b2','#be185d','#854d0e','#15803d','#1d4ed8','#ea580c','#475569','#9333ea','#0f766e'];
 
             const datasetsDaily = wells.map((w, idx) => {
                 const dataMap = {};
-                filtered.filter(d => d.Poco === w).forEach(d => {
-                    dataMap[d.DataFormatted] = d.Vazao;
-                });
+                filtered.filter(d => d.Poco === w).forEach(d => { dataMap[d.IsoDate] = d.Vazao; });
+                const c = colors[idx % colors.length];
                 return {
                     label: w,
-                    data: dates.map(dt => dataMap[dt] || null),
-                    borderColor: colors[idx % colors.length],
-                    backgroundColor: colors[idx % colors.length],
-                    tension: 0.2,
+                    data: datesIso.map(iso => dataMap[iso] ?? null),
+                    borderColor: c,
+                    backgroundColor: c,
+                    pointBackgroundColor: c,
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2,
+                    pointRadius: 4.5,
+                    pointHoverRadius: 6,
+                    borderWidth: 2.5,
+                    tension: 0.18,
                     spanGaps: true
                 };
             });
@@ -2833,148 +2819,33 @@ function toggleDropdown(id) {
             }, {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { datalabels: { display: false } }
-            });
-
-            // Gráfico detalhado: uma barra para CADA registro de vazão por poço/data.
-            // Usa exclusivamente a planilha "Vazão Média", evitando agregação e sobreposição.
-            renderVazaoRegistradaPorDataTab1(selectedWells, selectedMonths, startDate, endDate);
-        }
-
-        function renderVazaoRegistradaPorDataTab1(selectedWells, selectedMonths, startDate, endDate) {
-            // Usa a mesma fonte que já alimenta corretamente os gráficos da Aba 01.
-            // Assim evitamos que diferenças de cabeçalho da planilha "Vazão Média"
-            // façam o novo gráfico ficar vazio.
-            const source = Array.isArray(globalRawData) ? globalRawData : [];
-
-            const filtrados = source.filter(d => {
-                if (!d || !d.Poco || !d.IsoDate) return false;
-                if (selectedWells.length > 0 && !selectedWells.includes(d.Poco)) return false;
-                if (selectedMonths.length > 0 && d.MesLabel && d.MesLabel !== 'N/I' && !selectedMonths.includes(d.MesLabel)) return false;
-                const dia = String(d.IsoDate).slice(0, 10);
-                if (startDate && dia < startDate) return false;
-                if (endDate && dia > endDate) return false;
-                return Number(d.Vazao) > 0;
-            });
-
-            // Uma barra por POÇO + DIA. Se houver mais de um lançamento do mesmo
-            // poço no mesmo dia, mantém a vazão efetivamente usada pela Aba 01.
-            const porChave = new Map();
-            filtrados.forEach(d => {
-                const chave = `${String(d.IsoDate).slice(0,10)}|||${String(d.Poco).trim()}`;
-                porChave.set(chave, d);
-            });
-
-            const registros = Array.from(porChave.values()).sort((a, b) => {
-                const dateCmp = String(a.IsoDate).localeCompare(String(b.IsoDate));
-                if (dateCmp !== 0) return dateCmp;
-                return String(a.Poco).localeCompare(String(b.Poco), undefined, { numeric: true, sensitivity: 'base' });
-            });
-
-            const summary = document.getElementById('vazaoDiaResumoTab1');
-            if (summary) summary.textContent = `${registros.length} registro${registros.length === 1 ? '' : 's'} exibido${registros.length === 1 ? '' : 's'}`;
-
-            const wrapper = document.getElementById('vazaoDiaTab1Scroll');
-            const container = document.getElementById('vazaoDiaTab1ChartContainer');
-            if (!container || !wrapper) return;
-
-            // Altura fixa para não criar um espaço enorme na Aba 01.
-            // Quando houver muitos registros, o usuário rola somente dentro do gráfico.
-            const rowHeight = 34;
-            const visibleHeight = Math.min(430, Math.max(260, Math.min(registros.length || 1, 12) * rowHeight + 65));
-            container.style.height = `${visibleHeight}px`;
-            container.style.minWidth = '100%';
-            container.style.width = '100%';
-            wrapper.style.maxHeight = '450px';
-            wrapper.style.overflowY = registros.length > 12 ? 'auto' : 'hidden';
-            wrapper.style.overflowX = 'hidden';
-
-            const labels = registros.map(d => {
-                const data = d.DataFormatted || (d.DataObj ? d.DataObj.toLocaleDateString('pt-BR') : String(d.IsoDate).slice(0,10));
-                return `${d.Poco} • ${data}`;
-            });
-            const values = registros.map(d => Math.round(Number(d.Vazao) || 0));
-
-            if (!registros.length) {
-                renderChart('vazaoDiaTab1Chart', 'vazaoDiaTab1', 'bar', {
-                    labels: ['Nenhum registro de vazão no período selecionado'],
-                    datasets: [{
-                        label: 'Vazão (L/h)',
-                        data: [0],
-                        backgroundColor: 'rgba(148, 163, 184, 0.30)',
-                        borderRadius: 8,
-                        barThickness: 24
-                    }]
-                }, {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    indexAxis: 'y',
-                    plugins: {
-                        legend: { display: false },
-                        datalabels: { display: false }
+                interaction: { mode: 'index', intersect: false },
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        title: { display: true, text: 'Vazão (L/h)' },
+                        ticks: { callback: v => Number(v).toLocaleString('pt-BR') }
                     },
-                    scales: {
-                        x: { beginAtZero: true, ticks: { callback: v => Number(v).toLocaleString('pt-BR') + ' L/h' } },
-                        y: { grid: { display: false } }
-                    }
-                });
-                return;
-            }
-
-            renderChart('vazaoDiaTab1Chart', 'vazaoDiaTab1', 'bar', {
-                labels,
-                datasets: [{
-                    label: 'Vazão registrada (L/h)',
-                    data: values,
-                    backgroundColor: 'rgba(8, 145, 178, 0.82)',
-                    borderColor: '#0e7490',
-                    borderWidth: 1,
-                    borderRadius: 7,
-                    barThickness: 22,
-                    maxBarThickness: 24
-                }]
-            }, {
-                responsive: true,
-                maintainAspectRatio: false,
-                indexAxis: 'y',
-                animation: { duration: 300 },
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        displayColors: false,
-                        callbacks: {
-                            title: items => items[0]?.label || '',
-                            label: item => ` Vazão: ${Number(item.raw).toLocaleString('pt-BR')} L/h`
-                        }
-                    },
-                    datalabels: {
-                        anchor: 'end',
-                        align: 'right',
-                        offset: 4,
-                        clamp: true,
-                        color: '#0f172a',
-                        font: { size: 10, weight: '800' },
-                        formatter: value => `${Number(value).toLocaleString('pt-BR')} L/h`
+                    x: {
+                        title: { display: true, text: 'Data' },
+                        grid: { display: false }
                     }
                 },
-                scales: {
-                    x: {
-                        beginAtZero: true,
-                        grid: { color: 'rgba(148, 163, 184, 0.16)' },
-                        ticks: {
-                            color: '#64748b',
-                            callback: value => Number(value).toLocaleString('pt-BR')
-                        },
-                        title: { display: true, text: 'Vazão (L/h)', color: '#475569', font: { weight: '700' } }
-                    },
-                    y: {
-                        grid: { display: false },
-                        ticks: {
-                            color: '#334155',
-                            font: { size: 10, weight: '700' },
-                            autoSkip: false,
-                            padding: 6
-                        }
+                plugins: {
+                    legend: { position: 'top', labels: { usePointStyle: true, pointStyle: 'circle', padding: 18, font: { size: 11, weight: '600' } } },
+                    tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${Number(ctx.raw).toLocaleString('pt-BR')} L/h` } },
+                    datalabels: {
+                        display: ctx => ctx.dataset.data[ctx.dataIndex] != null,
+                        formatter: value => `${Math.round(Number(value)).toLocaleString('pt-BR')} L/h`,
+                        backgroundColor: ctx => ctx.dataset.borderColor,
+                        borderRadius: 5,
+                        color: '#ffffff',
+                        padding: { top: 4, bottom: 4, left: 5, right: 5 },
+                        anchor: 'end',
+                        align: 'top',
+                        offset: 5,
+                        clamp: true,
+                        font: { size: 9.5, weight: '700' }
                     }
                 }
             });
@@ -3154,44 +3025,88 @@ function toggleDropdown(id) {
                 return true;
             });
 
-            // KPIs
-            const totalRec = filtered.length;
-            const avgFlow = totalRec > 0 ? (filtered.reduce((acc, curr) => acc + curr.Vazao, 0) / totalRec) : 0;
-            const avgVol = totalRec > 0 ? (filtered.reduce((acc, curr) => acc + curr.Volume, 0) / totalRec) : 0;
-
-            document.getElementById('kpi3_totalRecords').innerText = totalRec.toLocaleString('pt-BR');
-            document.getElementById('kpi3_avgFlow').innerText = `${Math.round(avgFlow).toLocaleString('pt-BR')} L/h`;
-            document.getElementById('kpi3_avgVolPerRecord').innerText = `${Math.round(avgVol).toLocaleString('pt-BR')} L`;
-
-            // Table Summary Grouped by Well & Month
-            const groupMap = {};
+            // Consolida qualquer duplicidade por DATA + POÇO para manter uma única barra por dia/poço.
+            const grouped = new Map();
             filtered.forEach(d => {
-                const key = `${d.Poco}___${d.MesLabel}`;
-                if (!groupMap[key]) {
-                    groupMap[key] = { poco: d.Poco, mes: d.MesLabel, totalVol: 0, sumFlow: 0, count: 0 };
-                }
-                groupMap[key].totalVol += d.Volume;
-                groupMap[key].sumFlow += d.Vazao;
-                groupMap[key].count++;
+                const key = `${d.IsoDate}___${d.Poco}`;
+                if (!grouped.has(key)) grouped.set(key, { iso: d.IsoDate, poco: d.Poco, sum: 0, count: 0 });
+                const g = grouped.get(key);
+                g.sum += Number(d.Vazao) || 0;
+                g.count++;
             });
 
-            const rows = Object.values(groupMap).sort((a,b) => a.poco.localeCompare(b.poco, undefined, {numeric: true, sensitivity: 'base'}));
-            const tbody = document.getElementById('tab3TableBody');
-            
-            if (rows.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-400">Nenhum registro encontrado para os filtros selecionados.</td></tr>`;
-                return;
+            const datesIso = Array.from(new Set(Array.from(grouped.values()).map(r => r.iso).filter(Boolean))).sort();
+            const wells = Array.from(new Set(Array.from(grouped.values()).map(r => r.poco))).sort((a,b) => a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'}));
+            const displayDate = iso => {
+                const d = new Date(iso + 'T00:00:00');
+                return Number.isNaN(d.getTime()) ? iso : d.toLocaleDateString('pt-BR', { day:'2-digit', month:'long', year:'numeric' });
+            };
+
+            const values = new Map();
+            grouped.forEach(g => values.set(`${g.iso}___${g.poco}`, g.sum / Math.max(1, g.count)));
+
+            const colors = ['#166534','#2563eb','#f59e0b','#64748b','#7c3aed','#0891b2','#be185d','#854d0e','#15803d','#1d4ed8','#ea580c','#475569','#9333ea','#0f766e'];
+            const datasets = wells.map((w, idx) => {
+                const c = colors[idx % colors.length];
+                return {
+                    label: w,
+                    data: datesIso.map(iso => values.has(`${iso}___${w}`) ? Math.round(values.get(`${iso}___${w}`)) : null),
+                    backgroundColor: c,
+                    borderColor: c,
+                    borderWidth: 1,
+                    borderRadius: 4,
+                    maxBarThickness: 32,
+                    categoryPercentage: 0.78,
+                    barPercentage: 0.86
+                };
+            });
+
+            const container = document.getElementById('tab3DailyChartContainer');
+            if (container) {
+                const width = Math.max(1500, datesIso.length * Math.max(250, wells.length * 24));
+                container.style.width = `${width}px`;
+                container.style.minWidth = `${width}px`;
             }
 
-            tbody.innerHTML = rows.map(r => `
-                <tr class="hover:bg-slate-50 transition">
-                    <td class="py-2.5 px-4 font-semibold text-slate-800">${r.poco}</td>
-                    <td class="py-2.5 px-4 text-slate-600">${r.mes}</td>
-                    <td class="py-2.5 px-4 text-right font-medium text-blue-600">${Math.round(r.sumFlow / r.count).toLocaleString('pt-BR')} L/h</td>
-                    <td class="py-2.5 px-4 text-right font-bold text-emerald-600">${Math.round(r.totalVol).toLocaleString('pt-BR')} L</td>
-                    <td class="py-2.5 px-4 text-center text-slate-500">${r.count}</td>
-                </tr>
-            `).join('');
+            renderChart('tab3DailyFlowChart', 'tab3DailyFlow', 'bar', {
+                labels: datesIso.map(displayDate),
+                datasets
+            }, {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                scales: {
+                    x: {
+                        title: { display: true, text: 'Data' },
+                        stacked: false,
+                        grid: { display: false },
+                        ticks: { maxRotation: 0, minRotation: 0, font: { size: 10, weight: '600' } }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        title: { display: true, text: 'Vazão (L/h)' },
+                        ticks: { callback: v => Number(v).toLocaleString('pt-BR') },
+                        grid: { color: 'rgba(148,163,184,.20)' }
+                    }
+                },
+                plugins: {
+                    legend: { position: 'top', labels: { usePointStyle: true, pointStyle: 'rectRounded', padding: 16, font: { size: 10.5, weight: '600' } } },
+                    tooltip: { callbacks: { label: ctx => ctx.raw == null ? `${ctx.dataset.label}: sem leitura` : `${ctx.dataset.label}: ${Number(ctx.raw).toLocaleString('pt-BR')} L/h` } },
+                    datalabels: {
+                        display: ctx => ctx.raw != null,
+                        formatter: value => Number(value).toLocaleString('pt-BR'),
+                        color: '#1e293b',
+                        anchor: 'end',
+                        align: 'top',
+                        offset: 3,
+                        clamp: true,
+                        font: { size: 9, weight: '700' }
+                    }
+                }
+            });
+
+            const info = document.getElementById('tab3ChartInfo');
+            if (info) info.textContent = `${datesIso.length} ${datesIso.length === 1 ? 'dia' : 'dias'} · ${wells.length} ${wells.length === 1 ? 'poço' : 'poços'}`;
         }
 
         function resetFiltersTab3() {
@@ -4162,8 +4077,190 @@ function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
             applyFiltersTab6();
         }
 
+        // ===== ENVIO GLOBAL DE GRÁFICOS POR E-MAIL =====
+        const GLOBAL_EMAIL_CHARTS = [
+            {key:'weeklyFlow', canvas:'weeklyFlowChart', tabId:'content-diario', tabKey:'diario', label:'Aba 01 · Vazão Média por Poço (Por Semana)'},
+            {key:'dailyFlow', canvas:'dailyFlowChart', tabId:'content-diario', tabKey:'diario', label:'Aba 01 · Vazão Média Diária Exata'},
+            {key:'monthlyVolume', canvas:'monthlyVolumeChart', tabId:'content-mensal', tabKey:'mensal', label:'Aba 02 · Volume Total Mensal'},
+            {key:'trend', canvas:'trendChart', tabId:'content-mensal', tabKey:'mensal', label:'Aba 02 · Tendência Mensal'},
+            {key:'tab3DailyFlow', canvas:'tab3DailyFlowChart', tabId:'content-comparacao', tabKey:'comparacao', label:'Aba 03 · Vazão dos Poços por Dia'},
+            {key:'vazaoMediaDiaPocos', canvas:'vazaoMediaDiaPocosChart', tabId:'content-entrada', tabKey:'entrada', label:'Aba 04 · Vazão Média dos Poços por Dia'},
+            {key:'entradaAgua', canvas:'entradaAguaChart', tabId:'content-entrada', tabKey:'entrada', label:'Aba 04 · Volume Total por Poço (Entrada)'},
+            {key:'saidaAgua', canvas:'saidaAguaChart', tabId:'content-entrada', tabKey:'entrada', label:'Aba 04 · Saída de Água'},
+            {key:'nivelAguaTanque', canvas:'nivelAguaTanqueChart', tabId:'content-entrada', tabKey:'entrada', label:'Aba 04 · Nível de Água do Tanque'},
+            {key:'emissoresBloco', canvas:'emissoresBlocoChart', tabId:'content-entrada', tabKey:'entrada', label:'Aba 04 · Emissores por Bloco'},
+            {key:'resumoBloco', canvas:'resumoBlocoChart', tabId:'content-bloco', tabKey:'bloco', label:'Aba 05 · Resumo Geral por Bloco'},
+            {key:'blocoCicloComparacao', canvas:'blocoCicloComparacaoChart', tabId:'content-bloco', tabKey:'bloco', label:'Aba 05 · Comparação por Bloco e Ciclo'},
+            {key:'medidoresR2R3', canvas:'medidoresR2R3Chart', tabId:'content-manutencao', tabKey:'manutencao', label:'Aba 06 · Medidores R2 e R3'},
+            {key:'manutencaoVazao', canvas:'manutencaoVazaoChart', tabId:'content-manutencao', tabKey:'manutencao', label:'Aba 06 · Vazão Inicial / Manutenção'},
+            {key:'manutencaoProf', canvas:'manutencaoProfundidadeChart', tabId:'content-manutencao', tabKey:'manutencao', label:'Aba 06 · Profundidade / Manutenção'}
+        ];
+
+        function populateGlobalEmailCharts(){
+            const sel=document.getElementById('globalChart');
+            if(!sel) return;
+            sel.innerHTML=GLOBAL_EMAIL_CHARTS.map(c=>`<option value="${c.key}">${escapeHtml(c.label)}</option>`).join('');
+            const saved=localStorage.getItem('vazaoGlobalEmailChart');
+            if(saved && GLOBAL_EMAIL_CHARTS.some(c=>c.key===saved)) sel.value=saved;
+        }
+
+        function saveGlobalEmail(){
+            const email=String(document.getElementById('globalEmail')?.value||'').trim();
+            const notice=document.getElementById('globalEmailNotice');
+            if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+                if(notice){notice.textContent='Digite um e-mail válido antes de salvar.';notice.className='text-[11px] text-red-600 self-center';}
+                return;
+            }
+            localStorage.setItem('vazaoGlobalEmail',email);
+            localStorage.setItem('vazaoGlobalEmailChart',document.getElementById('globalChart')?.value||'dailyFlow');
+            if(notice){notice.textContent='E-mail salvo neste navegador.';notice.className='text-[11px] text-emerald-600 self-center';}
+        }
+
+        function getGlobalEmailConfig(){
+            return {
+                email:String(document.getElementById('globalEmail')?.value||localStorage.getItem('vazaoGlobalEmail')||'').trim(),
+                chartKey:document.getElementById('globalChart')?.value||'dailyFlow',
+                includeFields:document.getElementById('globalIncludeFields')?.checked!==false
+            };
+        }
+
+        async function buildSelectedEmailCanvas(){
+            const cfg=getGlobalEmailConfig();
+            const item=GLOBAL_EMAIL_CHARTS.find(c=>c.key===cfg.chartKey)||GLOBAL_EMAIL_CHARTS[0];
+            if(!item) throw new Error('Gráfico não configurado.');
+            const previousTab=document.querySelector('[id^="content-"]:not(.hidden)')?.id || 'content-diario';
+            const previousKey=previousTab.replace('content-','');
+            if(previousTab!==item.tabId) switchTab(item.tabKey);
+            try{
+                await new Promise(r=>setTimeout(r,250));
+                const canvas=document.getElementById(item.canvas);
+                if(!canvas) throw new Error('O gráfico selecionado não foi encontrado.');
+                const card=canvas.closest('.glass-card');
+                if(!card) throw new Error('Não foi possível localizar o quadro do gráfico.');
+                const section={card,title:card.querySelector('h2,h3,h4')?.textContent?.trim()||item.label};
+                // A função de composição usa os campos gerais reais da aba selecionada.
+                if(cfg.includeFields){
+                    const output=await composeSectionWithGeneralFields(section,item.tabId,item.label);
+                    return {canvas:output,item};
+                }
+                // Sem campos gerais: somente o gráfico em 1920×1080.
+                const clean=document.createElement('canvas');clean.width=1920;clean.height=1080;
+                const c=clean.getContext('2d');c.fillStyle='#fff';c.fillRect(0,0,clean.width,clean.height);
+                const chart=Chart.getChart(canvas);let restore=()=>{};
+                try{restore=prepareChartForExport(chart,1800,930);await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));c.drawImage(canvas,60,75,1800,930);}finally{restore();}
+                return {canvas:clean,item};
+            } finally {
+                if(previousKey && previousKey!==item.tabKey) switchTab(previousKey);
+            }
+        }
+
+        async function sendSelectedChartByEmail(){
+            const cfg=getGlobalEmailConfig();
+            const notice=document.getElementById('globalEmailNotice');
+            if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cfg.email)){
+                if(notice){notice.textContent='Digite um e-mail válido.';notice.className='text-[11px] text-red-600 self-center';}
+                return;
+            }
+            try{
+                if(notice){notice.textContent='Preparando gráfico...';notice.className='text-[11px] text-blue-600 self-center';}
+                const {canvas,item}=await buildSelectedEmailCanvas();
+                // Copia a imagem para a área de transferência antes de abrir o e-mail.
+                // Assim, no Gmail/Outlook basta usar Ctrl+V para colocar o gráfico no corpo da mensagem.
+                try{
+                    const blob=await new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error('Falha ao gerar a imagem.')),'image/png'));
+                    if(navigator.clipboard?.write && window.ClipboardItem){
+                        await navigator.clipboard.write([new ClipboardItem({'image/png':blob})]);
+                    }
+                }catch(copyErr){ console.warn('Não foi possível copiar automaticamente o gráfico:',copyErr); }
+                const summary=getReportGeneralFields(item.tabId).map(k=>`${k.label}: ${k.value}`).join('\n');
+                const subject=encodeURIComponent(`Relatório — ${item.label}`);
+                const body=encodeURIComponent(`Olá,\n\nSegue o relatório do gráfico: ${item.label}.\n\n${cfg.includeFields && summary ? 'Campos gerais:\n'+summary+'\n\n' : ''}A imagem do gráfico foi copiada para a área de transferência. No e-mail, use Ctrl+V para inserir o gráfico.\n\nData: ${new Date().toLocaleString('pt-BR')}`);
+                window.location.href=`mailto:${encodeURIComponent(cfg.email)}?subject=${subject}&body=${body}`;
+                localStorage.setItem('vazaoGlobalEmail',cfg.email);
+                localStorage.setItem('vazaoGlobalEmailChart',cfg.chartKey);
+                if(notice){notice.textContent='E-mail preparado. Use "Copiar gráfico" para colar a imagem no corpo da mensagem.';notice.className='text-[11px] text-emerald-600 self-center';}
+            }catch(e){console.error(e);if(notice){notice.textContent='Não foi possível preparar o envio: '+(e?.message||'erro desconhecido');notice.className='text-[11px] text-red-600 self-center';}}
+        }
+
+        async function copySelectedChartImage(){
+            const notice=document.getElementById('globalEmailNotice');
+            try{
+                if(notice){notice.textContent='Gerando imagem do gráfico...';notice.className='text-[11px] text-blue-600 self-center';}
+                const {canvas}=await buildSelectedEmailCanvas();
+                canvas.toBlob(async blob=>{
+                    if(!blob) throw new Error('Não foi possível gerar a imagem.');
+                    if(navigator.clipboard?.write && window.ClipboardItem){
+                        await navigator.clipboard.write([new ClipboardItem({'image/png':blob})]);
+                        if(notice){notice.textContent='Gráfico copiado. Agora cole (Ctrl+V) no e-mail.';notice.className='text-[11px] text-emerald-600 self-center';}
+                    }else{
+                        downloadCanvasAsJPEG(canvas,'grafico_vazao_email.jpeg');
+                        if(notice){notice.textContent='Seu navegador não permite copiar a imagem. O JPEG foi baixado para anexar ao e-mail.';notice.className='text-[11px] text-amber-600 self-center';}
+                    }
+                },'image/png');
+            }catch(e){console.error(e);if(notice){notice.textContent='Não foi possível copiar o gráfico: '+(e?.message||'erro desconhecido');notice.className='text-[11px] text-red-600 self-center';}}
+        }
+
+        function loadGlobalEmailConfig(){
+            const email=document.getElementById('globalEmail');
+            const saved=localStorage.getItem('vazaoGlobalEmail');
+            if(email && saved) email.value=saved;
+            populateGlobalEmailCharts();
+        }
+
+        function getEmailSchedules() {
+            try { return JSON.parse(localStorage.getItem('vazaoEmailSchedules') || '[]'); }
+            catch(e) { return []; }
+        }
+
+        function saveEmailSchedule() {
+            const email = String(document.getElementById('scheduleEmail')?.value || '').trim();
+            const chart = document.getElementById('scheduleChart')?.value || 'dailyFlow';
+            const time = document.getElementById('scheduleTime')?.value || '07:00';
+            const notice = document.getElementById('emailScheduleNotice');
+            const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+            if (!valid) {
+                if (notice) { notice.className='mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700'; notice.textContent='Digite um e-mail válido para cadastrar a programação.'; }
+                return;
+            }
+            const labels = {
+                dailyFlow:'Vazão Média Diária Exata — Aba 01',
+                tab3DailyFlow:'Vazão dos Poços por Dia — Aba 03',
+                trend:'Tendência Mensal — Aba 02',
+                monthlyVolume:'Volume Total Mensal — Aba 02'
+            };
+            const schedules = getEmailSchedules();
+            schedules.push({ id: Date.now(), email, chart, chartLabel: labels[chart] || chart, time, frequency:'Diariamente' });
+            localStorage.setItem('vazaoEmailSchedules', JSON.stringify(schedules));
+            renderEmailSchedules();
+            if (notice) { notice.className='mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-700'; notice.textContent='Programação salva neste navegador. O envio automático exige um serviço de e-mail/servidor conectado ao sistema.'; }
+        }
+
+        function deleteEmailSchedule(id) {
+            const schedules = getEmailSchedules().filter(s => s.id !== id);
+            localStorage.setItem('vazaoEmailSchedules', JSON.stringify(schedules));
+            renderEmailSchedules();
+        }
+
+        function renderEmailSchedules() {
+            const el = document.getElementById('emailScheduleList');
+            if (!el) return;
+            const schedules = getEmailSchedules();
+            if (!schedules.length) {
+                el.innerHTML = '<span class="text-xs text-slate-400">Nenhuma programação cadastrada.</span>';
+                return;
+            }
+            el.innerHTML = schedules.map(s => `
+                <span class="schedule-chip">
+                    <i class="fa-solid fa-envelope text-blue-500"></i>
+                    <span><b>${s.email}</b> · ${s.chartLabel} · todos os dias às <b>${s.time}</b></span>
+                    <button type="button" onclick="deleteEmailSchedule(${s.id})" title="Excluir programação"><i class="fa-solid fa-xmark"></i></button>
+                </span>
+            `).join('');
+        }
+
         window.onload = function() {
-            // Pronta para receber interações ou autologin em desenvolvimento
+            loadGlobalEmailConfig();
+            renderEmailSchedules();
         };
     </script>
 
