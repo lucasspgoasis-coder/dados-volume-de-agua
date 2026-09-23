@@ -2486,21 +2486,64 @@ function toggleDropdown(id) {
         }
 
         function normalizeVazaoDiaSheetData(data) {
+            // A planilha Controle de Vazão dos Poços pode chegar em dois formatos:
+            // 1) Data | Poço | Vazão/Vazão Média/Vazão (L/h)
+            // 2) Data | Poço 01 | Poço 03 | Poço 04 ... (um poço por coluna)
+            // Aceitamos os dois para o gráfico da Aba 03 não depender do nome exato da coluna.
             const out = [];
-            (Array.isArray(data) ? data : []).forEach(row => {
-                const keys = Object.keys(row || {});
-                const norm = k => String(k || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
-                const dateKey = keys.find(k => { const nk = norm(k); return nk === 'data' || nk === 'date' || nk.startsWith('data '); }) || keys.find(k => norm(k).includes('data'));
-                const wellKey = keys.find(k => { const nk = norm(k); return nk.includes('poco') || nk.includes('well'); });
-                const vazaoKey = keys.find(k => norm(k).replace(/\s+/g,'') === 'vazao(l/h)') || keys.find(k => { const nk = norm(k); return nk.includes('vazao') && (nk.includes('l/h') || nk.includes('litros/h')); });
-                if (!dateKey || !wellKey || !vazaoKey) return;
-                const parsedDate = parsePortugueseDate(row[dateKey]);
-                const vazao = parseBrazilianNumber(row[vazaoKey]);
-                const well = formatWellName(row[wellKey]);
+            const rows = Array.isArray(data) ? data : [];
+            const norm = k => String(k || '')
+                .toLowerCase()
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                .replace(/\s+/g, ' ')
+                .trim();
+            const isDateHeader = k => {
+                const nk = norm(k);
+                return nk === 'data' || nk === 'date' || nk.startsWith('data ') || nk.includes('data');
+            };
+            const isWellHeader = k => {
+                const nk = norm(k);
+                return /^(poço|poco|well|p)\s*0*\d+$/i.test(nk) || nk.includes('poco') || nk.includes('well');
+            };
+            const isFlowHeader = k => {
+                const nk = norm(k).replace(/\s+/g, '');
+                return nk.includes('vazao') || nk.includes('flow') || nk.includes('l/h') || nk.includes('litros/h');
+            };
+            const toRecord = (rawDate, rawWell, rawFlow) => {
+                const parsedDate = parsePortugueseDate(rawDate);
+                const well = formatWellName(rawWell);
+                const vazao = parseBrazilianNumber(rawFlow);
                 if (!parsedDate || !well || !Number.isFinite(vazao) || vazao <= 0) return;
                 const iso = `${parsedDate.getFullYear()}-${String(parsedDate.getMonth()+1).padStart(2,'0')}-${String(parsedDate.getDate()).padStart(2,'0')}`;
-                out.push({ DataObj: parsedDate, IsoDate: iso, DataFormatted: parsedDate.toLocaleDateString('pt-BR'), MesLabel: monthNames[parsedDate.getMonth()], Poco: well, VazaoMediaDia: vazao });
+                out.push({
+                    DataObj: parsedDate,
+                    IsoDate: iso,
+                    DataFormatted: parsedDate.toLocaleDateString('pt-BR'),
+                    MesLabel: monthNames[parsedDate.getMonth()],
+                    Poco: well,
+                    VazaoMediaDia: vazao
+                });
+            };
+
+            rows.forEach(row => {
+                const keys = Object.keys(row || {});
+                const dateKey = keys.find(isDateHeader);
+                if (!dateKey) return;
+
+                // Formato vertical: existe uma coluna de poço e uma de vazão.
+                const wellKey = keys.find(isWellHeader);
+                const flowKey = keys.find(isFlowHeader);
+                if (wellKey && flowKey && wellKey !== flowKey) {
+                    toRecord(row[dateKey], row[wellKey], row[flowKey]);
+                    return;
+                }
+
+                // Formato horizontal: cada coluna representa um poço.
+                keys.filter(k => isWellHeader(k)).forEach(wellColumn => {
+                    toRecord(row[dateKey], wellColumn, row[wellColumn]);
+                });
             });
+
             return out.sort((a,b) => a.DataObj - b.DataObj || a.Poco.localeCompare(b.Poco, undefined, {numeric:true, sensitivity:'base'}));
         }
 
