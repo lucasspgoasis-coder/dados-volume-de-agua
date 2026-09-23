@@ -3178,19 +3178,18 @@ function toggleDropdown(id) {
                         }
                     },
                     datalabels: {
-                        display: ctx => ctx.raw != null,
+                        display: ctx => ctx.raw != null && Number(ctx.raw) > 0,
                         formatter: value => `${Number(value).toLocaleString('pt-BR')} L/h`,
-                        color: '#1e293b',
-                        anchor: 'end',
-                        align: 'right',
-                        offset: 5,
+                        color: '#ffffff',
+                        anchor: 'center',
+                        align: 'center',
+                        offset: 0,
                         clamp: true,
                         clip: false,
                         padding: {top: 2, bottom: 2, left: 4, right: 4},
-                        color: '#0f172a',
-                        backgroundColor: 'rgba(255,255,255,.88)',
+                        backgroundColor: 'rgba(0,0,0,.18)',
                         borderRadius: 4,
-                        font: { size: 10, weight: '700' }
+                        font: { size: 11, weight: '800' }
                     }
                 }
             });
