@@ -637,6 +637,33 @@
                 </div>
 
 
+                <!-- Dados tabulares da mesma fonte usada no gráfico da Aba 03 -->
+                <div class="glass-card p-5 mt-4">
+                    <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
+                        <div>
+                            <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                                <i class="fa-solid fa-table-list text-orange-500"></i> Dados Tabulares — Controle de Vazão dos Poços
+                            </h3>
+                            <p class="text-xs text-slate-500">Os dados abaixo são puxados da mesma planilha de controle de vazão usada no gráfico acima.</p>
+                        </div>
+                        <span id="tab3TableInfo" class="text-[11px] font-semibold text-slate-500">--</span>
+                    </div>
+                    <div class="overflow-x-auto max-h-[560px] overflow-y-auto border border-slate-200 rounded-lg">
+                        <table class="w-full border-collapse text-sm">
+                            <thead class="sticky top-0 z-10">
+                                <tr class="bg-slate-100 text-slate-700 uppercase text-xs tracking-wider border-b border-slate-200">
+                                    <th class="py-3 px-4 text-left">Data</th>
+                                    <th class="py-3 px-4 text-left">Poço</th>
+                                    <th class="py-3 px-4 text-right">Vazão Média (L/h)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tab3TableBody" class="divide-y divide-slate-100 text-slate-700">
+                                <tr><td colspan="3" class="py-8 text-center text-slate-400">Carregando dados do Controle de Vazão dos Poços...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
             </div>
 
             <!-- TAB 4: ENTRADA / SAÍDA (ATUALIZADA COM COMPONENTES DE EMISSORES) -->
@@ -2472,7 +2499,7 @@ function toggleDropdown(id) {
                 const well = formatWellName(row[wellKey]);
                 if (!parsedDate || !well || !Number.isFinite(vazao) || vazao <= 0) return;
                 const iso = `${parsedDate.getFullYear()}-${String(parsedDate.getMonth()+1).padStart(2,'0')}-${String(parsedDate.getDate()).padStart(2,'0')}`;
-                out.push({ DataObj: parsedDate, IsoDate: iso, DataFormatted: parsedDate.toLocaleDateString('pt-BR'), Poco: well, VazaoMediaDia: vazao });
+                out.push({ DataObj: parsedDate, IsoDate: iso, DataFormatted: parsedDate.toLocaleDateString('pt-BR'), MesLabel: monthNames[parsedDate.getMonth()], Poco: well, VazaoMediaDia: vazao });
             });
             return out.sort((a,b) => a.DataObj - b.DataObj || a.Poco.localeCompare(b.Poco, undefined, {numeric:true, sensitivity:'base'}));
         }
@@ -2608,8 +2635,15 @@ function toggleDropdown(id) {
         }
 
         function populateWellSelectors() {
-            const wells = Array.from(new Set(globalRawData.map(d => d.Poco))).filter(Boolean).sort((a,b) => a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'}));
+            const wellsByTab = {
+                1: globalRawData,
+                2: globalRawData,
+                3: Array.isArray(globalVazaoDiaData) ? globalVazaoDiaData : [],
+                4: globalRawData
+            };
             [1, 2, 3, 4].forEach(tab => {
+                const source = wellsByTab[tab] || [];
+                const wells = Array.from(new Set(source.map(d => d.Poco))).filter(Boolean).sort((a,b) => a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'}));
                 const container = document.getElementById(`wellCheckboxesTab${tab}`);
                 if (!container) return;
                 container.innerHTML = '';
@@ -2624,8 +2658,19 @@ function toggleDropdown(id) {
         }
 
         function populateMonthSelectors() {
-            const months = Array.from(new Set(globalRawData.map(d => d.MesLabel))).filter(Boolean);
+            const sourcesByTab = {
+                1: globalRawData,
+                2: globalRawData,
+                3: Array.isArray(globalVazaoDiaData) ? globalVazaoDiaData : []
+            };
             [1, 2, 3].forEach(tab => {
+                const source = sourcesByTab[tab] || [];
+                const months = Array.from(new Set(source.map(d => {
+                    if (d.MesLabel) return d.MesLabel;
+                    if (d.DataObj instanceof Date && !isNaN(d.DataObj)) return monthNames[d.DataObj.getMonth()];
+                    if (d.IsoDate) { const dt = new Date(d.IsoDate + 'T00:00:00'); return isNaN(dt) ? '' : monthNames[dt.getMonth()]; }
+                    return '';
+                }))).filter(Boolean);
                 const container = document.getElementById(`monthCheckboxesTab${tab}`);
                 if (!container) return;
                 container.innerHTML = '';
@@ -3016,34 +3061,47 @@ function toggleDropdown(id) {
         }
 
         function applyFiltersTab3() {
+            // ABA 03: fonte única = planilha de Controle de Vazão dos Poços,
+            // a mesma fonte usada para montar o gráfico de vazão diária.
+            const source = Array.isArray(globalVazaoDiaData) ? globalVazaoDiaData : [];
             const selectedWells = Array.from(document.querySelectorAll('.well-chk-3:checked')).map(c => c.value);
             const selectedMonths = Array.from(document.querySelectorAll('.month-chk-3:checked')).map(c => c.value);
 
-            let filtered = globalRawData.filter(d => {
+            let filtered = source.filter(d => {
+                if (!d || !d.IsoDate || !d.Poco || !Number.isFinite(Number(d.VazaoMediaDia))) return false;
                 if (selectedWells.length > 0 && !selectedWells.includes(d.Poco)) return false;
-                if (selectedMonths.length > 0 && d.MesLabel !== 'N/I' && !selectedMonths.includes(d.MesLabel)) return false;
-                return true;
+                const dt = d.DataObj instanceof Date ? d.DataObj : new Date(d.IsoDate + 'T00:00:00');
+                const monthLabel = monthNames[dt.getMonth()];
+                if (selectedMonths.length > 0 && !selectedMonths.includes(monthLabel) && !selectedMonths.includes(d.MesLabel)) return false;
+                return Number(d.VazaoMediaDia) > 0;
             });
 
-            // Consolida qualquer duplicidade por DATA + POÇO para manter uma única barra por dia/poço.
+            // Consolida por DATA + POÇO para que gráfico e tabela mostrem exatamente
+            // a mesma informação diária. Se houver mais de um registro, calcula a média.
             const grouped = new Map();
             filtered.forEach(d => {
                 const key = `${d.IsoDate}___${d.Poco}`;
                 if (!grouped.has(key)) grouped.set(key, { iso: d.IsoDate, poco: d.Poco, sum: 0, count: 0 });
                 const g = grouped.get(key);
-                g.sum += Number(d.Vazao) || 0;
+                g.sum += Number(d.VazaoMediaDia) || 0;
                 g.count++;
             });
 
-            const datesIso = Array.from(new Set(Array.from(grouped.values()).map(r => r.iso).filter(Boolean))).sort();
-            const wells = Array.from(new Set(Array.from(grouped.values()).map(r => r.poco))).sort((a,b) => a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'}));
+            const groupedRows = Array.from(grouped.values()).map(g => ({
+                iso: g.iso,
+                poco: g.poco,
+                value: g.sum / Math.max(1, g.count)
+            })).sort((a,b) => a.iso.localeCompare(b.iso) || a.poco.localeCompare(b.poco, undefined, {numeric:true, sensitivity:'base'}));
+
+            const datesIso = Array.from(new Set(groupedRows.map(r => r.iso))).sort();
+            const wells = Array.from(new Set(groupedRows.map(r => r.poco))).sort((a,b) => a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'}));
             const displayDate = iso => {
                 const d = new Date(iso + 'T00:00:00');
                 return Number.isNaN(d.getTime()) ? iso : d.toLocaleDateString('pt-BR', { day:'2-digit', month:'long', year:'numeric' });
             };
 
             const values = new Map();
-            grouped.forEach(g => values.set(`${g.iso}___${g.poco}`, g.sum / Math.max(1, g.count)));
+            groupedRows.forEach(g => values.set(`${g.iso}___${g.poco}`, g.value));
 
             const colors = ['#166534','#2563eb','#f59e0b','#64748b','#7c3aed','#0891b2','#be185d','#854d0e','#15803d','#1d4ed8','#ea580c','#475569','#9333ea','#0f766e'];
             const datasets = wells.map((w, idx) => {
@@ -3105,8 +3163,25 @@ function toggleDropdown(id) {
                 }
             });
 
+            // Tabela da Aba 03: usa exatamente os mesmos dados consolidados do gráfico.
+            const tbody = document.getElementById('tab3TableBody');
+            if (tbody) {
+                if (!groupedRows.length) {
+                    tbody.innerHTML = '<tr><td colspan="3" class="py-8 text-center text-slate-400">Nenhum dado encontrado no Controle de Vazão dos Poços para os filtros selecionados.</td></tr>';
+                } else {
+                    tbody.innerHTML = groupedRows.map(r => `
+                        <tr class="hover:bg-slate-50 transition">
+                            <td class="py-2.5 px-4 text-left font-medium">${displayDate(r.iso)}</td>
+                            <td class="py-2.5 px-4 text-left font-semibold">${r.poco}</td>
+                            <td class="py-2.5 px-4 text-right font-bold">${Math.round(r.value).toLocaleString('pt-BR')} L/h</td>
+                        </tr>`).join('');
+                }
+            }
+
             const info = document.getElementById('tab3ChartInfo');
             if (info) info.textContent = `${datesIso.length} ${datesIso.length === 1 ? 'dia' : 'dias'} · ${wells.length} ${wells.length === 1 ? 'poço' : 'poços'}`;
+            const tableInfo = document.getElementById('tab3TableInfo');
+            if (tableInfo) tableInfo.textContent = `${groupedRows.length} registros diários`;
         }
 
         function resetFiltersTab3() {
