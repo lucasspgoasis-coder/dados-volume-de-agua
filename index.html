@@ -2842,18 +2842,31 @@ function toggleDropdown(id) {
         }
 
         function renderVazaoRegistradaPorDataTab1(selectedWells, selectedMonths, startDate, endDate) {
-            const source = Array.isArray(globalVazaoDiaData) ? globalVazaoDiaData : [];
+            // Usa a mesma fonte que já alimenta corretamente os gráficos da Aba 01.
+            // Assim evitamos que diferenças de cabeçalho da planilha "Vazão Média"
+            // façam o novo gráfico ficar vazio.
+            const source = Array.isArray(globalRawData) ? globalRawData : [];
 
-            const registros = source.filter(d => {
+            const filtrados = source.filter(d => {
+                if (!d || !d.Poco || !d.IsoDate) return false;
                 if (selectedWells.length > 0 && !selectedWells.includes(d.Poco)) return false;
-                const monthLabel = d.DataObj ? `${monthNames[d.DataObj.getMonth()]} ${d.DataObj.getFullYear()}` : '';
-                if (selectedMonths.length > 0 && monthLabel && !selectedMonths.includes(monthLabel)) return false;
-                const dia = String(d.IsoDate || '').slice(0, 10);
+                if (selectedMonths.length > 0 && d.MesLabel && d.MesLabel !== 'N/I' && !selectedMonths.includes(d.MesLabel)) return false;
+                const dia = String(d.IsoDate).slice(0, 10);
                 if (startDate && dia < startDate) return false;
                 if (endDate && dia > endDate) return false;
-                return Number(d.VazaoMediaDia) > 0;
-            }).sort((a, b) => {
-                const dateCmp = new Date(a.DataObj) - new Date(b.DataObj);
+                return Number(d.Vazao) > 0;
+            });
+
+            // Uma barra por POÇO + DIA. Se houver mais de um lançamento do mesmo
+            // poço no mesmo dia, mantém a vazão efetivamente usada pela Aba 01.
+            const porChave = new Map();
+            filtrados.forEach(d => {
+                const chave = `${String(d.IsoDate).slice(0,10)}|||${String(d.Poco).trim()}`;
+                porChave.set(chave, d);
+            });
+
+            const registros = Array.from(porChave.values()).sort((a, b) => {
+                const dateCmp = String(a.IsoDate).localeCompare(String(b.IsoDate));
                 if (dateCmp !== 0) return dateCmp;
                 return String(a.Poco).localeCompare(String(b.Poco), undefined, { numeric: true, sensitivity: 'base' });
             });
@@ -2861,27 +2874,49 @@ function toggleDropdown(id) {
             const summary = document.getElementById('vazaoDiaResumoTab1');
             if (summary) summary.textContent = `${registros.length} registro${registros.length === 1 ? '' : 's'} exibido${registros.length === 1 ? '' : 's'}`;
 
+            const wrapper = document.getElementById('vazaoDiaTab1Scroll');
             const container = document.getElementById('vazaoDiaTab1ChartContainer');
-            if (!container) return;
+            if (!container || !wrapper) return;
 
-            // Mais registros = mais altura e largura, mantendo cada barra legível.
-            const rowHeight = 42;
-            const chartHeight = Math.max(260, registros.length * rowHeight + 55);
-            const chartWidth = Math.max(900, registros.length * 105);
-            container.style.height = `${chartHeight}px`;
-            container.style.minWidth = `${chartWidth}px`;
+            // Altura fixa para não criar um espaço enorme na Aba 01.
+            // Quando houver muitos registros, o usuário rola somente dentro do gráfico.
+            const rowHeight = 34;
+            const visibleHeight = Math.min(430, Math.max(260, Math.min(registros.length || 1, 12) * rowHeight + 65));
+            container.style.height = `${visibleHeight}px`;
+            container.style.minWidth = '100%';
+            container.style.width = '100%';
+            wrapper.style.maxHeight = '450px';
+            wrapper.style.overflowY = registros.length > 12 ? 'auto' : 'hidden';
+            wrapper.style.overflowX = 'hidden';
 
-            const labels = registros.map(d => `${d.Poco} • ${d.DataFormatted}`);
-            const values = registros.map(d => Math.round(Number(d.VazaoMediaDia) || 0));
+            const labels = registros.map(d => {
+                const data = d.DataFormatted || (d.DataObj ? d.DataObj.toLocaleDateString('pt-BR') : String(d.IsoDate).slice(0,10));
+                return `${d.Poco} • ${data}`;
+            });
+            const values = registros.map(d => Math.round(Number(d.Vazao) || 0));
 
             if (!registros.length) {
                 renderChart('vazaoDiaTab1Chart', 'vazaoDiaTab1', 'bar', {
-                    labels: ['Sem dados no período selecionado'],
-                    datasets: [{ label: 'Vazão (L/h)', data: [0], backgroundColor: 'rgba(148, 163, 184, 0.35)', borderRadius: 8 }]
+                    labels: ['Nenhum registro de vazão no período selecionado'],
+                    datasets: [{
+                        label: 'Vazão (L/h)',
+                        data: [0],
+                        backgroundColor: 'rgba(148, 163, 184, 0.30)',
+                        borderRadius: 8,
+                        barThickness: 24
+                    }]
                 }, {
-                    responsive: true, maintainAspectRatio: false, indexAxis: 'y',
-                    plugins: { legend: { display: false }, datalabels: { display: false } },
-                    scales: { x: { beginAtZero: true, ticks: { callback: v => Number(v).toLocaleString('pt-BR') + ' L/h' } } }
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    plugins: {
+                        legend: { display: false },
+                        datalabels: { display: false }
+                    },
+                    scales: {
+                        x: { beginAtZero: true, ticks: { callback: v => Number(v).toLocaleString('pt-BR') + ' L/h' } },
+                        y: { grid: { display: false } }
+                    }
                 });
                 return;
             }
@@ -2894,15 +2929,15 @@ function toggleDropdown(id) {
                     backgroundColor: 'rgba(8, 145, 178, 0.82)',
                     borderColor: '#0e7490',
                     borderWidth: 1,
-                    borderRadius: 8,
-                    barThickness: 25,
-                    maxBarThickness: 30
+                    borderRadius: 7,
+                    barThickness: 22,
+                    maxBarThickness: 24
                 }]
             }, {
                 responsive: true,
                 maintainAspectRatio: false,
                 indexAxis: 'y',
-                animation: { duration: 350 },
+                animation: { duration: 300 },
                 plugins: {
                     legend: { display: false },
                     tooltip: {
@@ -2915,7 +2950,7 @@ function toggleDropdown(id) {
                     datalabels: {
                         anchor: 'end',
                         align: 'right',
-                        offset: 5,
+                        offset: 4,
                         clamp: true,
                         color: '#0f172a',
                         font: { size: 10, weight: '800' },
@@ -2936,9 +2971,9 @@ function toggleDropdown(id) {
                         grid: { display: false },
                         ticks: {
                             color: '#334155',
-                            font: { size: 11, weight: '700' },
+                            font: { size: 10, weight: '700' },
                             autoSkip: false,
-                            padding: 8
+                            padding: 6
                         }
                     }
                 }
