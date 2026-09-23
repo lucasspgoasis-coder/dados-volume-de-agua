@@ -418,6 +418,14 @@
                             </div>
 
                             <div class="relative">
+                                <label class="block text-[11px] font-semibold text-slate-500 mb-0.5">Data inicial</label>
+                                <input type="date" id="tab3StartDate" onchange="applyFiltersTab3()" class="bg-white border border-slate-300 rounded-lg text-xs px-3 py-1.5 shadow-sm w-40">
+                            </div>
+                            <div class="relative">
+                                <label class="block text-[11px] font-semibold text-slate-500 mb-0.5">Data final</label>
+                                <input type="date" id="tab3EndDate" onchange="applyFiltersTab3()" class="bg-white border border-slate-300 rounded-lg text-xs px-3 py-1.5 shadow-sm w-40">
+                            </div>
+                            <div class="relative">
                                 <label class="block text-[11px] font-semibold text-slate-500 mb-0.5">Meses</label>
                                 <button type="button" onclick="toggleDropdown('dropdownMonthTab1')" class="bg-white border border-slate-300 rounded-lg text-xs px-3 py-1.5 shadow-sm w-44 flex justify-between items-center">
                                     <span id="labelMonthTab1">Todos os Meses</span>
@@ -625,12 +633,12 @@
                             <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
                                 <i class="fa-solid fa-chart-column text-orange-500"></i> Vazão dos Poços por Dia
                             </h3>
-                            <p class="text-xs text-slate-500">Barras verticais por poço e por dia. As datas aparecem em ordem cronológica, com o mês escrito por extenso.</p>
+                            <p class="text-xs text-slate-500">Barras horizontais por poço e por dia. Use a data inicial e final para limitar o período exibido.</p>
                         </div>
                         <span id="tab3ChartInfo" class="text-[11px] font-semibold text-slate-500">--</span>
                     </div>
                     <div class="chart-scroll-wrapper mt-3">
-                        <div id="tab3DailyChartContainer" class="chart-container-large" style="height:760px; min-width:1200px;">
+                        <div id="tab3DailyChartContainer" class="chart-container-large" style="height:620px; min-width:1200px;">
                             <canvas id="tab3DailyFlowChart"></canvas>
                         </div>
                     </div>
@@ -3084,11 +3092,15 @@ function toggleDropdown(id) {
             const source = Array.isArray(globalVazaoDiaData) ? globalVazaoDiaData : [];
             const selectedWells = Array.from(document.querySelectorAll('.well-chk-3:checked')).map(c => c.value);
             const selectedMonths = Array.from(document.querySelectorAll('.month-chk-3:checked')).map(c => c.value);
+            const startDate = document.getElementById('tab3StartDate')?.value || '';
+            const endDate = document.getElementById('tab3EndDate')?.value || '';
 
             let filtered = source.filter(d => {
                 if (!d || !d.IsoDate || !d.Poco || !Number.isFinite(Number(d.VazaoMediaDia))) return false;
                 if (selectedWells.length > 0 && !selectedWells.includes(d.Poco)) return false;
                 const dt = d.DataObj instanceof Date ? d.DataObj : new Date(d.IsoDate + 'T00:00:00');
+                if (startDate && d.IsoDate < startDate) return false;
+                if (endDate && d.IsoDate > endDate) return false;
                 const monthLabel = monthNames[dt.getMonth()];
                 if (selectedMonths.length > 0 && !selectedMonths.includes(monthLabel) && !selectedMonths.includes(d.MesLabel)) return false;
                 return Number(d.VazaoMediaDia) > 0;
@@ -3171,9 +3183,12 @@ function toggleDropdown(id) {
                         color: '#1e293b',
                         anchor: 'end',
                         align: 'right',
-                        offset: 4,
-                        clamp: true,
-                        font: { size: 9, weight: '700' }
+                        offset: 6,
+                        clamp: false,
+                        clip: false,
+                        padding: 2,
+                        color: '#0f172a',
+                        font: { size: 10, weight: '700' }
                     }
                 }
             });
@@ -3189,6 +3204,10 @@ function toggleDropdown(id) {
         function resetFiltersTab3() {
             document.querySelectorAll('.well-chk-3').forEach(c => c.checked = true);
             document.querySelectorAll('.month-chk-3').forEach(c => c.checked = true);
+            const start = document.getElementById('tab3StartDate');
+            const end = document.getElementById('tab3EndDate');
+            if (start) start.value = '';
+            if (end) end.value = '';
             const selAllW = document.getElementById('selectAllWellsTab3'); if(selAllW) selAllW.checked = true;
             const selAllM = document.getElementById('selectAllMonthsTab3'); if(selAllM) selAllM.checked = true;
             updateWellLabel(3);
