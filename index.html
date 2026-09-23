@@ -413,6 +413,24 @@
                     <h3 class="text-base font-bold text-slate-800">Vazão Média Diária Exata</h3>
                     <div class="chart-scroll-wrapper mt-3"><div class="chart-container"><canvas id="dailyFlowChart"></canvas></div></div>
                 </div>
+
+                <!-- NOVO GRÁFICO: VAZÃO REAL REGISTRADA POR POÇO E POR DATA -->
+                <div class="glass-card p-5 border-slate-200 bg-gradient-to-br from-white to-slate-50/70">
+                    <div class="flex justify-between items-start gap-3 flex-wrap mb-2">
+                        <div>
+                            <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                                <i class="fa-solid fa-chart-column text-cyan-600"></i> Vazão Registrada por Poço e Data
+                            </h3>
+                            <p class="text-xs text-slate-500 mt-1">Cada barra representa uma leitura da planilha de Vazão Média, mostrando <b>Poço + data + vazão</b>. Ao selecionar várias datas, todos os registros aparecem individualmente, sem sobreposição.</p>
+                        </div>
+                        <div id="vazaoDiaResumoTab1" class="text-[11px] font-semibold text-slate-500 bg-white border border-slate-200 rounded-lg px-3 py-1.5 shadow-sm">-- registros</div>
+                    </div>
+                    <div id="vazaoDiaTab1Scroll" class="chart-scroll-wrapper mt-3">
+                        <div id="vazaoDiaTab1ChartContainer" class="relative" style="height:260px; min-width:100%;">
+                            <canvas id="vazaoDiaTab1Chart"></canvas>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- TAB 2: MENSAL (TENDÊNCIA ATUALIZADA) -->
@@ -2816,6 +2834,114 @@ function toggleDropdown(id) {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: { datalabels: { display: false } }
+            });
+
+            // Gráfico detalhado: uma barra para CADA registro de vazão por poço/data.
+            // Usa exclusivamente a planilha "Vazão Média", evitando agregação e sobreposição.
+            renderVazaoRegistradaPorDataTab1(selectedWells, selectedMonths, startDate, endDate);
+        }
+
+        function renderVazaoRegistradaPorDataTab1(selectedWells, selectedMonths, startDate, endDate) {
+            const source = Array.isArray(globalVazaoDiaData) ? globalVazaoDiaData : [];
+
+            const registros = source.filter(d => {
+                if (selectedWells.length > 0 && !selectedWells.includes(d.Poco)) return false;
+                const monthLabel = d.DataObj ? `${monthNames[d.DataObj.getMonth()]} ${d.DataObj.getFullYear()}` : '';
+                if (selectedMonths.length > 0 && monthLabel && !selectedMonths.includes(monthLabel)) return false;
+                const dia = String(d.IsoDate || '').slice(0, 10);
+                if (startDate && dia < startDate) return false;
+                if (endDate && dia > endDate) return false;
+                return Number(d.VazaoMediaDia) > 0;
+            }).sort((a, b) => {
+                const dateCmp = new Date(a.DataObj) - new Date(b.DataObj);
+                if (dateCmp !== 0) return dateCmp;
+                return String(a.Poco).localeCompare(String(b.Poco), undefined, { numeric: true, sensitivity: 'base' });
+            });
+
+            const summary = document.getElementById('vazaoDiaResumoTab1');
+            if (summary) summary.textContent = `${registros.length} registro${registros.length === 1 ? '' : 's'} exibido${registros.length === 1 ? '' : 's'}`;
+
+            const container = document.getElementById('vazaoDiaTab1ChartContainer');
+            if (!container) return;
+
+            // Mais registros = mais altura e largura, mantendo cada barra legível.
+            const rowHeight = 42;
+            const chartHeight = Math.max(260, registros.length * rowHeight + 55);
+            const chartWidth = Math.max(900, registros.length * 105);
+            container.style.height = `${chartHeight}px`;
+            container.style.minWidth = `${chartWidth}px`;
+
+            const labels = registros.map(d => `${d.Poco} • ${d.DataFormatted}`);
+            const values = registros.map(d => Math.round(Number(d.VazaoMediaDia) || 0));
+
+            if (!registros.length) {
+                renderChart('vazaoDiaTab1Chart', 'vazaoDiaTab1', 'bar', {
+                    labels: ['Sem dados no período selecionado'],
+                    datasets: [{ label: 'Vazão (L/h)', data: [0], backgroundColor: 'rgba(148, 163, 184, 0.35)', borderRadius: 8 }]
+                }, {
+                    responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+                    plugins: { legend: { display: false }, datalabels: { display: false } },
+                    scales: { x: { beginAtZero: true, ticks: { callback: v => Number(v).toLocaleString('pt-BR') + ' L/h' } } }
+                });
+                return;
+            }
+
+            renderChart('vazaoDiaTab1Chart', 'vazaoDiaTab1', 'bar', {
+                labels,
+                datasets: [{
+                    label: 'Vazão registrada (L/h)',
+                    data: values,
+                    backgroundColor: 'rgba(8, 145, 178, 0.82)',
+                    borderColor: '#0e7490',
+                    borderWidth: 1,
+                    borderRadius: 8,
+                    barThickness: 25,
+                    maxBarThickness: 30
+                }]
+            }, {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y',
+                animation: { duration: 350 },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        displayColors: false,
+                        callbacks: {
+                            title: items => items[0]?.label || '',
+                            label: item => ` Vazão: ${Number(item.raw).toLocaleString('pt-BR')} L/h`
+                        }
+                    },
+                    datalabels: {
+                        anchor: 'end',
+                        align: 'right',
+                        offset: 5,
+                        clamp: true,
+                        color: '#0f172a',
+                        font: { size: 10, weight: '800' },
+                        formatter: value => `${Number(value).toLocaleString('pt-BR')} L/h`
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        grid: { color: 'rgba(148, 163, 184, 0.16)' },
+                        ticks: {
+                            color: '#64748b',
+                            callback: value => Number(value).toLocaleString('pt-BR')
+                        },
+                        title: { display: true, text: 'Vazão (L/h)', color: '#475569', font: { weight: '700' } }
+                    },
+                    y: {
+                        grid: { display: false },
+                        ticks: {
+                            color: '#334155',
+                            font: { size: 11, weight: '700' },
+                            autoSkip: false,
+                            padding: 8
+                        }
+                    }
+                }
             });
         }
 
