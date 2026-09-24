@@ -451,8 +451,7 @@
                 </div>
 
                 <div class="glass-card p-5">
-                    <h3 class="text-base font-bold text-slate-800">Vazão Média Diária por Poço — Barras Empilhadas + Total Diário</h3>
-                    <p class="text-xs text-slate-500 mt-1">Cada data forma um grupo de barras individuais: cada barra representa um poço, com o valor dentro da barra. A data fica acima do grupo, o nome do poço abaixo da barra e a linha vermelha ondulada mostra o total diário.</p>
+                    <h3 class="text-base font-bold text-slate-800">Vazão Média Diária Exata</h3>
                     <div class="chart-scroll-wrapper mt-3"><div class="chart-container"><canvas id="dailyFlowChart"></canvas></div></div>
                 </div>
             </div>
@@ -1579,8 +1578,12 @@
                     setFont(a.title, 14, scale);
                     // Mais espaço entre os rótulos do eixo X para evitar sobreposição.
                     if (axis === 'x') {
-                        saveProp(a.ticks, 'autoSkip'); saveProp(a.ticks, 'maxRotation'); saveProp(a.ticks, 'minRotation');
-                        a.ticks.autoSkip = false;
+                        saveProp(a.ticks, 'autoSkip'); saveProp(a.ticks, 'maxRotation'); saveProp(a.ticks, 'minRotation'); saveProp(a.ticks, 'maxTicksLimit');
+                        const isDailyExactAxis = chart.canvas?.id === 'dailyFlowChart';
+                        // As datas podem ser reduzidas visualmente quando há muitos dias,
+                        // mas os rótulos de valor de TODOS os pontos continuam no gráfico.
+                        a.ticks.autoSkip = isDailyExactAxis ? true : false;
+                        a.ticks.maxTicksLimit = isDailyExactAxis ? 18 : undefined;
                         a.ticks.maxRotation = 35;
                         a.ticks.minRotation = 25;
                     }
@@ -1593,20 +1596,24 @@
                     saveProp(dl, 'anchor'); saveProp(dl, 'align'); saveProp(dl, 'offset'); saveProp(dl, 'clamp'); saveProp(dl, 'clip'); saveProp(dl, 'padding'); saveProp(dl, 'display');
                     const isDailyExact = chart.canvas?.id === 'dailyFlowChart';
                     if (isDailyExact) {
-                        // No PDF, exportação ou Gmail pode esconder os valores da Aba 01.
+                        // No PDF/JPEG/Gmail, manter TODOS os valores dos pontos.
+                        // Cada série usa uma faixa vertical própria para impedir
+                        // que os rótulos se sobreponham.
                         dl.display = ctx => {
-                            const ds = ctx.dataset || {};
-                            if (ds._isDailyTotalLine || ds.type === 'line') return true;
-                            const original = ds._originalData || [];
-                            return original[ctx.dataIndex] != null && Number(original[ctx.dataIndex]) > 0;
+                            const original = ctx.dataset?._originalData || [];
+                            return original[ctx.dataIndex] != null;
                         };
-                        // As barras mantêm os valores dentro dos segmentos. A linha
-                        // vermelha mantém os totais acima dos pontos.
                         dl.anchor = 'center';
-                        dl.align = 'center';
-                        dl.offset = 0;
-                        dl.clamp = true;
-                        dl.clip = true;
+                        dl.align = ctx => {
+                            const lane = ctx.datasetIndex % 6;
+                            return lane % 2 === 0 ? 'top' : 'bottom';
+                        };
+                        dl.offset = ctx => {
+                            const lane = ctx.datasetIndex % 6;
+                            return 12 + Math.floor(lane / 2) * 18;
+                        };
+                        dl.clamp = false;
+                        dl.clip = false;
                         dl.padding = 2;
                     } else {
                         dl.anchor = 'end';
@@ -1621,7 +1628,8 @@
                     const count = Math.max(...(chart.data?.datasets || []).map(ds => Array.isArray(ds.data) ? ds.data.length : 0), 0);
                     const f = dl.font && typeof dl.font === 'object' ? dl.font : {};
                     const base = Number(f.size) || 10;
-                    dl.font = {...f, size: Math.max(8, Math.min(13, count > 55 ? 8 : count > 40 ? 9 : count > 28 ? 10 : base))};
+                    const dailyBase = isDailyExact ? Math.max(10, base) : base;
+                    dl.font = {...f, size: Math.max(8, Math.min(13, count > 55 ? (isDailyExact ? 9 : 8) : count > 40 ? (isDailyExact ? 10 : 9) : count > 28 ? 10 : dailyBase))};
                 }
                 chart.canvas.style.width = exportWidth + 'px';
                 chart.canvas.style.height = exportHeight + 'px';
@@ -1778,10 +1786,15 @@
             ctx.fillStyle='#f8fafc';ctx.fillRect(0,0,W,H);
 
             const kpis=getReportGeneralFields(tabId).slice(0,6);
-            // Dois níveis de KPIs (3 por linha): muito mais largura por campo e nenhum texto apertado.
+            // No gráfico 02 da Aba 01, os 3 campos gerais ficam em uma faixa
+            // mais compacta para sobrar altura para os valores de cada ponto.
+            const isDailyExactReport = item.card?.querySelector('canvas')?.id === 'dailyFlowChart';
             const cols=Math.min(3,Math.max(1,kpis.length));
             const rows=Math.ceil(kpis.length/cols);
-            const kpiGapX=28,kpiGapY=22,kpiY=28,kpiH=126;
+            const kpiGapX=isDailyExactReport ? 24 : 28;
+            const kpiGapY=isDailyExactReport ? 12 : 22;
+            const kpiY=isDailyExactReport ? 20 : 28;
+            const kpiH=isDailyExactReport ? 94 : 126;
             const kpiW=(W-M*2-kpiGapX*(cols-1))/cols;
             for(let i=0;i<kpis.length;i++){
                 const k=kpis[i],col=i%cols,row=Math.floor(i/cols);
@@ -1811,7 +1824,7 @@
 
             const kpiBottom=kpis.length ? kpiY+rows*kpiH+(rows-1)*kpiGapY : kpiY;
             const title=String(item.title||'GRÁFICO').replace(/\s+/g,' ').trim();
-            const titleY=kpiBottom+44;
+            const titleY=kpiBottom+(isDailyExactReport ? 34 : 44);
             ctx.fillStyle='#0f172a';ctx.font='800 32px Arial';ctx.textBaseline='alphabetic';ctx.fillText(title.slice(0,120),M,titleY);
             const range=getExportDateRange(tabId);
             let separatorY=titleY+24;
@@ -1830,11 +1843,9 @@
             const sourceCanvas=item.card?.querySelector('canvas');if(!sourceCanvas)throw new Error('Gráfico não encontrado para exportação.');
             const chart=(window.Chart&&Chart.getChart)?Chart.getChart(sourceCanvas):null;let restore=()=>{};
             try{
-                const chartExportW=boxW-inner*2;
-                const chartExportH=boxH-inner*2;
-                restore=prepareChartForExport(chart,chartExportW,chartExportH);
+                restore=prepareChartForExport(chart,boxW-inner*2,boxH-inner*2);
                 await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
-                ctx.drawImage(sourceCanvas,boxX+inner,boxY+inner,chartExportW,chartExportH);
+                ctx.drawImage(sourceCanvas,boxX+inner,boxY+inner,boxW-inner*2,boxH-inner*2);
             }finally{try{restore();}catch(e){}}
             return out;
         }
@@ -2873,187 +2884,76 @@ function toggleDropdown(id) {
                 }
             });
 
-            // Daily Chart — uma barra individual para cada poço, agrupada por data.
-            // A data fica acima de cada grupo e o nome do poço fica abaixo da respectiva barra.
-            // A linha vermelha ondulada acompanha o total diário de cada grupo.
+            // Daily Chart — formato visual semelhante ao modelo de referência:
+            // linhas com marcadores e etiquetas coloridas/legíveis em cada ponto.
             const dateMap = new Map();
-            filtered.forEach(d => {
-                if (d.IsoDate) dateMap.set(d.IsoDate, d.DataObj || new Date(d.IsoDate + 'T00:00:00'));
-            });
+            filtered.forEach(d => { if (d.IsoDate) dateMap.set(d.IsoDate, d.DataObj || new Date(d.IsoDate + 'T00:00:00')); });
             const datesIso = Array.from(dateMap.keys()).sort();
             const dates = datesIso.map(iso => {
                 const dt = dateMap.get(iso);
                 return dt ? dt.toLocaleDateString('pt-BR') : iso.split('-').reverse().join('/');
             });
-            const wells = Array.from(new Set(filtered.map(d => d.Poco))).sort((a,b) =>
-                a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'})
-            );
-            const colors = ['#f59e0b','#0ea5b7','#347a3f','#2563eb','#7c3aed','#be185d','#854d0e','#475569','#0891b2','#dc2626','#15803d','#1d4ed8','#9333ea','#0f766e'];
+            const wells = Array.from(new Set(filtered.map(d => d.Poco))).sort((a,b) => a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'}));
+            const colors = ['#166534','#2563eb','#f59e0b','#64748b','#7c3aed','#0891b2','#be185d','#854d0e','#15803d','#1d4ed8','#ea580c','#475569','#9333ea','#0f766e'];
 
-            // Cada posição do eixo X representa exatamente uma barra de um poço.
-            // Inserimos uma posição vazia entre datas para criar separação visual entre grupos.
-            const xItems = [];
-            datesIso.forEach((iso, dateIndex) => {
-                wells.forEach(well => xItems.push({type:'bar', iso, well, dateIndex}));
-                if (dateIndex < datesIso.length - 1) xItems.push({type:'spacer', iso:null, well:null, dateIndex});
-            });
+            // Separação visual das séries: cada poço recebe um pequeno deslocamento
+            // vertical apenas na posição desenhada. Os rótulos e tooltips continuam
+            // mostrando a vazão real registrada, evitando que as linhas fiquem
+            // totalmente sobrepostas quando dois poços têm valores muito próximos.
+            const rawDailyValues = wells.flatMap(w => filtered.filter(d => d.Poco === w).map(d => Number(d.Vazao) || 0));
+            const rawMin = rawDailyValues.length ? Math.min(...rawDailyValues) : 0;
+            const rawMax = rawDailyValues.length ? Math.max(...rawDailyValues) : 1;
+            const rawRange = Math.max(1, rawMax - rawMin);
+            const laneGap = Math.max(rawRange * 0.045, 20);
+            const dailyOriginalData = {};
 
-            const datasetsDaily = wells.map((well, idx) => {
+            const datasetsDaily = wells.map((w, idx) => {
                 const dataMap = {};
-                filtered.filter(d => d.Poco === well).forEach(d => {
-                    dataMap[d.IsoDate] = Number(d.Vazao) || 0;
-                });
-                const original = xItems.map(item => {
-                    if (item.type !== 'bar' || item.well !== well) return null;
-                    return dataMap[item.iso] ?? 0;
-                });
+                filtered.filter(d => d.Poco === w).forEach(d => { dataMap[d.IsoDate] = Number(d.Vazao) || 0; });
                 const c = colors[idx % colors.length];
+                const original = datesIso.map(iso => dataMap[iso] ?? null);
+                dailyOriginalData[w] = original;
                 return {
-                    type: 'bar',
-                    label: well,
-                    data: original,
+                    label: w,
+                    data: original.map(v => v == null ? null : v + (idx * laneGap)),
                     _originalData: original,
+                    borderColor: c,
                     backgroundColor: c,
-                    borderColor: '#ffffff',
-                    borderWidth: 1.5,
-                    borderRadius: 2,
-                    barPercentage: 0.82,
-                    categoryPercentage: 0.90,
-                    datalabels: {
-                        display: ctx => {
-                            const value = Number(ctx.dataset._originalData?.[ctx.dataIndex] ?? ctx.raw);
-                            return Number.isFinite(value) && value > 0;
-                        },
-                        formatter: (value, ctx) => Math.round(Number(ctx.dataset._originalData?.[ctx.dataIndex] ?? value)).toLocaleString('pt-BR'),
-                        color: '#ffffff',
-                        anchor: 'center',
-                        align: 'center',
-                        clamp: true,
-                        clip: true,
-                        padding: { top: 2, bottom: 2, left: 2, right: 2 },
-                        font: { size: 10, weight: '800' }
-                    }
+                    pointBackgroundColor: c,
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2,
+                    pointRadius: 4.5,
+                    pointHoverRadius: 6,
+                    borderWidth: 2.5,
+                    tension: 0.42,
+                    cubicInterpolationMode: 'monotone',
+                    spanGaps: true
                 };
             });
 
-            const dailyTotals = datesIso.map(iso => filtered
-                .filter(d => d.IsoDate === iso)
-                .reduce((sum, d) => sum + (Number(d.Vazao) || 0), 0)
-            );
-
-            // Plugin visual da Aba 01: datas no topo, nomes dos poços no rodapé
-            // e linha vermelha ondulada dos totais diários.
-            const dailyStructurePlugin = {
-                id: 'dailyStructureLabels',
-                afterDraw(chart) {
-                    const {ctx, chartArea, scales} = chart;
-                    const x = scales.x;
-                    if (!x || !chartArea) return;
-                    const metaByDataset = chart.data.datasets.map((_, i) => chart.getDatasetMeta(i));
-                    const positions = xItems.map((item, i) => ({item, px:x.getPixelForValue(i)}));
-                    const groups = [];
-                    datesIso.forEach((iso, di) => {
-                        const points = positions.filter(p => p.item.type === 'bar' && p.item.dateIndex === di);
-                        if (points.length) groups.push({iso, date:dates[di], points});
-                    });
-
-                    ctx.save();
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-
-                    // Data no topo de cada grupo.
-                    ctx.font = '800 11px Arial';
-                    ctx.fillStyle = '#334155';
-                    groups.forEach(g => {
-                        const center = (g.points[0].px + g.points[g.points.length - 1].px) / 2;
-                        ctx.fillText(g.date, center, chartArea.top - 25);
-                    });
-
-                    // Poço abaixo de cada barra.
-                    ctx.font = '700 9px Arial';
-                    ctx.fillStyle = '#475569';
-                    positions.forEach(p => {
-                        if (p.item.type !== 'bar') return;
-                        const label = String(p.item.well || '').replace(/^Poço\s*/i, 'Poço ');
-                        ctx.save();
-                        ctx.translate(p.px, chartArea.bottom + 28);
-                        ctx.rotate(-Math.PI / 2);
-                        ctx.fillText(label, 0, 0);
-                        ctx.restore();
-                    });
-
-                    // Linha vermelha ondulada e pontos no centro de cada grupo.
-                    const linePoints = groups.map((g, di) => ({
-                        x: (g.points[0].px + g.points[g.points.length - 1].px) / 2,
-                        y: yValue(chart, dailyTotals[di])
-                    }));
-                    if (linePoints.length) {
-                        ctx.strokeStyle = '#dc2626';
-                        ctx.lineWidth = 2.5;
-                        ctx.lineJoin = 'round';
-                        ctx.lineCap = 'round';
-                        ctx.beginPath();
-                        linePoints.forEach((p, i) => {
-                            if (i === 0) ctx.moveTo(p.x, p.y);
-                            else {
-                                const prev = linePoints[i - 1];
-                                const midX = (prev.x + p.x) / 2;
-                                ctx.bezierCurveTo(midX, prev.y, midX, p.y, p.x, p.y);
-                            }
-                        });
-                        ctx.stroke();
-
-                        linePoints.forEach((p, i) => {
-                            ctx.fillStyle = '#dc2626';
-                            ctx.beginPath(); ctx.arc(p.x, p.y, 4.5, 0, Math.PI * 2); ctx.fill();
-                            ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2; ctx.stroke();
-
-                            const label = Math.round(Number(dailyTotals[i]) || 0).toLocaleString('pt-BR');
-                            const padX = 5, padY = 3;
-                            ctx.font = '800 10px Arial';
-                            const tw = ctx.measureText(label).width;
-                            const bx = p.x - tw / 2 - padX;
-                            const by = p.y - 25;
-                            ctx.fillStyle = '#6b7280';
-                            ctx.beginPath();
-                            ctx.roundRect(bx, by, tw + padX * 2, 18, 4);
-                            ctx.fill();
-                            ctx.fillStyle = '#ffffff';
-                            ctx.fillText(label, p.x, by + 9);
-                        });
-                    }
-                    ctx.restore();
-
-                    function yValue(chartRef, value) {
-                        const yScale = chartRef.scales?.y;
-                        return yScale ? yScale.getPixelForValue(value) : chartArea.bottom;
-                    }
-                }
-            };
-
+            // Quando há muitas datas, o gráfico precisa crescer horizontalmente.
+            // Assim a última data/última vazão não fica espremida ou cortada.
             const dailyWrap = document.getElementById('dailyFlowChart')?.closest('.chart-scroll-wrapper');
             const dailyContainer = document.getElementById('dailyFlowChart')?.parentElement;
-            const availableWidth = dailyWrap ? Math.max(dailyWrap.clientWidth || 0, 1100) : 1100;
-            // Mantém as barras altas e separadas. Em telas menores o gráfico continua
-            // navegável horizontalmente, enquanto a exportação é normalizada para 1280×720.
-            const barWidth = wells.length > 10 ? 24 : wells.length > 6 ? 30 : 38;
-            const groupGap = 22;
-            const pointsWidth = datesIso.length * (wells.length * barWidth + groupGap);
+            // Nunca deixar o canvas menor que a área disponível. Com uma única
+            // data, por exemplo, ele deve ocupar toda a largura do card, e não
+            // ficar com uma pequena faixa de gráfico no meio da margem.
+            const availableWidth = dailyWrap ? Math.max(dailyWrap.clientWidth || 0, 900) : 900;
+            const pointsWidth = datesIso.length * (wells.length > 6 ? 145 : wells.length > 3 ? 125 : 105);
             const dailyWidth = Math.max(availableWidth, pointsWidth);
             if (dailyContainer) {
                 dailyContainer.style.width = dailyWidth + 'px';
                 dailyContainer.style.minWidth = dailyWidth + 'px';
-                dailyContainer.style.height = '600px';
+                dailyContainer.style.height = Math.max(520, wells.length > 8 ? 600 : 520) + 'px';
                 dailyContainer.style.margin = '0';
             }
             if (dailyWrap) {
                 dailyWrap.style.overflowX = dailyWidth > availableWidth ? 'auto' : 'hidden';
                 dailyWrap.style.width = '100%';
-                dailyWrap.style.paddingBottom = '8px';
             }
 
-            renderChart('dailyFlowChart', 'dailyFlow', 'bar', {
-                labels: xItems.map((_, i) => String(i)),
+            renderChart('dailyFlowChart', 'dailyFlow', 'line', {
+                labels: dates,
                 datasets: datasetsDaily
             }, {
                 responsive: true,
@@ -3061,34 +2961,54 @@ function toggleDropdown(id) {
                 interaction: { mode: 'index', intersect: false },
                 scales: {
                     y: {
-                        beginAtZero: true,
-                        title: { display: true, text: 'Vazão (L/h)' },
-                        ticks: { callback: v => Number(v).toLocaleString('pt-BR'), font: {size: 11} },
-                        grace: '12%'
+                        beginAtZero: false,
+                        title: { display: true, text: 'Vazão (L/h) — separação visual das linhas' },
+                        ticks: { callback: v => Number(v).toLocaleString('pt-BR') }
                     },
                     x: {
-                        offset: true,
+                        title: { display: true, text: 'Data' },
                         grid: { display: false },
-                        ticks: { display: false },
-                        title: { display: true, text: 'Poços por data', padding: {top: 48}, font: {size: 12, weight: '700'} }
+                        ticks: { autoSkip: datesIso.length > 18, maxRotation: 45, minRotation: 0, padding: 6 }
                     }
                 },
-                layout: { padding: { top: 52, right: 28, bottom: 72, left: 10 } },
+                layout: { padding: { top: 28, right: 28, bottom: 10, left: 10 } },
                 plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        mode: 'index',
-                        intersect: false,
-                        callbacks: {
-                            label: ctx => {
-                                const value = Number(ctx.raw) || 0;
-                                return `${ctx.dataset.label}: ${value.toLocaleString('pt-BR')} L/h`;
-                            }
-                        }
-                    },
-                    datalabels: { display: false }
-                },
-                __plugins: [dailyStructurePlugin]
+                    legend: { position: 'top', labels: { usePointStyle: true, pointStyle: 'circle', padding: 18, font: { size: 11, weight: '600' } } },
+                    tooltip: { callbacks: { label: ctx => {
+                        const original = ctx.dataset._originalData?.[ctx.dataIndex];
+                        return `${ctx.dataset.label}: ${Number(original ?? ctx.raw).toLocaleString('pt-BR')} L/h`;
+                    } } },
+                    datalabels: {
+                        // TODOS os pontos continuam mostrando o valor real.
+                        // A posição é alternada por poço e por data para que, por exemplo,
+                        // um período de 12 a 23 mostre cada valor sem esconder o ponto vizinho.
+                        display: ctx => {
+                            const original = ctx.dataset._originalData || [];
+                            return original[ctx.dataIndex] != null;
+                        },
+                        formatter: (value, ctx) => `${Math.round(Number(ctx.dataset._originalData?.[ctx.dataIndex] ?? value)).toLocaleString('pt-BR')} L/h`,
+                        backgroundColor: ctx => ctx.dataset.borderColor,
+                        borderRadius: 5,
+                        color: '#ffffff',
+                        padding: { top: 3, bottom: 3, left: 5, right: 5 },
+                        anchor: 'center',
+                        align: ctx => {
+                            // Cada poço recebe uma "faixa" própria de rótulo.
+                            // Isso evita que os valores de poços diferentes fiquem
+                            // um em cima do outro no mesmo dia.
+                            const lane = ctx.datasetIndex % 6;
+                            return lane % 2 === 0 ? 'top' : 'bottom';
+                        },
+                        offset: ctx => {
+                            const lane = ctx.datasetIndex % 6;
+                            return 12 + Math.floor(lane / 2) * 18;
+                        },
+                        clamp: false,
+                        clip: false,
+                        textAlign: 'center',
+                        font: { size: 9, weight: '700' }
+                    }
+                }
             });
         }
 
@@ -4447,7 +4367,7 @@ function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
             }).join('');
             return `<!doctype html><html><head><meta charset="utf-8"><title>Monitoramento Hidrográfico Pro</title></head><body style="margin:0;background:#f1f5f9;font-family:Arial,Helvetica,sans-serif;color:#0f172a;">
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f1f5f9;padding:24px 0;"><tr><td align="center">
-<table role="presentation" width="1280" cellspacing="0" cellpadding="0" style="max-width:1280px;width:100%;background:#fff;border:1px solid #e2e8f0;border-radius:14px;overflow:hidden;">
+<table role="presentation" width="720" cellspacing="0" cellpadding="0" style="max-width:720px;width:100%;background:#fff;border:1px solid #e2e8f0;border-radius:14px;overflow:hidden;">
 <tr><td style="background:linear-gradient(135deg,#0f172a,#172554,#312e81);padding:22px 28px;"><table role="presentation" width="100%"><tr><td width="70" valign="middle"><img src="${logoUrl}" alt="Logo do sistema" width="54" style="display:block;max-width:54px;height:auto;border:0;"></td><td valign="middle"><div style="font-size:21px;font-weight:800;color:#fff;line-height:1.2;">Monitoramento Hidrográfico Pro</div><div style="font-size:12px;color:#cbd5e1;margin-top:5px;">Análise de Desempenho, Vazão, Irrigação, Volumes e Manutenção</div></td></tr></table></td></tr>
 <tr><td style="padding:24px 28px 12px;"><div style="font-size:18px;font-weight:800;color:#0f172a;">${escapeHtml(item.label)}</div><div style="font-size:12px;color:#64748b;margin-top:5px;">Relatório gerado pelo sistema</div></td></tr>
 ${summary ? `<tr><td style="padding:8px 28px 18px;"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border:1px solid #e2e8f0;border-radius:9px;font-size:12px;">${safeSummary}</table></td></tr>` : ''}
@@ -4476,7 +4396,7 @@ ${summary ? `<tr><td style="padding:8px 28px 18px;"><table role="presentation" w
                 const pdfFile=new File([pdfBlob],pdfName,{type:'application/pdf'});
                 const subject=`Monitoramento Hidrográfico Pro — ${item.label}`;
                 const summary=getReportGeneralFields(item.tabId).map(k=>`${k.label}: ${k.value}`).join('\n');
-                const body=`Olá,\n\nSegue o relatório em PDF do Monitoramento Hidrográfico Pro.\n\n${summary}\n\nO PDF foi preparado em 1280×720 (16:9), com o gráfico e os dados dimensionados para leitura no Gmail/tela. Na Aba 01, a vazão média diária é apresentada em grupos de barras por data, uma barra para cada poço, com os valores dentro das barras, a data acima do grupo, o nome do poço abaixo da barra e a linha vermelha ondulada com os totais acima dos pontos.\n\nGerado em ${new Date().toLocaleString('pt-BR')}.`;
+                const body=`Olá,\n\nSegue o relatório em PDF do Monitoramento Hidrográfico Pro.\n\n${summary}\n\nO PDF contém somente o gráfico selecionado e seus campos gerais, em formato 1280×720.\n\nGerado em ${new Date().toLocaleString('pt-BR')}.`;
 
                 // Envio EXCLUSIVO pelo Gmail. O navegador não permite que um HTML local
                 // anexe automaticamente o PDF a uma composição do Gmail; por isso o PDF é
