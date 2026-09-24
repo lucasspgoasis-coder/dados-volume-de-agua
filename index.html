@@ -4309,6 +4309,24 @@ function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
             }
         }
 
+        function buildProfessionalEmailHTML(item, summary, imageDataUrl){
+            const logoUrl='https://imgur.com/wEozr34.png';
+            const safeSummary=(summary||'').split('\\n').map(line=>{
+                const i=line.indexOf(':');
+                if(i>0) return `<tr><td style="padding:5px 8px;color:#64748b;font-weight:600;">${escapeHtml(line.slice(0,i))}</td><td style="padding:5px 8px;color:#0f172a;">${escapeHtml(line.slice(i+1).trim())}</td></tr>`;
+                return `<tr><td colspan="2" style="padding:5px 8px;color:#334155;">${escapeHtml(line)}</td></tr>`;
+            }).join('');
+            return `<!doctype html><html><head><meta charset="utf-8"><title>Monitoramento Hidrográfico Pro</title></head><body style="margin:0;background:#f1f5f9;font-family:Arial,Helvetica,sans-serif;color:#0f172a;">
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f1f5f9;padding:24px 0;"><tr><td align="center">
+<table role="presentation" width="720" cellspacing="0" cellpadding="0" style="max-width:720px;width:100%;background:#fff;border:1px solid #e2e8f0;border-radius:14px;overflow:hidden;">
+<tr><td style="background:linear-gradient(135deg,#0f172a,#172554,#312e81);padding:22px 28px;"><table role="presentation" width="100%"><tr><td width="70" valign="middle"><img src="${logoUrl}" alt="Logo do sistema" width="54" style="display:block;max-width:54px;height:auto;border:0;"></td><td valign="middle"><div style="font-size:21px;font-weight:800;color:#fff;line-height:1.2;">Monitoramento Hidrográfico Pro</div><div style="font-size:12px;color:#cbd5e1;margin-top:5px;">Análise de Desempenho, Vazão, Irrigação, Volumes e Manutenção</div></td></tr></table></td></tr>
+<tr><td style="padding:24px 28px 12px;"><div style="font-size:18px;font-weight:800;color:#0f172a;">${escapeHtml(item.label)}</div><div style="font-size:12px;color:#64748b;margin-top:5px;">Relatório gerado pelo sistema</div></td></tr>
+${summary ? `<tr><td style="padding:8px 28px 18px;"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border:1px solid #e2e8f0;border-radius:9px;font-size:12px;">${safeSummary}</table></td></tr>` : ''}
+<tr><td style="padding:4px 28px 24px;"><img src="${imageDataUrl}" alt="Gráfico do relatório" style="display:block;width:100%;height:auto;border:1px solid #e2e8f0;border-radius:8px;"></td></tr>
+<tr><td style="padding:14px 28px;border-top:1px solid #e2e8f0;background:#f8fafc;color:#64748b;font-size:11px;line-height:1.5;">Monitoramento Hidrográfico Pro<br>Análise de Desempenho, Vazão, Irrigação, Volumes e Manutenção<br>Relatório gerado em ${new Date().toLocaleString('pt-BR')}</td></tr>
+</table></td></tr></table></body></html>`;
+        }
+
         async function sendSelectedChartByEmail(){
             const cfg=getGlobalEmailConfig();
             const notice=document.getElementById('globalEmailNotice');
@@ -4323,7 +4341,13 @@ function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
                 const fileName=`relatorio_${item.key}_${new Date().toISOString().slice(0,10)}.png`;
                 const subject=`Relatório — ${item.label}`;
                 const summary=getReportGeneralFields(item.tabId).map(k=>`${k.label}: ${k.value}`).join('\n');
-                const body=`Olá,\n\nSegue o relatório completo de ${item.label}.\n\n${summary ? 'Campos gerais:\n'+summary+'\n\n' : ''}O gráfico completo foi gerado em PNG para anexar ao e-mail.\n\nData: ${new Date().toLocaleString('pt-BR')}`;
+                const imageDataUrl=canvas.toDataURL('image/png');
+                const emailHTML=buildProfessionalEmailHTML(item,summary,imageDataUrl);
+                const htmlBlob=new Blob([emailHTML],{type:'text/html;charset=utf-8'});
+                const htmlUrl=URL.createObjectURL(htmlBlob);
+                const htmlLink=document.createElement('a');htmlLink.href=htmlUrl;htmlLink.download=`email_${item.key}_${new Date().toISOString().slice(0,10)}.html`;htmlLink.click();
+                setTimeout(()=>URL.revokeObjectURL(htmlUrl),1000);
+                const body=`Olá,\n\nSegue o relatório de ${item.label} do Monitoramento Hidrográfico Pro.\n\nO relatório profissional em HTML e o gráfico completo foram gerados pelo sistema.\n\nData: ${new Date().toLocaleString('pt-BR')}`;
 
                 // Gmail é o único destino deste botão. O navegador não permite
                 // que um HTML local anexe automaticamente um arquivo a uma nova
@@ -4340,7 +4364,7 @@ function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
                 localStorage.setItem('vazaoGlobalEmail',cfg.email);
                 localStorage.setItem('vazaoGlobalEmailChart',cfg.chartKey);
                 if(notice){
-                    notice.textContent='Gmail aberto com destinatário e mensagem preenchidos. O navegador não permite que o HTML defina outro remetente; para isso é necessário um serviço de e-mail do sistema.';
+                    notice.textContent='Gmail aberto com destinatário e mensagem preenchidos. O relatório HTML profissional e o PNG completo também foram gerados para anexar. Para o Gmail enviar o HTML diretamente no corpo e usar um remetente próprio do sistema, é necessária uma conexão de envio (ex.: Google Apps Script/serviço SMTP).';
                     notice.className='text-[11px] font-semibold text-emerald-600 self-center';
                 }
             }catch(e){
