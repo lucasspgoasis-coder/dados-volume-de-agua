@@ -209,7 +209,7 @@
 
         /* Impressão: somente a aba atual, sem filtros/controles. */
         @media print {
-            @page { size: A4 portrait; margin: 8mm; }
+            @page { size: A4 landscape; margin: 10mm; }
             body.printing { background: #fff !important; color: #0f172a !important; display: block !important; }
             body.printing > *:not(#main-content) { display: none !important; }
             body.printing #main-content { display: block !important; width: 100% !important; max-width: none !important; margin: 0 !important; padding: 0 !important; }
@@ -339,13 +339,13 @@
                     </div>
                     <div class="md:col-span-3">
                         <button onclick="sendSelectedChartByEmail()" class="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-4 py-2 text-sm font-bold transition flex items-center justify-center gap-2 h-[38px]">
-                            <i class="fa-brands fa-google"></i> Enviar pelo Gmail
+                            <i class="fa-solid fa-paper-plane"></i> Enviar por e-mail
                         </button>
                     </div>
                 </div>
                 <div class="flex flex-wrap gap-2 mt-3">
                     <button type="button" onclick="saveGlobalEmail()" class="bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-lg px-3 py-1.5 text-xs font-semibold"><i class="fa-solid fa-floppy-disk mr-1"></i> Salvar e-mail</button>
-                    <span class="text-[11px] text-slate-500 self-center">O relatório é preparado pelo HTML e aberto no Gmail para envio. Para usar um remetente próprio do sistema, é necessário conectar um serviço de e-mail.</span>
+                    <span class="text-[11px] text-slate-500 self-center">O Gmail será aberto com o destinatário e os campos gerais preenchidos; o gráfico completo será baixado para anexar.</span>
                     <span id="globalEmailNotice" class="text-[11px] font-semibold self-center"></span>
                 </div>
             </div>
@@ -1469,9 +1469,9 @@
         // Formato final: paisagem, 16:9, um gráfico + campos gerais por página/arquivo.
         // A largura foi ampliada ligeiramente para dar folga aos textos dos KPIs,
         // sem alterar a altura de referência.
-        const REPORT_PAGE_W = 1280;
-        const REPORT_PAGE_H = 720;
-        const REPORT_MARGIN = 56;
+        const REPORT_PAGE_W = 3200;
+        const REPORT_PAGE_H = 1800;
+        const REPORT_MARGIN = 72;
 
         function getExportableSections(tabId) {
             const tab = document.getElementById(tabId);
@@ -1578,12 +1578,8 @@
                     setFont(a.title, 14, scale);
                     // Mais espaço entre os rótulos do eixo X para evitar sobreposição.
                     if (axis === 'x') {
-                        saveProp(a.ticks, 'autoSkip'); saveProp(a.ticks, 'maxRotation'); saveProp(a.ticks, 'minRotation'); saveProp(a.ticks, 'maxTicksLimit');
-                        const isDailyExactAxis = chart.canvas?.id === 'dailyFlowChart';
-                        // As datas podem ser reduzidas visualmente quando há muitos dias,
-                        // mas os rótulos de valor de TODOS os pontos continuam no gráfico.
-                        a.ticks.autoSkip = isDailyExactAxis ? true : false;
-                        a.ticks.maxTicksLimit = isDailyExactAxis ? 18 : undefined;
+                        saveProp(a.ticks, 'autoSkip'); saveProp(a.ticks, 'maxRotation'); saveProp(a.ticks, 'minRotation');
+                        a.ticks.autoSkip = false;
                         a.ticks.maxRotation = 35;
                         a.ticks.minRotation = 25;
                     }
@@ -1593,40 +1589,50 @@
                 if (o.plugins?.datalabels) {
                     const dl = o.plugins.datalabels;
                     setFont(dl, 10, Math.min(1.35, scale));
-                    saveProp(dl, 'anchor'); saveProp(dl, 'align'); saveProp(dl, 'offset'); saveProp(dl, 'clamp'); saveProp(dl, 'clip'); saveProp(dl, 'padding'); saveProp(dl, 'display');
-                    const isDailyExact = chart.canvas?.id === 'dailyFlowChart';
-                    if (isDailyExact) {
-                        // No PDF/JPEG/Gmail, manter TODOS os valores dos pontos.
-                        // Cada série usa uma faixa vertical própria para impedir
-                        // que os rótulos se sobreponham.
-                        dl.display = ctx => {
-                            const original = ctx.dataset?._originalData || [];
-                            return original[ctx.dataIndex] != null;
-                        };
-                        dl.anchor = 'center';
-                        dl.align = ctx => {
-                            const pattern = (ctx.datasetIndex * 3 + ctx.dataIndex) % 8;
-                            return [-75, 75, -105, 105, -60, 60, -120, 120][pattern];
-                        };
-                        dl.offset = ctx => 7 + ((ctx.datasetIndex + ctx.dataIndex) % 3) * 2;
-                        dl.clamp = true;
-                        dl.clip = false;
-                        dl.padding = 2;
-                    } else {
-                        dl.anchor = 'end';
-                        dl.align = 'top';
-                        dl.offset = 5;
-                        dl.clamp = false;
-                        dl.clip = false;
-                        dl.padding = 1;
-                    }
+                    saveProp(dl, 'anchor'); saveProp(dl, 'align'); saveProp(dl, 'offset'); saveProp(dl, 'clamp'); saveProp(dl, 'clip'); saveProp(dl, 'padding');
+                    dl.anchor = 'end';
+                    dl.align = (ctx) => {
+                        const chart = ctx?.chart;
+                        const area = chart?.chartArea;
+                        const xScale = chart?.scales?.x;
+                        const yScale = chart?.scales?.y;
+                        const x = xScale && ctx?.dataIndex != null ? xScale.getPixelForValue(ctx.dataIndex) : 0;
+                        const idx = Number(ctx?.dataIndex || 0);
+                        const di = Number(ctx?.datasetIndex || 0);
+                        const values = (chart?.data?.datasets || []).map((ds, i) => ({i, v: ds?.data?.[idx]}))
+                            .filter(o => o.v != null && Number.isFinite(Number(o.v)))
+                            .sort((a,b) => Number(b.v) - Number(a.v));
+                        const rank = Math.max(0, values.findIndex(o => o.i === di));
+                        const y = yScale && ctx?.raw != null ? yScale.getPixelForValue(Number(ctx.raw)) : 0;
+                        if (area && x <= area.left + 80) return 'right';
+                        if (area && x >= area.right - 80) return 'left';
+                        if (area && y <= area.top + 38) return 'bottom';
+                        if (area && y >= area.bottom - 38) return 'top';
+                        return rank % 2 === 0 ? 'top' : 'bottom';
+                    };
+                    dl.offset = (ctx) => {
+                        const chart = ctx?.chart;
+                        const area = chart?.chartArea;
+                        const xScale = chart?.scales?.x;
+                        const x = xScale && ctx?.dataIndex != null ? xScale.getPixelForValue(ctx.dataIndex) : 0;
+                        const idx = Number(ctx?.dataIndex || 0);
+                        const di = Number(ctx?.datasetIndex || 0);
+                        const values = (chart?.data?.datasets || []).map((ds, i) => ({i, v: ds?.data?.[idx]}))
+                            .filter(o => o.v != null && Number.isFinite(Number(o.v)))
+                            .sort((a,b) => Number(b.v) - Number(a.v));
+                        const rank = Math.max(0, values.findIndex(o => o.i === di));
+                        const edge = area && (x <= area.left + 80 || x >= area.right - 80);
+                        return (edge ? 16 : 10) + Math.floor(rank / 2) * 15;
+                    };
+                    dl.clamp = true;
+                    dl.clip = false;
+                    dl.padding = {top: 2, bottom: 2, left: 4, right: 4};
                     // Reduz somente a fonte dos rótulos quando há muitas barras,
                     // mantendo cada valor visível sem empilhar os números.
                     const count = Math.max(...(chart.data?.datasets || []).map(ds => Array.isArray(ds.data) ? ds.data.length : 0), 0);
                     const f = dl.font && typeof dl.font === 'object' ? dl.font : {};
                     const base = Number(f.size) || 10;
-                    const dailyBase = isDailyExact ? Math.max(10, base) : base;
-                    dl.font = {...f, size: Math.max(8, Math.min(13, count > 55 ? (isDailyExact ? 9 : 8) : count > 40 ? (isDailyExact ? 10 : 9) : count > 28 ? 10 : dailyBase))};
+                    dl.font = {...f, size: Math.max(8, Math.min(14, count > 70 ? 8 : count > 50 ? 9 : count > 30 ? 10 : base))};
                 }
                 chart.canvas.style.width = exportWidth + 'px';
                 chart.canvas.style.height = exportHeight + 'px';
@@ -1783,15 +1789,10 @@
             ctx.fillStyle='#f8fafc';ctx.fillRect(0,0,W,H);
 
             const kpis=getReportGeneralFields(tabId).slice(0,6);
-            // No gráfico 02 da Aba 01, os 3 campos gerais ficam em uma faixa
-            // mais compacta para sobrar altura para os valores de cada ponto.
-            const isDailyExactReport = item.card?.querySelector('canvas')?.id === 'dailyFlowChart';
+            // Dois níveis de KPIs (3 por linha): muito mais largura por campo e nenhum texto apertado.
             const cols=Math.min(3,Math.max(1,kpis.length));
             const rows=Math.ceil(kpis.length/cols);
-            const kpiGapX=isDailyExactReport ? 24 : 28;
-            const kpiGapY=isDailyExactReport ? 10 : 22;
-            const kpiY=isDailyExactReport ? 16 : 28;
-            const kpiH=isDailyExactReport ? 82 : 126;
+            const kpiGapX=28,kpiGapY=22,kpiY=28,kpiH=126;
             const kpiW=(W-M*2-kpiGapX*(cols-1))/cols;
             for(let i=0;i<kpis.length;i++){
                 const k=kpis[i],col=i%cols,row=Math.floor(i/cols);
@@ -1821,7 +1822,7 @@
 
             const kpiBottom=kpis.length ? kpiY+rows*kpiH+(rows-1)*kpiGapY : kpiY;
             const title=String(item.title||'GRÁFICO').replace(/\s+/g,' ').trim();
-            const titleY=kpiBottom+(isDailyExactReport ? 34 : 44);
+            const titleY=kpiBottom+44;
             ctx.fillStyle='#0f172a';ctx.font='800 32px Arial';ctx.textBaseline='alphabetic';ctx.fillText(title.slice(0,120),M,titleY);
             const range=getExportDateRange(tabId);
             let separatorY=titleY+24;
@@ -1835,7 +1836,7 @@
             }
             ctx.fillStyle='#dbe3ec';ctx.fillRect(M,separatorY,W-M*2,2);
 
-            const boxX=M,boxY=separatorY+22,boxW=W-M*2,boxH=H-boxY-M,inner=28;
+            const boxX=M,boxY=separatorY+28,boxW=W-M*2,boxH=H-boxY-M,inner=42;
             ctx.fillStyle='#fff';ctx.strokeStyle='#dbe3ec';ctx.lineWidth=2;ctx.beginPath();ctx.roundRect(boxX,boxY,boxW,boxH,14);ctx.fill();ctx.stroke();
             const sourceCanvas=item.card?.querySelector('canvas');if(!sourceCanvas)throw new Error('Gráfico não encontrado para exportação.');
             const chart=(window.Chart&&Chart.getChart)?Chart.getChart(sourceCanvas):null;let restore=()=>{};
@@ -1847,7 +1848,7 @@
             return out;
         }
 
-        function downloadCanvasAsJPEG(canvas,fileName){const link=document.createElement('a');link.download=fileName;link.href=canvas.toDataURL('image/jpeg',0.97);document.body.appendChild(link);link.click();link.remove();}
+        function downloadCanvasAsJPEG(canvas,fileName){const link=document.createElement('a');link.download=fileName;link.href=canvas.toDataURL('image/jpeg',1.0);document.body.appendChild(link);link.click();link.remove();}
         async function exportSelectedSectionsJPEG(selected,tabId,tabName,btn){
             const original=btn.innerHTML;btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Gerando JPEG...';
             try{for(let i=0;i<selected.length;i++){const canvas=await composeSectionWithGeneralFields(selected[i],tabId,tabName);const safe=String(selected[i].title||`grafico_${i+1}`).replace(/[^a-z0-9áàâãéêíóôõúç _-]/gi,'').trim().replace(/\s+/g,'_').slice(0,80);downloadCanvasAsJPEG(canvas,`${tabName}_${safe}_${new Date().toISOString().slice(0,10)}.jpeg`);if(i<selected.length-1)await new Promise(r=>setTimeout(r,250));}}
@@ -2084,7 +2085,7 @@ function toggleDropdown(id) {
                     pointBorderWidth: 1.5,
                     pointRadius: 3,
                     pointHoverRadius: 5,
-                    borderWidth: 2.2,
+                    borderWidth: 2.5,
                     tension: 0.25,
                     fill: true
                 }]
@@ -2893,41 +2894,22 @@ function toggleDropdown(id) {
             const wells = Array.from(new Set(filtered.map(d => d.Poco))).sort((a,b) => a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'}));
             const colors = ['#166534','#2563eb','#f59e0b','#64748b','#7c3aed','#0891b2','#be185d','#854d0e','#15803d','#1d4ed8','#ea580c','#475569','#9333ea','#0f766e'];
 
-            // Separação visual das séries: cada poço recebe um pequeno deslocamento
-            // vertical apenas na posição desenhada. Os rótulos e tooltips continuam
-            // mostrando a vazão real registrada, evitando que as linhas fiquem
-            // totalmente sobrepostas quando dois poços têm valores muito próximos.
-            const rawDailyValues = wells.flatMap(w => filtered.filter(d => d.Poco === w).map(d => Number(d.Vazao) || 0));
-            const rawMin = rawDailyValues.length ? Math.min(...rawDailyValues) : 0;
-            const rawMax = rawDailyValues.length ? Math.max(...rawDailyValues) : 1;
-            const rawRange = Math.max(1, rawMax - rawMin);
-            const laneGap = Math.max(rawRange * 0.11, 45);
-            const dailyOriginalData = {};
-
             const datasetsDaily = wells.map((w, idx) => {
                 const dataMap = {};
-                filtered.filter(d => d.Poco === w).forEach(d => { dataMap[d.IsoDate] = Number(d.Vazao) || 0; });
+                filtered.filter(d => d.Poco === w).forEach(d => { dataMap[d.IsoDate] = d.Vazao; });
                 const c = colors[idx % colors.length];
-                const original = datesIso.map(iso => dataMap[iso] ?? null);
-                dailyOriginalData[w] = original;
                 return {
                     label: w,
-                    data: original.map(v => v == null ? null : v + (idx * laneGap)),
-                    _originalData: original,
+                    data: datesIso.map(iso => dataMap[iso] ?? null),
                     borderColor: c,
-                    // Formato "montanha" semelhante ao Looker Studio:
-                    // linha contínua com área preenchida suavemente abaixo dela.
-                    backgroundColor: c + '18',
-                    fill: 'origin',
+                    backgroundColor: c,
                     pointBackgroundColor: c,
                     pointBorderColor: '#ffffff',
                     pointBorderWidth: 2,
-                    pointRadius: 3.8,
-                    pointHoverRadius: 5.5,
+                    pointRadius: 4.5,
+                    pointHoverRadius: 6,
                     borderWidth: 2.5,
-                    tension: 0.38,
-                    stepped: false,
-                    cubicInterpolationMode: 'monotone',
+                    tension: 0.18,
                     spanGaps: true
                 };
             });
@@ -2939,150 +2921,19 @@ function toggleDropdown(id) {
             // Nunca deixar o canvas menor que a área disponível. Com uma única
             // data, por exemplo, ele deve ocupar toda a largura do card, e não
             // ficar com uma pequena faixa de gráfico no meio da margem.
-            const availableWidth = dailyWrap ? Math.max(dailyWrap.clientWidth || 0, 900) : 900;
-            const edgeSpace = 150;
-            const pointsWidth = Math.max(availableWidth, datesIso.length * (wells.length > 6 ? 225 : wells.length > 3 ? 205 : 185));
-            // Reserva espaço extra nas duas extremidades para que os rótulos
-            // da primeira e principalmente da última data nunca sejam cortados.
-            const dailyWidth = Math.max(availableWidth, pointsWidth + edgeSpace);
+            const availableWidth = dailyWrap ? Math.max(dailyWrap.clientWidth || 0, 1100) : 1100;
+            const pointsWidth = datesIso.length * (wells.length > 12 ? 240 : wells.length > 9 ? 215 : wells.length > 6 ? 190 : wells.length > 3 ? 165 : 145);
+            const dailyWidth = Math.max(availableWidth, pointsWidth);
             if (dailyContainer) {
                 dailyContainer.style.width = dailyWidth + 'px';
                 dailyContainer.style.minWidth = dailyWidth + 'px';
-                dailyContainer.style.height = Math.max(760, wells.length > 8 ? 900 : wells.length > 5 ? 840 : 760) + 'px';
+                dailyContainer.style.height = Math.max(820, datesIso.length > 1 ? 980 : 820, wells.length > 12 ? 1500 : wells.length > 9 ? 1320 : wells.length > 6 ? 1140 : wells.length > 4 ? 1020 : 820) + 'px';
                 dailyContainer.style.margin = '0';
             }
             if (dailyWrap) {
                 dailyWrap.style.overflowX = dailyWidth > availableWidth ? 'auto' : 'hidden';
                 dailyWrap.style.width = '100%';
             }
-
-            // Etiquetas dos valores: posicionamento manual leve e determinístico.
-            // O objetivo é reproduzir o visual da referência: etiquetas curtas,
-            // próximas aos pontos, alternadas acima/abaixo e sem ficarem umas
-            // sobre as outras. O algoritmo é limitado (sem varreduras grandes),
-            // para não deixar a página presa em "carregando".
-            const dailyFlowValueLabelsPlugin = {
-                id: 'dailyFlowValueLabels',
-                afterDatasetsDraw(chart) {
-                    if (chart?.canvas?.id !== 'dailyFlowChart') return;
-                    try {
-                        const ctx = chart.ctx;
-                        const chartArea = chart.chartArea;
-                        if (!chartArea || !chart.data?.datasets?.length) return;
-
-                        const placed = [];
-                        const labels = chart.data.labels || [];
-                        const pad = 3;
-                        const gap = 3;
-                        const boxH = 17;
-                        const minX = chartArea.left + pad;
-                        const maxX = chartArea.right - pad;
-                        const minY = chartArea.top + pad;
-                        const maxY = chartArea.bottom - pad;
-
-                        const overlap = (a, b) =>
-                            !(a.x + a.w + gap < b.x || b.x + b.w + gap < a.x ||
-                              a.y + a.h + gap < b.y || b.y + b.h + gap < a.y);
-
-                        const roundedRect = (c, x, y, w, h, r) => {
-                            const rr = Math.min(r, w / 2, h / 2);
-                            c.beginPath();
-                            c.moveTo(x + rr, y);
-                            c.lineTo(x + w - rr, y);
-                            c.quadraticCurveTo(x + w, y, x + w, y + rr);
-                            c.lineTo(x + w, y + h - rr);
-                            c.quadraticCurveTo(x + w, y + h, x + w - rr, y + h);
-                            c.lineTo(x + rr, y + h);
-                            c.quadraticCurveTo(x, y + h, x, y + h - rr);
-                            c.lineTo(x, y + rr);
-                            c.quadraticCurveTo(x, y, x + rr, y);
-                            c.closePath();
-                        };
-
-                        // Pontos de cada série. Ordenar pelo dataset/dataIndex faz
-                        // a posição das etiquetas ficar estável a cada atualização.
-                        chart.data.datasets.forEach((ds, dsIndex) => {
-                            const meta = chart.getDatasetMeta(dsIndex);
-                            (meta?.data || []).forEach((point, dataIndex) => {
-                                const original = ds._originalData?.[dataIndex];
-                                if (original == null || !Number.isFinite(Number(original))) return;
-
-                                const x = Number(point.x);
-                                const y = Number(point.y);
-                                if (!Number.isFinite(x) || !Number.isFinite(y)) return;
-
-                                const text = `${Math.round(Number(original)).toLocaleString('pt-BR')} L/h`;
-                                ctx.save();
-                                ctx.font = '700 8.5px Arial, sans-serif';
-                                const w = Math.ceil(ctx.measureText(text).width + 8);
-                                ctx.restore();
-                                const boxW = Math.max(42, Math.min(w, 78));
-
-                                const preferAbove = ((dsIndex + dataIndex) % 2 === 0);
-                                const vertical = preferAbove ? -1 : 1;
-                                const otherVertical = -vertical;
-                                const dx = [0, 0, 1, -1, 0.72, -0.72, 0.72, -0.72];
-                                const dy = [vertical, otherVertical, 0, 0, vertical, vertical, otherVertical, otherVertical];
-                                const distances = [11, 11, 15, 15, 13, 13, 22, 22];
-
-                                const candidates = [];
-                                for (let i = 0; i < dx.length; i++) {
-                                    let cx = x + dx[i] * distances[i] - boxW / 2;
-                                    let cy = y + dy[i] * distances[i] - boxH / 2;
-                                    cx = Math.max(minX, Math.min(cx, maxX - boxW));
-                                    cy = Math.max(minY, Math.min(cy, maxY - boxH));
-                                    candidates.push({ x: cx, y: cy, w: boxW, h: boxH });
-                                }
-
-                                // Escolhe primeiro uma posição totalmente livre.
-                                // Se todas estiverem ocupadas, usa a que tiver menor
-                                // quantidade/área de conflito, mantendo a etiqueta visível.
-                                let chosen = null;
-                                let bestScore = Infinity;
-                                for (const cand of candidates) {
-                                    let score = 0;
-                                    for (const prev of placed) {
-                                        if (overlap(cand, prev)) {
-                                            const ix = Math.max(0, Math.min(cand.x + cand.w, prev.x + prev.w) - Math.max(cand.x, prev.x));
-                                            const iy = Math.max(0, Math.min(cand.y + cand.h, prev.y + prev.h) - Math.max(cand.y, prev.y));
-                                            score += 1 + ix * iy;
-                                        }
-                                    }
-                                    const dist = Math.hypot((cand.x + cand.w / 2) - x, (cand.y + cand.h / 2) - y);
-                                    score = score * 10000 + dist;
-                                    if (score < bestScore) {
-                                        bestScore = score;
-                                        chosen = cand;
-                                    }
-                                    if (score < dist + 0.01) break;
-                                }
-                                if (!chosen) return;
-
-                                ctx.save();
-                                ctx.font = '700 8.5px Arial, sans-serif';
-                                ctx.textAlign = 'center';
-                                ctx.textBaseline = 'middle';
-                                ctx.fillStyle = ds.borderColor || '#475569';
-                                roundedRect(ctx, chosen.x, chosen.y, chosen.w, chosen.h, 4);
-                                ctx.fill();
-                                ctx.fillStyle = '#ffffff';
-                                ctx.fillText(text, chosen.x + chosen.w / 2, chosen.y + chosen.h / 2 + 0.3);
-                                ctx.restore();
-
-                                placed.push(chosen);
-                            });
-                        });
-                    } catch (err) {
-                        // Uma falha de desenho das etiquetas nunca deve impedir
-                        // o restante do dashboard de carregar.
-                        console.warn('dailyFlowValueLabels:', err);
-                    }
-                }
-            };
-
-            const dailyDatalabels = {
-                display: false
-            };
 
             renderChart('dailyFlowChart', 'dailyFlow', 'line', {
                 labels: dates,
@@ -3094,8 +2945,31 @@ function toggleDropdown(id) {
                 scales: {
                     y: {
                         beginAtZero: false,
-                        title: { display: true, text: 'Vazão (L/h) — gráfico em montanha' },
-                        ticks: { callback: v => Number(v).toLocaleString('pt-BR') }
+                        title: { display: true, text: 'Vazão (L/h)' },
+                        afterBuildTicks: (axis) => {
+                            // Quando houver mais de uma data selecionada, usa uma
+                            // escala mais espaçada para separar os pontos e seus
+                            // valores, evitando que um rótulo cubra outro.
+                            const vals = (axis.chart?.data?.datasets || [])
+                                .flatMap(ds => Array.isArray(ds.data) ? ds.data : [])
+                                .filter(v => v != null && Number.isFinite(Number(v)))
+                                .map(Number);
+                            if (datesIso.length > 1 && vals.length) {
+                                const maxVal = Math.max(...vals);
+                                const minVal = Math.min(...vals);
+                                const step = 500;
+                                const niceMax = Math.max(5000, Math.ceil((maxVal + step) / step) * step);
+                                const niceMin = Math.max(0, Math.floor((minVal - step) / step) * step);
+                                axis.options.min = Math.max(0, niceMin);
+                                axis.options.max = niceMax;
+                                axis.options.ticks.stepSize = step;
+                            }
+                        },
+                        ticks: {
+                            stepSize: datesIso.length > 1 ? 500 : undefined,
+                            padding: 8,
+                            callback: v => Number(v).toLocaleString('pt-BR')
+                        }
                     },
                     x: {
                         title: { display: true, text: 'Data' },
@@ -3103,16 +2977,84 @@ function toggleDropdown(id) {
                         ticks: { autoSkip: datesIso.length > 18, maxRotation: 45, minRotation: 0, padding: 6 }
                     }
                 },
-                layout: { padding: { top: 60, right: 110, bottom: 40, left: 60 } },
+                layout: { padding: { top: 72, right: 80, bottom: 38, left: 80 } },
                 plugins: {
-                    legend: { position: 'top', labels: { usePointStyle: true, pointStyle: 'circle', padding: 18, font: { size: 11, weight: '600' } } },
-                    tooltip: { callbacks: { label: ctx => {
-                        const original = ctx.dataset._originalData?.[ctx.dataIndex];
-                        return `${ctx.dataset.label}: ${Number(original ?? ctx.raw).toLocaleString('pt-BR')} L/h`;
-                    } } },
-                    datalabels: dailyDatalabels
-                },
-                __plugins: [dailyFlowValueLabelsPlugin]
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            usePointStyle: true,
+                            pointStyle: 'circle',
+                            padding: 20,
+                            boxWidth: 12,
+                            font: { size: 12, weight: '700' }
+                        }
+                    },
+                    tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${Number(ctx.raw).toLocaleString('pt-BR')} L/h` } },
+                    datalabels: {
+                        display: ctx => ctx.dataset.data[ctx.dataIndex] != null,
+                        formatter: value => `${Math.round(Number(value)).toLocaleString('pt-BR')} L/h`,
+                        backgroundColor: ctx => ctx.dataset.borderColor,
+                        borderColor: '#ffffff',
+                        borderWidth: 1,
+                        borderRadius: 5,
+                        color: '#ffffff',
+                        padding: { top: 4, bottom: 4, left: 6, right: 6 },
+                        anchor: 'end',
+                        font: (ctx) => {
+                            const n = Number(ctx?.chart?.data?.datasets?.length || 0);
+                            return { size: n > 14 ? 8 : n > 11 ? 9 : n > 8 ? 10 : 11, weight: '700' };
+                        },
+                        align: (ctx) => {
+                            const chart = ctx?.chart;
+                            const area = chart?.chartArea;
+                            const xScale = chart?.scales?.x;
+                            const yScale = chart?.scales?.y;
+                            const x = xScale && ctx?.dataIndex != null ? xScale.getPixelForValue(ctx.dataIndex) : 0;
+                            const idx = Number(ctx?.dataIndex || 0);
+                            const dsIndex = Number(ctx?.datasetIndex || 0);
+                            const values = (chart?.data?.datasets || []).map((ds, di) => ({
+                                di,
+                                value: ds?.data?.[idx]
+                            })).filter(o => o.value != null && Number.isFinite(Number(o.value)))
+                              .sort((a,b) => Number(b.value) - Number(a.value));
+                            const rank = Math.max(0, values.findIndex(o => o.di === dsIndex));
+                            const y = yScale && ctx?.raw != null ? yScale.getPixelForValue(Number(ctx.raw)) : 0;
+                            const edge = area && (x <= area.left + 80 || x >= area.right - 80);
+
+                            // Padrão visual da referência: as etiquetas de uma mesma
+                            // data ficam alternadas acima/abaixo do ponto. A cada dois
+                            // rótulos é criada uma nova faixa, mantendo uma distância
+                            // suficiente para que valores próximos não se cubram.
+                            if (edge) return x <= area.left + 80 ? 'right' : 'left';
+                            if (area && y <= area.top + 34) return 'bottom';
+                            if (area && y >= area.bottom - 34) return 'top';
+                            return rank % 2 === 0 ? 'top' : 'bottom';
+                        },
+                        offset: (ctx) => {
+                            const chart = ctx?.chart;
+                            const area = chart?.chartArea;
+                            const xScale = chart?.scales?.x;
+                            const yScale = chart?.scales?.y;
+                            const x = xScale && ctx?.dataIndex != null ? xScale.getPixelForValue(ctx.dataIndex) : 0;
+                            const idx = Number(ctx?.dataIndex || 0);
+                            const dsIndex = Number(ctx?.datasetIndex || 0);
+                            const values = (chart?.data?.datasets || []).map((ds, di) => ({
+                                di,
+                                value: ds?.data?.[idx]
+                            })).filter(o => o.value != null && Number.isFinite(Number(o.value)))
+                              .sort((a,b) => Number(b.value) - Number(a.value));
+                            const rank = Math.max(0, values.findIndex(o => o.di === dsIndex));
+                            const y = yScale && ctx?.raw != null ? yScale.getPixelForValue(Number(ctx.raw)) : 0;
+                            const edge = area && (x <= area.left + 80 || x >= area.right - 80);
+                            if (edge) return 18 + Math.floor(rank / 2) * 13;
+                            if (area && (y <= area.top + 34 || y >= area.bottom - 34)) return 12 + Math.floor(rank / 2) * 14;
+                            return 12 + Math.floor(rank / 2) * 18;
+                        },
+                        clamp: true,
+                        clip: false,
+                        font: { size: 10, weight: '700' }
+                    }
+                }
             });
         }
 
@@ -4462,24 +4404,6 @@ function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
             }
         }
 
-        function buildProfessionalEmailHTML(item, summary, imageDataUrl){
-            const logoUrl='https://imgur.com/wEozr34.png';
-            const safeSummary=(summary||'').split('\\n').map(line=>{
-                const i=line.indexOf(':');
-                if(i>0) return `<tr><td style="padding:5px 8px;color:#64748b;font-weight:600;">${escapeHtml(line.slice(0,i))}</td><td style="padding:5px 8px;color:#0f172a;">${escapeHtml(line.slice(i+1).trim())}</td></tr>`;
-                return `<tr><td colspan="2" style="padding:5px 8px;color:#334155;">${escapeHtml(line)}</td></tr>`;
-            }).join('');
-            return `<!doctype html><html><head><meta charset="utf-8"><title>Monitoramento Hidrográfico Pro</title></head><body style="margin:0;background:#f1f5f9;font-family:Arial,Helvetica,sans-serif;color:#0f172a;">
-<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f1f5f9;padding:24px 0;"><tr><td align="center">
-<table role="presentation" width="720" cellspacing="0" cellpadding="0" style="max-width:720px;width:100%;background:#fff;border:1px solid #e2e8f0;border-radius:14px;overflow:hidden;">
-<tr><td style="background:linear-gradient(135deg,#0f172a,#172554,#312e81);padding:22px 28px;"><table role="presentation" width="100%"><tr><td width="70" valign="middle"><img src="${logoUrl}" alt="Logo do sistema" width="54" style="display:block;max-width:54px;height:auto;border:0;"></td><td valign="middle"><div style="font-size:21px;font-weight:800;color:#fff;line-height:1.2;">Monitoramento Hidrográfico Pro</div><div style="font-size:12px;color:#cbd5e1;margin-top:5px;">Análise de Desempenho, Vazão, Irrigação, Volumes e Manutenção</div></td></tr></table></td></tr>
-<tr><td style="padding:24px 28px 12px;"><div style="font-size:18px;font-weight:800;color:#0f172a;">${escapeHtml(item.label)}</div><div style="font-size:12px;color:#64748b;margin-top:5px;">Relatório gerado pelo sistema</div></td></tr>
-${summary ? `<tr><td style="padding:8px 28px 18px;"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border:1px solid #e2e8f0;border-radius:9px;font-size:12px;">${safeSummary}</table></td></tr>` : ''}
-<tr><td style="padding:4px 28px 24px;"><img src="${imageDataUrl}" alt="Gráfico do relatório" style="display:block;width:100%;height:auto;border:1px solid #e2e8f0;border-radius:8px;"></td></tr>
-<tr><td style="padding:14px 28px;border-top:1px solid #e2e8f0;background:#f8fafc;color:#64748b;font-size:11px;line-height:1.5;">Monitoramento Hidrográfico Pro<br>Análise de Desempenho, Vazão, Irrigação, Volumes e Manutenção<br>Relatório gerado em ${new Date().toLocaleString('pt-BR')}</td></tr>
-</table></td></tr></table></body></html>`;
-        }
-
         async function sendSelectedChartByEmail(){
             const cfg=getGlobalEmailConfig();
             const notice=document.getElementById('globalEmailNotice');
@@ -4488,36 +4412,35 @@ ${summary ? `<tr><td style="padding:8px 28px 18px;"><table role="presentation" w
                 return;
             }
             try{
-                if(notice){notice.textContent='Gerando PDF 1280×720 com o gráfico e os campos gerais...';notice.className='text-[11px] font-semibold text-blue-600 self-center';}
+                if(notice){notice.textContent='Gerando relatório completo para o Gmail...';notice.className='text-[11px] font-semibold text-blue-600 self-center';}
                 const {canvas,item}=await buildSelectedEmailCanvas();
-                const {jsPDF}=window.jspdf||{};
-                if(!jsPDF) throw new Error('Biblioteca PDF não carregada.');
-                const pdf=new jsPDF({orientation:'landscape',unit:'pt',format:[REPORT_PAGE_W,REPORT_PAGE_H],compress:true});
-                pdf.addImage(canvas.toDataURL('image/png'),'PNG',0,0,REPORT_PAGE_W,REPORT_PAGE_H,undefined,'FAST');
-                const dateStamp=new Date().toISOString().slice(0,10);
-                const pdfName=`Monitoramento_Hidrografico_Pro_${item.key}_${dateStamp}.pdf`;
-                const pdfBlob=pdf.output('blob');
-                const pdfFile=new File([pdfBlob],pdfName,{type:'application/pdf'});
-                const subject=`Monitoramento Hidrográfico Pro — ${item.label}`;
+                const blob=await new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error('Falha ao gerar o relatório.')),'image/png'));
+                const fileName=`relatorio_${item.key}_${new Date().toISOString().slice(0,10)}.png`;
+                const subject=`Relatório — ${item.label}`;
                 const summary=getReportGeneralFields(item.tabId).map(k=>`${k.label}: ${k.value}`).join('\n');
-                const body=`Olá,\n\nSegue o relatório em PDF do Monitoramento Hidrográfico Pro.\n\n${summary}\n\nO PDF contém somente o gráfico selecionado e seus campos gerais, em formato 1280×720.\n\nGerado em ${new Date().toLocaleString('pt-BR')}.`;
+                const body=`Olá,\n\nSegue o relatório completo de ${item.label}.\n\n${summary ? 'Campos gerais:\n'+summary+'\n\n' : ''}O gráfico completo foi gerado em PNG para anexar ao e-mail.\n\nData: ${new Date().toLocaleString('pt-BR')}`;
 
-                // Envio EXCLUSIVO pelo Gmail. O navegador não permite que um HTML local
-                // anexe automaticamente o PDF a uma composição do Gmail; por isso o PDF é
-                // gerado e salvo, e a composição do Gmail é aberta já preenchida.
-                pdf.save(pdfName);
+                // Gmail é o único destino deste botão. O navegador não permite
+                // que um HTML local anexe automaticamente um arquivo a uma nova
+                // mensagem do Gmail; por isso o PNG completo é baixado e a janela
+                // de composição do Gmail é aberta já preenchida.
+                downloadCanvasAsPNG(canvas,fileName);
                 const gmailUrl='https://mail.google.com/mail/?view=cm&fs=1'
                     +`&to=${encodeURIComponent(cfg.email)}`
                     +`&su=${encodeURIComponent(subject)}`
                     +`&body=${encodeURIComponent(body)}`;
                 const popup=window.open(gmailUrl,'_blank');
-                if(!popup) window.location.href=gmailUrl;
+                if(!popup){ window.location.href=gmailUrl; }
+
                 localStorage.setItem('vazaoGlobalEmail',cfg.email);
                 localStorage.setItem('vazaoGlobalEmailChart',cfg.chartKey);
-                if(notice){notice.textContent='PDF 1280×720 gerado. O Gmail foi aberto para você anexar e enviar o relatório.';notice.className='text-[11px] font-semibold text-emerald-600 self-center';}
+                if(notice){
+                    notice.textContent='Gmail aberto com destinatário e mensagem preenchidos. Anexe o PNG que foi baixado e envie.';
+                    notice.className='text-[11px] font-semibold text-emerald-600 self-center';
+                }
             }catch(e){
                 console.error(e);
-                if(notice){notice.textContent='Não foi possível gerar o PDF: '+(e?.message||'erro desconhecido');notice.className='text-[11px] font-semibold text-red-600 self-center';}
+                if(notice){notice.textContent='Não foi possível preparar o envio: '+(e?.message||'erro desconhecido');notice.className='text-[11px] font-semibold text-red-600 self-center';}
             }
         }
 
@@ -4619,7 +4542,7 @@ ${summary ? `<tr><td style="padding:8px 28px 18px;"><table role="presentation" w
             <div class="px-5 pt-4">
                 <div class="grid grid-cols-2 gap-3">
                     <label class="export-option"><input type="radio" name="exportFormat" value="pdf" checked><span><b class="text-sm">PDF</b><small class="block text-[11px] text-slate-500">Cada gráfico/quadro em uma folha 1280×720</small></span></label>
-                    <label class="export-option"><input type="radio" name="exportFormat" value="jpeg"><span><b class="text-sm">JPEG</b><small class="block text-[11px] text-slate-500">Cada gráfico selecionado gera um JPEG 1280×720</small></span></label>
+                    <label class="export-option"><input type="radio" name="exportFormat" value="jpeg"><span><b class="text-sm">JPEG</b><small class="block text-[11px] text-slate-500">Cada gráfico selecionado gera um JPEG 3200×1800 em alta resolução</small></span></label>
                 </div>
             </div>
             <div class="p-5 max-h-[50vh] overflow-y-auto">
