@@ -1605,18 +1605,19 @@
                         };
                         dl.anchor = 'center';
                         dl.align = ctx => {
+                            const di = ctx.dataIndex;
+                            const last = (ctx.chart?.data?.labels?.length || 1) - 1;
+                            if (di === 0) return 'right';
+                            if (di === last) return 'left';
                             const wellLane = ctx.datasetIndex % 6;
-                            const dateLane = ctx.dataIndex % 4;
-                            const side = (wellLane + dateLane) % 4;
-                            if (side === 0) return 'top';
-                            if (side === 1) return 'bottom';
-                            if (side === 2) return 'left';
-                            return 'right';
+                            return ((wellLane + di) % 2 === 0) ? 'top' : 'bottom';
                         };
                         dl.offset = ctx => {
                             const wellLane = ctx.datasetIndex % 6;
-                            const dateLane = ctx.dataIndex % 4;
-                            return 10 + wellLane * 4 + (dateLane % 2) * 4;
+                            const di = ctx.dataIndex;
+                            const last = (ctx.chart?.data?.labels?.length || 1) - 1;
+                            if (di === 0 || di === last) return 10 + (wellLane % 3) * 5;
+                            return 10 + (wellLane % 6) * 5 + (di % 2) * 3;
                         };
                         dl.clamp = false;
                         dl.clip = false;
@@ -2931,8 +2932,9 @@ function toggleDropdown(id) {
                     pointRadius: 4.5,
                     pointHoverRadius: 6,
                     borderWidth: 2.5,
-                    tension: 0.42,
-                    cubicInterpolationMode: 'monotone',
+                    tension: 0,
+                    stepped: 'middle',
+                    cubicInterpolationMode: 'default',
                     spanGaps: true
                 };
             });
@@ -2945,8 +2947,11 @@ function toggleDropdown(id) {
             // data, por exemplo, ele deve ocupar toda a largura do card, e não
             // ficar com uma pequena faixa de gráfico no meio da margem.
             const availableWidth = dailyWrap ? Math.max(dailyWrap.clientWidth || 0, 900) : 900;
-            const pointsWidth = datesIso.length * (wells.length > 6 ? 175 : wells.length > 3 ? 155 : 135);
-            const dailyWidth = Math.max(availableWidth, pointsWidth);
+            const edgeSpace = 150;
+            const pointsWidth = Math.max(availableWidth, datesIso.length * (wells.length > 6 ? 190 : wells.length > 3 ? 170 : 150));
+            // Reserva espaço extra nas duas extremidades para que os rótulos
+            // da primeira e principalmente da última data nunca sejam cortados.
+            const dailyWidth = Math.max(availableWidth, pointsWidth + edgeSpace);
             if (dailyContainer) {
                 dailyContainer.style.width = dailyWidth + 'px';
                 dailyContainer.style.minWidth = dailyWidth + 'px';
@@ -2977,7 +2982,7 @@ function toggleDropdown(id) {
                         ticks: { autoSkip: datesIso.length > 18, maxRotation: 45, minRotation: 0, padding: 6 }
                     }
                 },
-                layout: { padding: { top: 28, right: 28, bottom: 10, left: 10 } },
+                layout: { padding: { top: 42, right: 110, bottom: 24, left: 55 } },
                 plugins: {
                     legend: { position: 'top', labels: { usePointStyle: true, pointStyle: 'circle', padding: 18, font: { size: 11, weight: '600' } } },
                     tooltip: { callbacks: { label: ctx => {
@@ -2999,21 +3004,21 @@ function toggleDropdown(id) {
                         padding: { top: 3, bottom: 3, left: 5, right: 5 },
                         anchor: 'center',
                         align: ctx => {
-                            // Alterna cima/baixo/lado conforme a data e cria uma
-                            // faixa própria para cada poço, evitando que os valores
-                            // ocupem o mesmo espaço quando várias datas estão selecionadas.
+                            // Organização em cascata: primeira data para a direita,
+                            // última para a esquerda e datas internas acima/abaixo.
+                            const di = ctx.dataIndex;
+                            const last = (ctx.chart?.data?.labels?.length || 1) - 1;
+                            if (di === 0) return 'right';
+                            if (di === last) return 'left';
                             const wellLane = ctx.datasetIndex % 6;
-                            const dateLane = ctx.dataIndex % 4;
-                            const side = (wellLane + dateLane) % 4;
-                            if (side === 0) return 'top';
-                            if (side === 1) return 'bottom';
-                            if (side === 2) return 'left';
-                            return 'right';
+                            return ((wellLane + di) % 2 === 0) ? 'top' : 'bottom';
                         },
                         offset: ctx => {
                             const wellLane = ctx.datasetIndex % 6;
-                            const dateLane = ctx.dataIndex % 4;
-                            return 10 + wellLane * 4 + (dateLane % 2) * 5;
+                            const di = ctx.dataIndex;
+                            const last = (ctx.chart?.data?.labels?.length || 1) - 1;
+                            if (di === 0 || di === last) return 10 + (wellLane % 3) * 5;
+                            return 10 + (wellLane % 6) * 5 + (di % 2) * 3;
                         },
                         clamp: false,
                         clip: false,
