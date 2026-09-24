@@ -2896,12 +2896,12 @@ function toggleDropdown(id) {
             // data, por exemplo, ele deve ocupar toda a largura do card, e não
             // ficar com uma pequena faixa de gráfico no meio da margem.
             const availableWidth = dailyWrap ? Math.max(dailyWrap.clientWidth || 0, 1100) : 1100;
-            const pointsWidth = datesIso.length * (wells.length > 10 ? 175 : wells.length > 6 ? 155 : 135);
+            const pointsWidth = datesIso.length * (wells.length > 10 ? 145 : wells.length > 6 ? 132 : 115);
             const dailyWidth = Math.max(availableWidth, pointsWidth);
             if (dailyContainer) {
                 dailyContainer.style.width = dailyWidth + 'px';
                 dailyContainer.style.minWidth = dailyWidth + 'px';
-                dailyContainer.style.height = Math.max(780, datesIso.length > 1 ? 920 : 780, wells.length > 10 ? 980 : wells.length > 7 ? 920 : 780) + 'px';
+                dailyContainer.style.height = Math.max(720, datesIso.length > 1 ? 840 : 720, wells.length > 10 ? 900 : wells.length > 7 ? 840 : 720) + 'px';
                 dailyContainer.style.margin = '0';
             }
             if (dailyWrap) {
@@ -2976,36 +2976,32 @@ function toggleDropdown(id) {
                         anchor: 'end',
                         align: (ctx) => {
                             const chart = ctx?.chart;
-                            const area = chart?.chartArea;
-                            const xScale = chart?.scales?.x;
+                            const chartArea = chart?.chartArea;
                             const yScale = chart?.scales?.y;
-                            const x = xScale && ctx?.dataIndex != null ? xScale.getPixelForValue(ctx.dataIndex) : 0;
+                            const xScale = chart?.scales?.x;
                             const y = yScale && ctx?.raw != null ? yScale.getPixelForValue(Number(ctx.raw)) : 0;
+                            const x = xScale && ctx?.dataIndex != null ? xScale.getPixelForValue(ctx.dataIndex) : 0;
 
-                            if (area && x <= area.left + 55) return 'right';
-                            if (area && x >= area.right - 55) return 'left';
+                            // Topo e bordas: afasta o rótulo para dentro da área.
+                            if (chartArea && y <= chartArea.top + 55) return 'bottom';
+                            if (chartArea && x <= chartArea.left + 45) return 'right';
+                            if (chartArea && x >= chartArea.right - 45) return 'left';
 
-                            // Usa quatro faixas de rótulo para que os valores de
-                            // poços próximos não ocupem exatamente a mesma posição.
-                            const lane = (Number(ctx?.datasetIndex || 0) + Number(ctx?.dataIndex || 0)) % 4;
-                            if (area && y <= area.top + 60) return 'bottom';
-                            return lane % 2 ? 'bottom' : 'top';
+                            // Alternância entre acima/abaixo para reduzir sobreposição
+                            // quando vários poços têm valores próximos.
+                            return Number(ctx?.dataIndex || 0) % 2 ? 'bottom' : 'top';
                         },
                         offset: (ctx) => {
                             const chart = ctx?.chart;
                             const area = chart?.chartArea;
                             const xScale = chart?.scales?.x;
                             const x = xScale && ctx?.dataIndex != null ? xScale.getPixelForValue(ctx.dataIndex) : 0;
-                            const edge = area && (x <= area.left + 55 || x >= area.right - 55);
-                            const lane = (Number(ctx?.datasetIndex || 0) + Number(ctx?.dataIndex || 0)) % 4;
-                            return edge ? 28 + lane * 4 : 12 + lane * 7;
+                            const edge = area && (x <= area.left + 45 || x >= area.right - 45);
+                            return edge ? 22 : (Number(ctx?.datasetIndex || 0) % 2 ? 16 : 9);
                         },
                         clamp: true,
                         clip: false,
-                        font: {
-                            size: datesIso.length > 1 ? 9 : 10,
-                            weight: '700'
-                        }
+                        font: { size: 10, weight: '700' }
                     }
                 }
             });
