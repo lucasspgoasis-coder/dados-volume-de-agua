@@ -428,6 +428,23 @@
                                 </div>
                             </div>
 
+                            <div class="relative">
+                                <label class="block text-[11px] font-semibold text-slate-500 mb-0.5">Semanas</label>
+                                <button type="button" onclick="toggleDropdown('dropdownWeekTab1')" class="bg-white border border-slate-300 rounded-lg text-xs px-3 py-1.5 shadow-sm w-48 flex justify-between items-center">
+                                    <span id="labelWeekTab1">Todas as Semanas</span>
+                                    <i class="fa-solid fa-chevron-down text-slate-400 text-xs"></i>
+                                </button>
+                                <div id="dropdownWeekTab1" class="hidden absolute z-50 mt-1 w-64 bg-white border border-slate-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+                                    <div class="p-2 border-b border-slate-200 bg-slate-50 sticky top-0 z-10">
+                                        <label class="flex items-center gap-2 px-1 py-1 hover:bg-slate-100 rounded cursor-pointer text-xs font-bold text-blue-600 transition">
+                                            <input type="checkbox" id="selectAllWeeksTab1" checked onchange="toggleSelectAllWeeksTab1(this)" class="w-3.5 h-3.5 text-blue-600 rounded">
+                                            Selecionar Todas
+                                        </label>
+                                    </div>
+                                    <div class="p-2 flex flex-col gap-1" id="weekCheckboxesTab1"></div>
+                                </div>
+                            </div>
+
                             <div>
                                 <label class="block text-[11px] font-semibold text-slate-500 mb-0.5">Data Inicial</label>
                                 <input type="date" id="filterStartDateTab1" onchange="applyFiltersTab1()" class="bg-white border border-slate-300 rounded-lg text-xs px-2.5 py-1.5 shadow-sm">
@@ -2178,6 +2195,7 @@ function toggleDropdown(id) {
                         
                         populateWellSelectors();
                         populateMonthSelectors();
+                        populateWeekSelectorsTab1();
                         populateLocalSelectors();
                         renderNivelAguaTanqueChart();
                         populateBlocoSelectorsTab5();
@@ -2714,6 +2732,53 @@ function toggleDropdown(id) {
             });
         }
 
+        function populateWeekSelectorsTab1() {
+            const source = Array.isArray(globalRawData) ? globalRawData : [];
+            const weeks = Array.from(new Set(source.map(d => {
+                const week = Number(d.SemanaNum);
+                const year = Number(d.Ano);
+                if (!Number.isFinite(week) || !Number.isFinite(year)) return '';
+                return `${year}|${String(week).padStart(2, '0')}`;
+            }).filter(Boolean))).sort((a,b) => {
+                const [ya, wa] = a.split('|').map(Number);
+                const [yb, wb] = b.split('|').map(Number);
+                return ya - yb || wa - wb;
+            });
+
+            const container = document.getElementById('weekCheckboxesTab1');
+            if (!container) return;
+            container.innerHTML = '';
+
+            weeks.forEach(key => {
+                const [year, week] = key.split('|');
+                const lbl = document.createElement('label');
+                lbl.className = 'flex items-center gap-2 px-1 py-0.5 hover:bg-slate-100 rounded cursor-pointer text-xs text-slate-700';
+                lbl.innerHTML = `<input type="checkbox" value="${key}" checked class="week-chk-1 w-3.5 h-3.5 text-blue-600 rounded" onchange="updateWeekLabelTab1(); applyFiltersTab1();"> Semana ${Number(week)} (${year})`;
+                container.appendChild(lbl);
+            });
+            updateWeekLabelTab1();
+        }
+
+        function updateWeekLabelTab1() {
+            const checked = document.querySelectorAll('.week-chk-1:checked');
+            const total = document.querySelectorAll('.week-chk-1');
+            const lbl = document.getElementById('labelWeekTab1');
+            if (!lbl) return;
+            if (checked.length === total.length) lbl.innerText = 'Todas as Semanas';
+            else if (checked.length === 0) lbl.innerText = 'Nenhuma Semana';
+            else if (checked.length === 1) {
+                const key = checked[0].value.split('|');
+                lbl.innerText = `Semana ${Number(key[1])} (${key[0]})`;
+            } else lbl.innerText = `${checked.length} de ${total.length} Semanas`;
+        }
+
+        function toggleSelectAllWeeksTab1(masterCheckbox) {
+            const isChecked = masterCheckbox.checked;
+            document.querySelectorAll('.week-chk-1').forEach(c => c.checked = isChecked);
+            updateWeekLabelTab1();
+            applyFiltersTab1();
+        }
+
         function populateLocalSelectors() {
             const locais = Array.from(new Set(globalSaidaData.map(d => d.Local))).filter(Boolean).sort((a,b) => a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'}));
             const container = document.getElementById('localCheckboxesTab4');
@@ -2800,6 +2865,8 @@ function toggleDropdown(id) {
         function applyFiltersTab1() {
             const selectedWells = Array.from(document.querySelectorAll('.well-chk-1:checked')).map(c => c.value);
             const selectedMonths = Array.from(document.querySelectorAll('.month-chk-1:checked')).map(c => c.value);
+            const selectedWeeks = Array.from(document.querySelectorAll('.week-chk-1:checked')).map(c => c.value);
+            const totalWeeks = document.querySelectorAll('.week-chk-1').length;
             const startDate = document.getElementById('filterStartDateTab1').value;
             const endDate = document.getElementById('filterEndDateTab1').value;
 
@@ -2808,6 +2875,10 @@ function toggleDropdown(id) {
                 // Registros sem data de manutenção ainda devem aparecer no relatório.
                 // O filtro por mês só deve restringir registros que realmente possuem mês.
                 if (selectedMonths.length > 0 && d.MesLabel !== 'N/I' && !selectedMonths.includes(d.MesLabel)) return false;
+                if (selectedWeeks.length > 0 && selectedWeeks.length < totalWeeks) {
+                    const weekKey = `${Number(d.Ano)}|${String(Number(d.SemanaNum)).padStart(2, '0')}`;
+                    if (!selectedWeeks.includes(weekKey)) return false;
+                }
                 const dia = String(d.IsoDate || d.DataFormatted || '').slice(0,10);
                 if (startDate && dia < startDate) return false;
                 if (endDate && dia > endDate) return false;
@@ -2974,31 +3045,55 @@ function toggleDropdown(id) {
                         color: '#ffffff',
                         padding: { top: 3, bottom: 3, left: 5, right: 5 },
                         anchor: 'end',
+
+                        // Distribui os rótulos de cada data em andares.
+                        // Assim, quando vários poços têm valores próximos,
+                        // as caixas não ficam umas sobre as outras.
                         align: (ctx) => {
                             const chart = ctx?.chart;
-                            const chartArea = chart?.chartArea;
-                            const yScale = chart?.scales?.y;
+                            const area = chart?.chartArea;
                             const xScale = chart?.scales?.x;
-                            const y = yScale && ctx?.raw != null ? yScale.getPixelForValue(Number(ctx.raw)) : 0;
-                            const x = xScale && ctx?.dataIndex != null ? xScale.getPixelForValue(ctx.dataIndex) : 0;
+                            const yScale = chart?.scales?.y;
+                            const x = xScale ? xScale.getPixelForValue(ctx.dataIndex) : 0;
+                            const y = yScale && ctx.raw != null ? yScale.getPixelForValue(Number(ctx.raw)) : 0;
 
-                            // Topo e bordas: afasta o rótulo para dentro da área.
-                            if (chartArea && y <= chartArea.top + 55) return 'bottom';
-                            if (chartArea && x <= chartArea.left + 45) return 'right';
-                            if (chartArea && x >= chartArea.right - 45) return 'left';
+                            const sameDate = (chart?.data?.datasets || [])
+                                .map((ds, di) => ({ di, value: ds?.data?.[ctx.dataIndex] }))
+                                .filter(item => item.value != null && Number.isFinite(Number(item.value)))
+                                .sort((a,b) => Number(b.value) - Number(a.value));
 
-                            // Alternância entre acima/abaixo para reduzir sobreposição
-                            // quando vários poços têm valores próximos.
-                            return Number(ctx?.dataIndex || 0) % 2 ? 'bottom' : 'top';
+                            const slot = Math.max(0, sameDate.findIndex(item => item.di === ctx.datasetIndex));
+                            let side = slot % 2 === 0 ? 'top' : 'bottom';
+
+                            // Mantém o rótulo dentro da área nas extremidades.
+                            if (area && y <= area.top + 50) side = 'bottom';
+                            else if (area && y >= area.bottom - 45) side = 'top';
+
+                            if (area && x <= area.left + 40) return 'right';
+                            if (area && x >= area.right - 40) return 'left';
+
+                            return side;
                         },
+
                         offset: (ctx) => {
                             const chart = ctx?.chart;
                             const area = chart?.chartArea;
                             const xScale = chart?.scales?.x;
-                            const x = xScale && ctx?.dataIndex != null ? xScale.getPixelForValue(ctx.dataIndex) : 0;
-                            const edge = area && (x <= area.left + 45 || x >= area.right - 45);
-                            return edge ? 22 : (Number(ctx?.datasetIndex || 0) % 2 ? 16 : 9);
+                            const x = xScale ? xScale.getPixelForValue(ctx.dataIndex) : 0;
+
+                            const sameDate = (chart?.data?.datasets || [])
+                                .map((ds, di) => ({ di, value: ds?.data?.[ctx.dataIndex] }))
+                                .filter(item => item.value != null && Number.isFinite(Number(item.value)))
+                                .sort((a,b) => Number(b.value) - Number(a.value));
+
+                            const slot = Math.max(0, sameDate.findIndex(item => item.di === ctx.datasetIndex));
+                            const edge = area && (x <= area.left + 40 || x >= area.right - 40);
+
+                            // 1ª/2ª caixa: 10 px; 3ª/4ª: 26 px; 5ª/6ª: 42 px...
+                            const stagger = 10 + Math.floor(slot / 2) * 16;
+                            return edge ? Math.max(22, stagger) : stagger;
                         },
+
                         clamp: true,
                         clip: false,
                         font: { size: 10, weight: '700' }
@@ -3010,8 +3105,11 @@ function toggleDropdown(id) {
         function resetFiltersTab1() {
             document.querySelectorAll('.well-chk-1').forEach(c => c.checked = true);
             document.querySelectorAll('.month-chk-1').forEach(c => c.checked = true);
+            document.querySelectorAll('.week-chk-1').forEach(c => c.checked = true);
             const selAllW = document.getElementById('selectAllWellsTab1'); if(selAllW) selAllW.checked = true;
             const selAllM = document.getElementById('selectAllMonthsTab1'); if(selAllM) selAllM.checked = true;
+            const selAllWeek = document.getElementById('selectAllWeeksTab1'); if(selAllWeek) selAllWeek.checked = true;
+            updateWeekLabelTab1();
             document.getElementById('filterStartDateTab1').value = '';
             document.getElementById('filterEndDateTab1').value = '';
             updateWellLabel(1);
