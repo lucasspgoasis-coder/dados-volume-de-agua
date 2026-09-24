@@ -339,7 +339,7 @@
                     </div>
                     <div class="md:col-span-3">
                         <button onclick="sendSelectedChartByEmail()" class="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-4 py-2 text-sm font-bold transition flex items-center justify-center gap-2 h-[38px]">
-                            <i class="fa-solid fa-paper-plane"></i> Enviar por e-mail
+                            <i class="fa-brands fa-google"></i> Enviar pelo Gmail
                         </button>
                     </div>
                 </div>
@@ -1589,13 +1589,28 @@
                 if (o.plugins?.datalabels) {
                     const dl = o.plugins.datalabels;
                     setFont(dl, 10, Math.min(1.35, scale));
-                    saveProp(dl, 'anchor'); saveProp(dl, 'align'); saveProp(dl, 'offset'); saveProp(dl, 'clamp'); saveProp(dl, 'clip'); saveProp(dl, 'padding');
-                    dl.anchor = 'end';
-                    dl.align = 'top';
-                    dl.offset = 5;
-                    dl.clamp = false;
-                    dl.clip = false;
-                    dl.padding = 1;
+                    saveProp(dl, 'anchor'); saveProp(dl, 'align'); saveProp(dl, 'offset'); saveProp(dl, 'clamp'); saveProp(dl, 'clip'); saveProp(dl, 'padding'); saveProp(dl, 'display');
+                    const isDailyExact = chart.canvas?.id === 'dailyFlowChart';
+                    if (isDailyExact) {
+                        // No PDF, exportação ou Gmail pode esconder os valores da Aba 01.
+                        dl.display = ctx => {
+                            const original = ctx.dataset?._originalData || [];
+                            return original[ctx.dataIndex] != null;
+                        };
+                        dl.anchor = 'center';
+                        dl.align = ctx => ((ctx.datasetIndex + ctx.dataIndex) % 4 < 2 ? 'top' : 'bottom');
+                        dl.offset = ctx => 8 + (((ctx.datasetIndex + ctx.dataIndex) % 4) % 2) * 7;
+                        dl.clamp = false;
+                        dl.clip = false;
+                        dl.padding = 2;
+                    } else {
+                        dl.anchor = 'end';
+                        dl.align = 'top';
+                        dl.offset = 5;
+                        dl.clamp = false;
+                        dl.clip = false;
+                        dl.padding = 1;
+                    }
                     // Reduz somente a fonte dos rótulos quando há muitas barras,
                     // mantendo cada valor visível sem empilhar os números.
                     const count = Math.max(...(chart.data?.datasets || []).map(ds => Array.isArray(ds.data) ? ds.data.length : 0), 0);
@@ -2906,7 +2921,7 @@ function toggleDropdown(id) {
             // data, por exemplo, ele deve ocupar toda a largura do card, e não
             // ficar com uma pequena faixa de gráfico no meio da margem.
             const availableWidth = dailyWrap ? Math.max(dailyWrap.clientWidth || 0, 900) : 900;
-            const pointsWidth = datesIso.length * (wells.length > 6 ? 105 : 90);
+            const pointsWidth = datesIso.length * (wells.length > 6 ? 145 : wells.length > 3 ? 125 : 105);
             const dailyWidth = Math.max(availableWidth, pointsWidth);
             if (dailyContainer) {
                 dailyContainer.style.width = dailyWidth + 'px';
@@ -2946,27 +2961,32 @@ function toggleDropdown(id) {
                         return `${ctx.dataset.label}: ${Number(original ?? ctx.raw).toLocaleString('pt-BR')} L/h`;
                     } } },
                     datalabels: {
-                        // Com várias datas e vários poços, mostrar todos os rótulos em
-                        // todos os pontos deixa as etiquetas umas sobre as outras.
-                        // Mantemos todos os valores no tooltip e mostramos no gráfico
-                        // apenas o último valor de cada poço, com posição alternada.
+                        // TODOS os pontos continuam mostrando o valor real.
+                        // A posição é alternada por poço e por data para que, por exemplo,
+                        // um período de 12 a 23 mostre cada valor sem esconder o ponto vizinho.
                         display: ctx => {
                             const original = ctx.dataset._originalData || [];
-                            if (original[ctx.dataIndex] == null) return false;
-                            if (wells.length <= 3 && datesIso.length <= 4) return true;
-                            return ctx.dataIndex === original.length - 1;
+                            return original[ctx.dataIndex] != null;
                         },
                         formatter: (value, ctx) => `${Math.round(Number(ctx.dataset._originalData?.[ctx.dataIndex] ?? value)).toLocaleString('pt-BR')} L/h`,
                         backgroundColor: ctx => ctx.dataset.borderColor,
                         borderRadius: 5,
                         color: '#ffffff',
-                        padding: { top: 4, bottom: 4, left: 6, right: 6 },
+                        padding: { top: 3, bottom: 3, left: 5, right: 5 },
                         anchor: 'center',
-                        align: ctx => (ctx.datasetIndex % 2 === 0 ? 'top' : 'bottom'),
-                        offset: ctx => 10 + ((ctx.datasetIndex % 4) * 4),
-                        clamp: true,
+                        align: ctx => {
+                            // Alterna acima/abaixo e cria três níveis para evitar colisões.
+                            const lane = (ctx.datasetIndex + ctx.dataIndex) % 4;
+                            return lane < 2 ? 'top' : 'bottom';
+                        },
+                        offset: ctx => {
+                            const lane = (ctx.datasetIndex + ctx.dataIndex) % 4;
+                            return 8 + (lane % 2) * 7;
+                        },
+                        clamp: false,
                         clip: false,
-                        font: { size: 9.5, weight: '700' }
+                        textAlign: 'center',
+                        font: { size: 9, weight: '700' }
                     }
                 }
             });
@@ -4358,26 +4378,9 @@ ${summary ? `<tr><td style="padding:8px 28px 18px;"><table role="presentation" w
                 const summary=getReportGeneralFields(item.tabId).map(k=>`${k.label}: ${k.value}`).join('\n');
                 const body=`Olá,\n\nSegue o relatório em PDF do Monitoramento Hidrográfico Pro.\n\n${summary}\n\nO PDF contém somente o gráfico selecionado e seus campos gerais, em formato 1280×720.\n\nGerado em ${new Date().toLocaleString('pt-BR')}.`;
 
-                // Se o navegador permitir compartilhamento de arquivos, o Gmail pode
-                // receber o PDF como anexo através da folha de compartilhamento.
-                if(navigator.share && (!navigator.canShare || navigator.canShare({files:[pdfFile]}))){
-                    try{
-                        await navigator.share({title:subject,text:body,files:[pdfFile]});
-                        if(notice){notice.textContent='PDF pronto para envio pelo Gmail.';notice.className='text-[11px] font-semibold text-emerald-600 self-center';}
-                        localStorage.setItem('vazaoGlobalEmail',cfg.email);
-                        localStorage.setItem('vazaoGlobalEmailChart',cfg.chartKey);
-                        return;
-                    }catch(shareErr){
-                        if(shareErr?.name==='AbortError'){
-                            if(notice){notice.textContent='Envio cancelado.';notice.className='text-[11px] font-semibold text-amber-600 self-center';}
-                            return;
-                        }
-                    }
-                }
-
-                // Fallback: baixa somente o PDF e abre exclusivamente o Gmail.
-                // O navegador não permite anexar arquivos automaticamente ao Gmail
-                // por uma URL mailto/composição.
+                // Envio EXCLUSIVO pelo Gmail. O navegador não permite que um HTML local
+                // anexe automaticamente o PDF a uma composição do Gmail; por isso o PDF é
+                // gerado e salvo, e a composição do Gmail é aberta já preenchida.
                 pdf.save(pdfName);
                 const gmailUrl='https://mail.google.com/mail/?view=cm&fs=1'
                     +`&to=${encodeURIComponent(cfg.email)}`
@@ -4387,7 +4390,7 @@ ${summary ? `<tr><td style="padding:8px 28px 18px;"><table role="presentation" w
                 if(!popup) window.location.href=gmailUrl;
                 localStorage.setItem('vazaoGlobalEmail',cfg.email);
                 localStorage.setItem('vazaoGlobalEmailChart',cfg.chartKey);
-                if(notice){notice.textContent='PDF 1280×720 gerado e Gmail aberto. Anexe o PDF baixado à mensagem.';notice.className='text-[11px] font-semibold text-emerald-600 self-center';}
+                if(notice){notice.textContent='PDF 1280×720 gerado. O Gmail foi aberto para você anexar e enviar o relatório.';notice.className='text-[11px] font-semibold text-emerald-600 self-center';}
             }catch(e){
                 console.error(e);
                 if(notice){notice.textContent='Não foi possível gerar o PDF: '+(e?.message||'erro desconhecido');notice.className='text-[11px] font-semibold text-red-600 self-center';}
