@@ -2894,9 +2894,6 @@ function toggleDropdown(id) {
             const wells = Array.from(new Set(filtered.map(d => d.Poco))).sort((a,b) => a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'}));
             const colors = ['#166534','#2563eb','#f59e0b','#64748b','#7c3aed','#0891b2','#be185d','#854d0e','#15803d','#1d4ed8','#ea580c','#475569','#9333ea','#0f766e'];
 
-            // Daily Chart — BARRAS agrupadas por data.
-            // Cada data recebe uma barra para cada poço, permitindo comparar
-            // diretamente todos os poços e visualizar o valor exato de cada um.
             const datasetsDaily = wells.map((w, idx) => {
                 const dataMap = {};
                 filtered.filter(d => d.Poco === w).forEach(d => { dataMap[d.IsoDate] = d.Vazao; });
@@ -2904,30 +2901,33 @@ function toggleDropdown(id) {
                 return {
                     label: w,
                     data: datesIso.map(iso => dataMap[iso] ?? null),
-                    backgroundColor: c,
                     borderColor: c,
-                    borderWidth: 1,
-                    borderRadius: 3,
-                    borderSkipped: false,
-                    maxBarThickness: 46,
-                    categoryPercentage: 0.88,
-                    barPercentage: 0.90
+                    backgroundColor: c,
+                    pointBackgroundColor: c,
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2,
+                    pointRadius: 4.5,
+                    pointHoverRadius: 6,
+                    borderWidth: 2.5,
+                    tension: 0.18,
+                    spanGaps: true
                 };
             });
 
-            // Para que todos os poços de cada data tenham espaço próprio,
-            // o gráfico fica deliberadamente largo e pode ser rolado na horizontal.
+            // Quando há muitas datas, o gráfico precisa crescer horizontalmente.
+            // Assim a última data/última vazão não fica espremida ou cortada.
             const dailyWrap = document.getElementById('dailyFlowChart')?.closest('.chart-scroll-wrapper');
             const dailyContainer = document.getElementById('dailyFlowChart')?.parentElement;
+            // Nunca deixar o canvas menor que a área disponível. Com uma única
+            // data, por exemplo, ele deve ocupar toda a largura do card, e não
+            // ficar com uma pequena faixa de gráfico no meio da margem.
             const availableWidth = dailyWrap ? Math.max(dailyWrap.clientWidth || 0, 1100) : 1100;
-            const barsPerDate = Math.max(wells.length, 1);
-            const widthPerBar = barsPerDate > 12 ? 78 : barsPerDate > 9 ? 88 : barsPerDate > 6 ? 98 : 110;
-            const pointsWidth = Math.max(datesIso.length, 1) * barsPerDate * widthPerBar + 180;
+            const pointsWidth = datesIso.length * (wells.length > 12 ? 240 : wells.length > 9 ? 215 : wells.length > 6 ? 190 : wells.length > 3 ? 165 : 145);
             const dailyWidth = Math.max(availableWidth, pointsWidth);
             if (dailyContainer) {
                 dailyContainer.style.width = dailyWidth + 'px';
                 dailyContainer.style.minWidth = dailyWidth + 'px';
-                dailyContainer.style.height = Math.max(760, wells.length > 12 ? 900 : wells.length > 9 ? 860 : wells.length > 6 ? 820 : 780) + 'px';
+                dailyContainer.style.height = Math.max(820, datesIso.length > 1 ? 980 : 820, wells.length > 12 ? 1500 : wells.length > 9 ? 1320 : wells.length > 6 ? 1140 : wells.length > 4 ? 1020 : 820) + 'px';
                 dailyContainer.style.margin = '0';
             }
             if (dailyWrap) {
@@ -2935,7 +2935,7 @@ function toggleDropdown(id) {
                 dailyWrap.style.width = '100%';
             }
 
-            renderChart('dailyFlowChart', 'dailyFlow', 'bar', {
+            renderChart('dailyFlowChart', 'dailyFlow', 'line', {
                 labels: dates,
                 datasets: datasetsDaily
             }, {
@@ -2944,23 +2944,40 @@ function toggleDropdown(id) {
                 interaction: { mode: 'index', intersect: false },
                 scales: {
                     y: {
-                        beginAtZero: true,
+                        beginAtZero: false,
                         title: { display: true, text: 'Vazão (L/h)' },
+                        afterBuildTicks: (axis) => {
+                            // Quando houver mais de uma data selecionada, usa uma
+                            // escala mais espaçada para separar os pontos e seus
+                            // valores, evitando que um rótulo cubra outro.
+                            const vals = (axis.chart?.data?.datasets || [])
+                                .flatMap(ds => Array.isArray(ds.data) ? ds.data : [])
+                                .filter(v => v != null && Number.isFinite(Number(v)))
+                                .map(Number);
+                            if (datesIso.length > 1 && vals.length) {
+                                const maxVal = Math.max(...vals);
+                                const minVal = Math.min(...vals);
+                                const step = 500;
+                                const niceMax = Math.max(5000, Math.ceil((maxVal + step) / step) * step);
+                                const niceMin = Math.max(0, Math.floor((minVal - step) / step) * step);
+                                axis.options.min = Math.max(0, niceMin);
+                                axis.options.max = niceMax;
+                                axis.options.ticks.stepSize = step;
+                            }
+                        },
                         ticks: {
-                            stepSize: 500,
+                            stepSize: datesIso.length > 1 ? 500 : undefined,
                             padding: 8,
                             callback: v => Number(v).toLocaleString('pt-BR')
-                        },
-                        grid: { color: 'rgba(148,163,184,0.18)' }
+                        }
                     },
                     x: {
                         title: { display: true, text: 'Data' },
                         grid: { display: false },
-                        stacked: false,
-                        ticks: { autoSkip: false, maxRotation: 0, minRotation: 0, padding: 10, font: { size: 13, weight: '700' } }
+                        ticks: { autoSkip: datesIso.length > 18, maxRotation: 45, minRotation: 0, padding: 6 }
                     }
                 },
-                layout: { padding: { top: 82, right: 60, bottom: 42, left: 55 } },
+                layout: { padding: { top: 72, right: 80, bottom: 38, left: 80 } },
                 plugins: {
                     legend: {
                         position: 'top',
@@ -2976,21 +2993,66 @@ function toggleDropdown(id) {
                     datalabels: {
                         display: ctx => ctx.dataset.data[ctx.dataIndex] != null,
                         formatter: value => `${Math.round(Number(value)).toLocaleString('pt-BR')} L/h`,
-                        backgroundColor: ctx => ctx.dataset.backgroundColor,
+                        backgroundColor: ctx => ctx.dataset.borderColor,
                         borderColor: '#ffffff',
                         borderWidth: 1,
-                        borderRadius: 4,
+                        borderRadius: 5,
                         color: '#ffffff',
-                        padding: { top: 4, bottom: 4, left: 5, right: 5 },
+                        padding: { top: 4, bottom: 4, left: 6, right: 6 },
                         anchor: 'end',
-                        align: 'top',
-                        offset: 4,
-                        clamp: true,
-                        clip: false,
                         font: (ctx) => {
                             const n = Number(ctx?.chart?.data?.datasets?.length || 0);
-                            return { size: n > 12 ? 8 : n > 9 ? 9 : 10, weight: '700' };
-                        }
+                            return { size: n > 14 ? 8 : n > 11 ? 9 : n > 8 ? 10 : 11, weight: '700' };
+                        },
+                        align: (ctx) => {
+                            const chart = ctx?.chart;
+                            const area = chart?.chartArea;
+                            const xScale = chart?.scales?.x;
+                            const yScale = chart?.scales?.y;
+                            const x = xScale && ctx?.dataIndex != null ? xScale.getPixelForValue(ctx.dataIndex) : 0;
+                            const idx = Number(ctx?.dataIndex || 0);
+                            const dsIndex = Number(ctx?.datasetIndex || 0);
+                            const values = (chart?.data?.datasets || []).map((ds, di) => ({
+                                di,
+                                value: ds?.data?.[idx]
+                            })).filter(o => o.value != null && Number.isFinite(Number(o.value)))
+                              .sort((a,b) => Number(b.value) - Number(a.value));
+                            const rank = Math.max(0, values.findIndex(o => o.di === dsIndex));
+                            const y = yScale && ctx?.raw != null ? yScale.getPixelForValue(Number(ctx.raw)) : 0;
+                            const edge = area && (x <= area.left + 80 || x >= area.right - 80);
+
+                            // Padrão visual da referência: as etiquetas de uma mesma
+                            // data ficam alternadas acima/abaixo do ponto. A cada dois
+                            // rótulos é criada uma nova faixa, mantendo uma distância
+                            // suficiente para que valores próximos não se cubram.
+                            if (edge) return x <= area.left + 80 ? 'right' : 'left';
+                            if (area && y <= area.top + 34) return 'bottom';
+                            if (area && y >= area.bottom - 34) return 'top';
+                            return rank % 2 === 0 ? 'top' : 'bottom';
+                        },
+                        offset: (ctx) => {
+                            const chart = ctx?.chart;
+                            const area = chart?.chartArea;
+                            const xScale = chart?.scales?.x;
+                            const yScale = chart?.scales?.y;
+                            const x = xScale && ctx?.dataIndex != null ? xScale.getPixelForValue(ctx.dataIndex) : 0;
+                            const idx = Number(ctx?.dataIndex || 0);
+                            const dsIndex = Number(ctx?.datasetIndex || 0);
+                            const values = (chart?.data?.datasets || []).map((ds, di) => ({
+                                di,
+                                value: ds?.data?.[idx]
+                            })).filter(o => o.value != null && Number.isFinite(Number(o.value)))
+                              .sort((a,b) => Number(b.value) - Number(a.value));
+                            const rank = Math.max(0, values.findIndex(o => o.di === dsIndex));
+                            const y = yScale && ctx?.raw != null ? yScale.getPixelForValue(Number(ctx.raw)) : 0;
+                            const edge = area && (x <= area.left + 80 || x >= area.right - 80);
+                            if (edge) return 18 + Math.floor(rank / 2) * 13;
+                            if (area && (y <= area.top + 34 || y >= area.bottom - 34)) return 12 + Math.floor(rank / 2) * 14;
+                            return 12 + Math.floor(rank / 2) * 18;
+                        },
+                        clamp: true,
+                        clip: false,
+                        font: { size: 10, weight: '700' }
                     }
                 }
             });
