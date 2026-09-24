@@ -3108,25 +3108,7 @@ function toggleDropdown(id) {
                         display: true,
                         align: 'top',
                         anchor: 'center',
-                        // Mantém os valores da mesma data em uma coluna vertical,
-                        // evitando que 2, 3 ou mais rótulos fiquem um sobre o outro.
-                        offset: function(context) {
-                            const chart = context.chart;
-                            const dataIndex = context.dataIndex;
-                            const datasetIndex = context.datasetIndex;
-
-                            const ativos = (chart.data.datasets || [])
-                                .map((ds, i) => ({ i, v: ds.data?.[dataIndex] }))
-                                .filter(item => item.v !== null && item.v !== undefined && Number.isFinite(Number(item.v)));
-
-                            const posicao = Math.max(0, ativos.findIndex(item => item.i === datasetIndex));
-
-                            // Primeiro rótulo mais próximo do ponto; os seguintes
-                            // sobem progressivamente, ficando um abaixo do outro.
-                            return 18 + (posicao * 30);
-                        },
-                        clamp: true,
-                        clip: false,
+                        offset: 8,
                         backgroundColor: null,
                         borderWidth: 0,
                         borderColor: 'transparent',
@@ -3175,9 +3157,6 @@ function toggleDropdown(id) {
                             }
                         }
                     }
-                },
-                layout: {
-                    padding: { top: 110, right: 35, bottom: 28, left: 35 }
                 }
             });
         }
