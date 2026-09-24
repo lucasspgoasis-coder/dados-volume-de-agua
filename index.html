@@ -345,7 +345,7 @@
                 </div>
                 <div class="flex flex-wrap gap-2 mt-3">
                     <button type="button" onclick="saveGlobalEmail()" class="bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-lg px-3 py-1.5 text-xs font-semibold"><i class="fa-solid fa-floppy-disk mr-1"></i> Salvar e-mail</button>
-                    <span class="text-[11px] text-slate-500 self-center">O gráfico selecionado será enviado junto com os campos gerais da aba.</span>
+                    <span class="text-[11px] text-slate-500 self-center">O Gmail será aberto com o destinatário e os campos gerais preenchidos; o gráfico completo será baixado para anexar.</span>
                     <span id="globalEmailNotice" class="text-[11px] font-semibold self-center"></span>
                 </div>
             </div>
@@ -2887,13 +2887,22 @@ function toggleDropdown(id) {
             // Assim a última data/última vazão não fica espremida ou cortada.
             const dailyWrap = document.getElementById('dailyFlowChart')?.closest('.chart-scroll-wrapper');
             const dailyContainer = document.getElementById('dailyFlowChart')?.parentElement;
-            const dailyMinWidth = Math.max(100, datesIso.length * (wells.length > 6 ? 105 : 90));
+            // Nunca deixar o canvas menor que a área disponível. Com uma única
+            // data, por exemplo, ele deve ocupar toda a largura do card, e não
+            // ficar com uma pequena faixa de gráfico no meio da margem.
+            const availableWidth = dailyWrap ? Math.max(dailyWrap.clientWidth || 0, 900) : 900;
+            const pointsWidth = datesIso.length * (wells.length > 6 ? 105 : 90);
+            const dailyWidth = Math.max(availableWidth, pointsWidth);
             if (dailyContainer) {
-                dailyContainer.style.width = dailyMinWidth + 'px';
-                dailyContainer.style.minWidth = dailyMinWidth + 'px';
+                dailyContainer.style.width = dailyWidth + 'px';
+                dailyContainer.style.minWidth = dailyWidth + 'px';
                 dailyContainer.style.height = Math.max(520, wells.length > 8 ? 600 : 520) + 'px';
+                dailyContainer.style.margin = '0';
             }
-            if (dailyWrap) dailyWrap.style.overflowX = datesIso.length > 12 ? 'auto' : 'visible';
+            if (dailyWrap) {
+                dailyWrap.style.overflowX = dailyWidth > availableWidth ? 'auto' : 'hidden';
+                dailyWrap.style.width = '100%';
+            }
 
             renderChart('dailyFlowChart', 'dailyFlow', 'line', {
                 labels: dates,
@@ -4290,35 +4299,33 @@ function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
                 return;
             }
             try{
-                if(notice){notice.textContent='Gerando relatório completo...';notice.className='text-[11px] font-semibold text-blue-600 self-center';}
+                if(notice){notice.textContent='Gerando relatório completo para o Gmail...';notice.className='text-[11px] font-semibold text-blue-600 self-center';}
                 const {canvas,item}=await buildSelectedEmailCanvas();
                 const blob=await new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error('Falha ao gerar o relatório.')),'image/png'));
                 const fileName=`relatorio_${item.key}_${new Date().toISOString().slice(0,10)}.png`;
-                const file=new File([blob],fileName,{type:'image/png'});
                 const subject=`Relatório — ${item.label}`;
                 const summary=getReportGeneralFields(item.tabId).map(k=>`${k.label}: ${k.value}`).join('\n');
-                const body=`Olá,\n\nSegue o relatório completo de ${item.label}.\n\n${summary ? 'Campos gerais:\n'+summary+'\n\n' : ''}O gráfico está anexado como imagem, sem cortes.\n\nData: ${new Date().toLocaleString('pt-BR')}`;
+                const body=`Olá,\n\nSegue o relatório completo de ${item.label}.\n\n${summary ? 'Campos gerais:\n'+summary+'\n\n' : ''}O gráfico completo foi gerado em PNG para anexar ao e-mail.\n\nData: ${new Date().toLocaleString('pt-BR')}`;
 
-                // Em navegadores que suportam compartilhamento de arquivos, abre
-                // diretamente a janela de compartilhamento com o relatório anexado.
-                if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
-                    await navigator.share({title:subject,text:body,files:[file]});
-                    if(notice){notice.textContent='Relatório pronto para envio com o gráfico anexado.';notice.className='text-[11px] font-semibold text-emerald-600 self-center';}
-                } else {
-                    // Fallback seguro: abre o e-mail preenchido e baixa o anexo completo.
-                    // O navegador não permite anexar arquivos automaticamente ao mailto.
-                    downloadCanvasAsPNG(canvas,fileName);
-                    const mailto=`mailto:${encodeURIComponent(cfg.email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-                    window.location.href=mailto;
-                    if(notice){notice.textContent='Relatório gerado e e-mail aberto. O PNG completo foi baixado para anexar.';notice.className='text-[11px] font-semibold text-amber-600 self-center';}
-                }
+                // Gmail é o único destino deste botão. O navegador não permite
+                // que um HTML local anexe automaticamente um arquivo a uma nova
+                // mensagem do Gmail; por isso o PNG completo é baixado e a janela
+                // de composição do Gmail é aberta já preenchida.
+                downloadCanvasAsPNG(canvas,fileName);
+                const gmailUrl='https://mail.google.com/mail/?view=cm&fs=1'
+                    +`&to=${encodeURIComponent(cfg.email)}`
+                    +`&su=${encodeURIComponent(subject)}`
+                    +`&body=${encodeURIComponent(body)}`;
+                const popup=window.open(gmailUrl,'_blank');
+                if(!popup){ window.location.href=gmailUrl; }
+
                 localStorage.setItem('vazaoGlobalEmail',cfg.email);
                 localStorage.setItem('vazaoGlobalEmailChart',cfg.chartKey);
-            }catch(e){
-                if(e?.name==='AbortError') {
-                    if(notice){notice.textContent='Envio cancelado.';notice.className='text-[11px] font-semibold text-slate-500 self-center';}
-                    return;
+                if(notice){
+                    notice.textContent='Gmail aberto com destinatário e mensagem preenchidos. Anexe o PNG que foi baixado e envie.';
+                    notice.className='text-[11px] font-semibold text-emerald-600 self-center';
                 }
+            }catch(e){
                 console.error(e);
                 if(notice){notice.textContent='Não foi possível preparar o envio: '+(e?.message||'erro desconhecido');notice.className='text-[11px] font-semibold text-red-600 self-center';}
             }
