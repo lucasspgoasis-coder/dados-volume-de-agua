@@ -2901,7 +2901,7 @@ function toggleDropdown(id) {
             if (dailyContainer) {
                 dailyContainer.style.width = dailyWidth + 'px';
                 dailyContainer.style.minWidth = dailyWidth + 'px';
-                dailyContainer.style.height = Math.max(600, wells.length > 10 ? 760 : wells.length > 7 ? 680 : 600) + 'px';
+                dailyContainer.style.height = Math.max(680, datesIso.length > 1 ? 760 : 680, wells.length > 10 ? 820 : wells.length > 7 ? 760 : 680) + 'px';
                 dailyContainer.style.margin = '0';
             }
             if (dailyWrap) {
@@ -2920,7 +2920,30 @@ function toggleDropdown(id) {
                     y: {
                         beginAtZero: false,
                         title: { display: true, text: 'Vazão (L/h)' },
-                        ticks: { callback: v => Number(v).toLocaleString('pt-BR') }
+                        afterBuildTicks: (axis) => {
+                            // Quando houver mais de uma data selecionada, usa uma
+                            // escala mais espaçada para separar os pontos e seus
+                            // valores, evitando que um rótulo cubra outro.
+                            const vals = (axis.chart?.data?.datasets || [])
+                                .flatMap(ds => Array.isArray(ds.data) ? ds.data : [])
+                                .filter(v => v != null && Number.isFinite(Number(v)))
+                                .map(Number);
+                            if (datesIso.length > 1 && vals.length) {
+                                const maxVal = Math.max(...vals);
+                                const minVal = Math.min(...vals);
+                                const step = 500;
+                                const niceMax = Math.max(5000, Math.ceil(maxVal / step) * step);
+                                const niceMin = Math.floor(minVal / step) * step;
+                                axis.options.min = Math.max(0, niceMin);
+                                axis.options.max = niceMax;
+                                axis.options.ticks.stepSize = step;
+                            }
+                        },
+                        ticks: {
+                            stepSize: datesIso.length > 1 ? 500 : undefined,
+                            padding: 8,
+                            callback: v => Number(v).toLocaleString('pt-BR')
+                        }
                     },
                     x: {
                         title: { display: true, text: 'Data' },
@@ -2957,7 +2980,7 @@ function toggleDropdown(id) {
                             const y = yScale && ctx?.raw != null ? yScale.getPixelForValue(Number(ctx.raw)) : 0;
                             return chartArea && y <= chartArea.top + 44 ? 'bottom' : 'top';
                         },
-                        offset: (ctx) => (Number(ctx?.datasetIndex || 0) % 2 ? 12 : 7),
+                        offset: (ctx) => (Number(ctx?.datasetIndex || 0) % 2 ? 16 : 9),
                         clamp: true,
                         clip: false,
                         font: { size: 10, weight: '700' }
