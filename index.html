@@ -209,7 +209,7 @@
 
         /* Impressão: somente a aba atual, sem filtros/controles. */
         @media print {
-            @page { size: A4 portrait; margin: 8mm; }
+            @page { size: A4 landscape; margin: 10mm; }
             body.printing { background: #fff !important; color: #0f172a !important; display: block !important; }
             body.printing > *:not(#main-content) { display: none !important; }
             body.printing #main-content { display: block !important; width: 100% !important; max-width: none !important; margin: 0 !important; padding: 0 !important; }
@@ -1469,9 +1469,9 @@
         // Formato final: paisagem, 16:9, um gráfico + campos gerais por página/arquivo.
         // A largura foi ampliada ligeiramente para dar folga aos textos dos KPIs,
         // sem alterar a altura de referência.
-        const REPORT_PAGE_W = 1920;
-        const REPORT_PAGE_H = 1080;
-        const REPORT_MARGIN = 56;
+        const REPORT_PAGE_W = 2400;
+        const REPORT_PAGE_H = 1350;
+        const REPORT_MARGIN = 72;
 
         function getExportableSections(tabId) {
             const tab = document.getElementById(tabId);
@@ -1591,17 +1591,22 @@
                     setFont(dl, 10, Math.min(1.35, scale));
                     saveProp(dl, 'anchor'); saveProp(dl, 'align'); saveProp(dl, 'offset'); saveProp(dl, 'clamp'); saveProp(dl, 'clip'); saveProp(dl, 'padding');
                     dl.anchor = 'end';
-                    dl.align = 'top';
-                    dl.offset = 5;
-                    dl.clamp = false;
+                    dl.align = (ctx) => {
+                        const chartArea = ctx?.chart?.chartArea;
+                        const yScale = ctx?.chart?.scales?.y;
+                        const y = yScale && ctx?.raw != null ? yScale.getPixelForValue(Number(ctx.raw)) : 0;
+                        return chartArea && y <= chartArea.top + 42 ? 'bottom' : 'top';
+                    };
+                    dl.offset = (ctx) => (Number(ctx?.datasetIndex || 0) % 2 ? 10 : 6);
+                    dl.clamp = true;
                     dl.clip = false;
-                    dl.padding = 1;
+                    dl.padding = {top: 2, bottom: 2, left: 4, right: 4};
                     // Reduz somente a fonte dos rótulos quando há muitas barras,
                     // mantendo cada valor visível sem empilhar os números.
                     const count = Math.max(...(chart.data?.datasets || []).map(ds => Array.isArray(ds.data) ? ds.data.length : 0), 0);
                     const f = dl.font && typeof dl.font === 'object' ? dl.font : {};
                     const base = Number(f.size) || 10;
-                    dl.font = {...f, size: Math.max(8, Math.min(13, count > 55 ? 8 : count > 40 ? 9 : count > 28 ? 10 : base))};
+                    dl.font = {...f, size: Math.max(8, Math.min(14, count > 70 ? 8 : count > 50 ? 9 : count > 30 ? 10 : base))};
                 }
                 chart.canvas.style.width = exportWidth + 'px';
                 chart.canvas.style.height = exportHeight + 'px';
@@ -1805,7 +1810,7 @@
             }
             ctx.fillStyle='#dbe3ec';ctx.fillRect(M,separatorY,W-M*2,2);
 
-            const boxX=M,boxY=separatorY+22,boxW=W-M*2,boxH=H-boxY-M,inner=28;
+            const boxX=M,boxY=separatorY+28,boxW=W-M*2,boxH=H-boxY-M,inner=42;
             ctx.fillStyle='#fff';ctx.strokeStyle='#dbe3ec';ctx.lineWidth=2;ctx.beginPath();ctx.roundRect(boxX,boxY,boxW,boxH,14);ctx.fill();ctx.stroke();
             const sourceCanvas=item.card?.querySelector('canvas');if(!sourceCanvas)throw new Error('Gráfico não encontrado para exportação.');
             const chart=(window.Chart&&Chart.getChart)?Chart.getChart(sourceCanvas):null;let restore=()=>{};
@@ -2890,13 +2895,13 @@ function toggleDropdown(id) {
             // Nunca deixar o canvas menor que a área disponível. Com uma única
             // data, por exemplo, ele deve ocupar toda a largura do card, e não
             // ficar com uma pequena faixa de gráfico no meio da margem.
-            const availableWidth = dailyWrap ? Math.max(dailyWrap.clientWidth || 0, 900) : 900;
-            const pointsWidth = datesIso.length * (wells.length > 6 ? 105 : 90);
+            const availableWidth = dailyWrap ? Math.max(dailyWrap.clientWidth || 0, 1100) : 1100;
+            const pointsWidth = datesIso.length * (wells.length > 10 ? 125 : wells.length > 6 ? 112 : 96);
             const dailyWidth = Math.max(availableWidth, pointsWidth);
             if (dailyContainer) {
                 dailyContainer.style.width = dailyWidth + 'px';
                 dailyContainer.style.minWidth = dailyWidth + 'px';
-                dailyContainer.style.height = Math.max(520, wells.length > 8 ? 600 : 520) + 'px';
+                dailyContainer.style.height = Math.max(600, wells.length > 10 ? 760 : wells.length > 7 ? 680 : 600) + 'px';
                 dailyContainer.style.margin = '0';
             }
             if (dailyWrap) {
@@ -2923,23 +2928,39 @@ function toggleDropdown(id) {
                         ticks: { autoSkip: datesIso.length > 18, maxRotation: 45, minRotation: 0, padding: 6 }
                     }
                 },
-                layout: { padding: { top: 28, right: 28, bottom: 10, left: 10 } },
+                layout: { padding: { top: 58, right: 42, bottom: 18, left: 18 } },
                 plugins: {
-                    legend: { position: 'top', labels: { usePointStyle: true, pointStyle: 'circle', padding: 18, font: { size: 11, weight: '600' } } },
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            usePointStyle: true,
+                            pointStyle: 'circle',
+                            padding: 20,
+                            boxWidth: 12,
+                            font: { size: 12, weight: '700' }
+                        }
+                    },
                     tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${Number(ctx.raw).toLocaleString('pt-BR')} L/h` } },
                     datalabels: {
                         display: ctx => ctx.dataset.data[ctx.dataIndex] != null,
                         formatter: value => `${Math.round(Number(value)).toLocaleString('pt-BR')} L/h`,
                         backgroundColor: ctx => ctx.dataset.borderColor,
+                        borderColor: '#ffffff',
+                        borderWidth: 1,
                         borderRadius: 5,
                         color: '#ffffff',
-                        padding: { top: 4, bottom: 4, left: 5, right: 5 },
+                        padding: { top: 3, bottom: 3, left: 5, right: 5 },
                         anchor: 'end',
-                        align: 'top',
-                        offset: 5,
-                        clamp: false,
+                        align: (ctx) => {
+                            const chartArea = ctx?.chart?.chartArea;
+                            const yScale = ctx?.chart?.scales?.y;
+                            const y = yScale && ctx?.raw != null ? yScale.getPixelForValue(Number(ctx.raw)) : 0;
+                            return chartArea && y <= chartArea.top + 44 ? 'bottom' : 'top';
+                        },
+                        offset: (ctx) => (Number(ctx?.datasetIndex || 0) % 2 ? 12 : 7),
+                        clamp: true,
                         clip: false,
-                        font: { size: 9.5, weight: '700' }
+                        font: { size: 10, weight: '700' }
                     }
                 }
             });
