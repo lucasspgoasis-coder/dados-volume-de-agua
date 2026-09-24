@@ -2925,16 +2925,19 @@ function toggleDropdown(id) {
                     data: original.map(v => v == null ? null : v + (idx * laneGap)),
                     _originalData: original,
                     borderColor: c,
-                    backgroundColor: c,
+                    // Formato "montanha" semelhante ao Looker Studio:
+                    // linha contínua com área preenchida suavemente abaixo dela.
+                    backgroundColor: c + '22',
+                    fill: 'origin',
                     pointBackgroundColor: c,
                     pointBorderColor: '#ffffff',
                     pointBorderWidth: 2,
                     pointRadius: 4.5,
                     pointHoverRadius: 6,
                     borderWidth: 2.5,
-                    tension: 0,
-                    stepped: 'middle',
-                    cubicInterpolationMode: 'default',
+                    tension: 0.32,
+                    stepped: false,
+                    cubicInterpolationMode: 'monotone',
                     spanGaps: true
                 };
             });
@@ -2955,7 +2958,7 @@ function toggleDropdown(id) {
             if (dailyContainer) {
                 dailyContainer.style.width = dailyWidth + 'px';
                 dailyContainer.style.minWidth = dailyWidth + 'px';
-                dailyContainer.style.height = Math.max(570, wells.length > 8 ? 660 : 570) + 'px';
+                dailyContainer.style.height = Math.max(760, wells.length > 8 ? 900 : wells.length > 5 ? 840 : 760) + 'px';
                 dailyContainer.style.margin = '0';
             }
             if (dailyWrap) {
@@ -2973,7 +2976,7 @@ function toggleDropdown(id) {
                 scales: {
                     y: {
                         beginAtZero: false,
-                        title: { display: true, text: 'Vazão (L/h) — separação visual das linhas' },
+                        title: { display: true, text: 'Vazão (L/h) — gráfico em montanha' },
                         ticks: { callback: v => Number(v).toLocaleString('pt-BR') }
                     },
                     x: {
@@ -2982,7 +2985,7 @@ function toggleDropdown(id) {
                         ticks: { autoSkip: datesIso.length > 18, maxRotation: 45, minRotation: 0, padding: 6 }
                     }
                 },
-                layout: { padding: { top: 42, right: 110, bottom: 24, left: 55 } },
+                layout: { padding: { top: 110, right: 150, bottom: 35, left: 75 } },
                 plugins: {
                     legend: { position: 'top', labels: { usePointStyle: true, pointStyle: 'circle', padding: 18, font: { size: 11, weight: '600' } } },
                     tooltip: { callbacks: { label: ctx => {
@@ -3001,24 +3004,24 @@ function toggleDropdown(id) {
                         backgroundColor: ctx => ctx.dataset.borderColor,
                         borderRadius: 5,
                         color: '#ffffff',
-                        padding: { top: 3, bottom: 3, left: 5, right: 5 },
+                        padding: { top: 2, bottom: 2, left: 4, right: 4 },
                         anchor: 'center',
                         align: ctx => {
-                            // Organização em cascata: primeira data para a direita,
-                            // última para a esquerda e datas internas acima/abaixo.
+                            // Cascata por poço: cada série recebe sua própria faixa
+                            // vertical para que as caixas de vazão não se cubram.
                             const di = ctx.dataIndex;
                             const last = (ctx.chart?.data?.labels?.length || 1) - 1;
                             if (di === 0) return 'right';
                             if (di === last) return 'left';
-                            const wellLane = ctx.datasetIndex % 6;
-                            return ((wellLane + di) % 2 === 0) ? 'top' : 'bottom';
+                            const lane = ctx.datasetIndex % 10;
+                            return lane % 2 === 0 ? 'top' : 'bottom';
                         },
                         offset: ctx => {
-                            const wellLane = ctx.datasetIndex % 6;
+                            const lane = ctx.datasetIndex % 10;
                             const di = ctx.dataIndex;
                             const last = (ctx.chart?.data?.labels?.length || 1) - 1;
-                            if (di === 0 || di === last) return 10 + (wellLane % 3) * 5;
-                            return 10 + (wellLane % 6) * 5 + (di % 2) * 3;
+                            if (di === 0 || di === last) return 18 + Math.floor(lane / 2) * 20;
+                            return 18 + Math.floor(lane / 2) * 24;
                         },
                         clamp: false,
                         clip: false,
