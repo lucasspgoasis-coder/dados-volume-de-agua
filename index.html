@@ -2901,7 +2901,7 @@ function toggleDropdown(id) {
             const rawMin = rawDailyValues.length ? Math.min(...rawDailyValues) : 0;
             const rawMax = rawDailyValues.length ? Math.max(...rawDailyValues) : 1;
             const rawRange = Math.max(1, rawMax - rawMin);
-            const laneGap = Math.max(rawRange * 0.075, 32);
+            const laneGap = Math.max(rawRange * 0.11, 45);
             const dailyOriginalData = {};
 
             const datasetsDaily = wells.map((w, idx) => {
@@ -2941,7 +2941,7 @@ function toggleDropdown(id) {
             // ficar com uma pequena faixa de gráfico no meio da margem.
             const availableWidth = dailyWrap ? Math.max(dailyWrap.clientWidth || 0, 900) : 900;
             const edgeSpace = 150;
-            const pointsWidth = Math.max(availableWidth, datesIso.length * (wells.length > 6 ? 190 : wells.length > 3 ? 170 : 150));
+            const pointsWidth = Math.max(availableWidth, datesIso.length * (wells.length > 6 ? 225 : wells.length > 3 ? 205 : 185));
             // Reserva espaço extra nas duas extremidades para que os rótulos
             // da primeira e principalmente da última data nunca sejam cortados.
             const dailyWidth = Math.max(availableWidth, pointsWidth + edgeSpace);
@@ -2995,14 +2995,29 @@ function toggleDropdown(id) {
                         borderRadius: 5,
                         color: '#ffffff',
                         padding: { top: 2, bottom: 2, left: 4, right: 4 },
-                        // Cada etiqueta fica presa ao seu próprio ponto, com um pequeno
-                        // deslocamento radial. Assim ela não fica solta fora do gráfico.
+                        // A etiqueta fica ancorada exatamente no ponto. Para datas
+                        // intermediárias alternamos acima/abaixo da linha. Na primeira
+                        // data ela abre para a direita; na última data abre para a
+                        // esquerda, acompanhando o ponto final sem sair do gráfico.
                         anchor: 'center',
                         align: ctx => {
-                            const pattern = (ctx.datasetIndex * 3 + ctx.dataIndex) % 8;
-                            return [-75, 75, -105, 105, -60, 60, -120, 120][pattern];
+                            const di = ctx.dataIndex;
+                            const ds = ctx.datasetIndex;
+                            const last = (ctx.chart?.data?.labels?.length || 1) - 1;
+                            if (di === 0) return 'right';
+                            if (di === last) return 'left';
+                            return ((ds + di) % 2 === 0) ? 'top' : 'bottom';
                         },
-                        offset: ctx => 8 + ((ctx.datasetIndex + ctx.dataIndex) % 3) * 2,
+                        offset: ctx => {
+                            const di = ctx.dataIndex;
+                            const ds = ctx.datasetIndex;
+                            const last = (ctx.chart?.data?.labels?.length || 1) - 1;
+                            // A última data usa o afastamento apenas o suficiente para
+                            // não tocar a linha; os próprios pontos já estão em faixas
+                            // verticais diferentes por poço.
+                            if (di === 0 || di === last) return 11 + (ds % 3) * 2;
+                            return 10 + ((ds + di) % 3) * 3;
+                        },
                         clamp: true,
                         clip: false,
                         textAlign: 'center',
