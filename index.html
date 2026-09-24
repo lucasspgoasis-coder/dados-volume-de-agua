@@ -2896,7 +2896,7 @@ function toggleDropdown(id) {
             // data, por exemplo, ele deve ocupar toda a largura do card, e não
             // ficar com uma pequena faixa de gráfico no meio da margem.
             const availableWidth = dailyWrap ? Math.max(dailyWrap.clientWidth || 0, 1100) : 1100;
-            const pointsWidth = datesIso.length * (wells.length > 10 ? 145 : wells.length > 6 ? 132 : 115);
+            const pointsWidth = datesIso.length * (wells.length > 10 ? 190 : wells.length > 6 ? 175 : 155);
             const dailyWidth = Math.max(availableWidth, pointsWidth);
             if (dailyContainer) {
                 dailyContainer.style.width = dailyWidth + 'px';
