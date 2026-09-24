@@ -328,31 +328,25 @@
                     </div>
                     <span class="text-[10px] font-bold uppercase tracking-wide px-2 py-1 rounded-full bg-blue-100 text-blue-700">Configuração geral do sistema</span>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
-                    <div class="md:col-span-1">
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+                    <div class="md:col-span-4">
                         <label for="globalEmail" class="block text-[11px] font-semibold text-slate-500 mb-1">E-mail destinatário</label>
                         <input id="globalEmail" type="email" placeholder="exemplo@empresa.com" class="w-full bg-white border border-slate-300 rounded-lg text-sm px-3 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
                     </div>
-                    <div class="md:col-span-2">
-                        <label for="globalChart" class="block text-[11px] font-semibold text-slate-500 mb-1">Gráfico que será enviado</label>
+                    <div class="md:col-span-5">
+                        <label for="globalChart" class="block text-[11px] font-semibold text-slate-500 mb-1">Selecionar gráfico</label>
                         <select id="globalChart" class="w-full bg-white border border-slate-300 rounded-lg text-sm px-3 py-2 shadow-sm"></select>
                     </div>
-                    <div>
-                        <label class="flex items-center gap-2 bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs font-semibold text-slate-600 cursor-pointer h-[38px]">
-                            <input id="globalIncludeFields" type="checkbox" checked class="w-4 h-4 text-blue-600 rounded">
-                            Incluir campos gerais
-                        </label>
-                    </div>
-                    <div>
+                    <div class="md:col-span-3">
                         <button onclick="sendSelectedChartByEmail()" class="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-4 py-2 text-sm font-bold transition flex items-center justify-center gap-2 h-[38px]">
-                            <i class="fa-solid fa-paper-plane"></i> Enviar gráfico
+                            <i class="fa-solid fa-paper-plane"></i> Enviar por e-mail
                         </button>
                     </div>
                 </div>
                 <div class="flex flex-wrap gap-2 mt-3">
                     <button type="button" onclick="saveGlobalEmail()" class="bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-lg px-3 py-1.5 text-xs font-semibold"><i class="fa-solid fa-floppy-disk mr-1"></i> Salvar e-mail</button>
-                    <button type="button" onclick="copySelectedChartImage()" class="bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-lg px-3 py-1.5 text-xs font-semibold"><i class="fa-solid fa-copy mr-1"></i> Copiar gráfico</button>
-                    <span id="globalEmailNotice" class="text-[11px] text-slate-500 self-center"></span>
+                    <span class="text-[11px] text-slate-500 self-center">O gráfico selecionado será enviado junto com os campos gerais da aba.</span>
+                    <span id="globalEmailNotice" class="text-[11px] font-semibold self-center"></span>
                 </div>
             </div>
 
@@ -2889,6 +2883,18 @@ function toggleDropdown(id) {
                 };
             });
 
+            // Quando há muitas datas, o gráfico precisa crescer horizontalmente.
+            // Assim a última data/última vazão não fica espremida ou cortada.
+            const dailyWrap = document.getElementById('dailyFlowChart')?.closest('.chart-scroll-wrapper');
+            const dailyContainer = document.getElementById('dailyFlowChart')?.parentElement;
+            const dailyMinWidth = Math.max(100, datesIso.length * (wells.length > 6 ? 105 : 90));
+            if (dailyContainer) {
+                dailyContainer.style.width = dailyMinWidth + 'px';
+                dailyContainer.style.minWidth = dailyMinWidth + 'px';
+                dailyContainer.style.height = Math.max(520, wells.length > 8 ? 600 : 520) + 'px';
+            }
+            if (dailyWrap) dailyWrap.style.overflowX = datesIso.length > 12 ? 'auto' : 'visible';
+
             renderChart('dailyFlowChart', 'dailyFlow', 'line', {
                 labels: dates,
                 datasets: datasetsDaily
@@ -2904,9 +2910,11 @@ function toggleDropdown(id) {
                     },
                     x: {
                         title: { display: true, text: 'Data' },
-                        grid: { display: false }
+                        grid: { display: false },
+                        ticks: { autoSkip: datesIso.length > 18, maxRotation: 45, minRotation: 0, padding: 6 }
                     }
                 },
+                layout: { padding: { top: 28, right: 28, bottom: 10, left: 10 } },
                 plugins: {
                     legend: { position: 'top', labels: { usePointStyle: true, pointStyle: 'circle', padding: 18, font: { size: 11, weight: '600' } } },
                     tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${Number(ctx.raw).toLocaleString('pt-BR')} L/h` } },
@@ -2920,7 +2928,8 @@ function toggleDropdown(id) {
                         anchor: 'end',
                         align: 'top',
                         offset: 5,
-                        clamp: true,
+                        clamp: false,
+                        clip: false,
                         font: { size: 9.5, weight: '700' }
                     }
                 }
@@ -4277,28 +4286,49 @@ function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
             const cfg=getGlobalEmailConfig();
             const notice=document.getElementById('globalEmailNotice');
             if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cfg.email)){
-                if(notice){notice.textContent='Digite um e-mail válido.';notice.className='text-[11px] text-red-600 self-center';}
+                if(notice){notice.textContent='Digite um e-mail válido.';notice.className='text-[11px] font-semibold text-red-600 self-center';}
                 return;
             }
             try{
-                if(notice){notice.textContent='Preparando gráfico...';notice.className='text-[11px] text-blue-600 self-center';}
+                if(notice){notice.textContent='Gerando relatório completo...';notice.className='text-[11px] font-semibold text-blue-600 self-center';}
                 const {canvas,item}=await buildSelectedEmailCanvas();
-                // Copia a imagem para a área de transferência antes de abrir o e-mail.
-                // Assim, no Gmail/Outlook basta usar Ctrl+V para colocar o gráfico no corpo da mensagem.
-                try{
-                    const blob=await new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error('Falha ao gerar a imagem.')),'image/png'));
-                    if(navigator.clipboard?.write && window.ClipboardItem){
-                        await navigator.clipboard.write([new ClipboardItem({'image/png':blob})]);
-                    }
-                }catch(copyErr){ console.warn('Não foi possível copiar automaticamente o gráfico:',copyErr); }
+                const blob=await new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error('Falha ao gerar o relatório.')),'image/png'));
+                const fileName=`relatorio_${item.key}_${new Date().toISOString().slice(0,10)}.png`;
+                const file=new File([blob],fileName,{type:'image/png'});
+                const subject=`Relatório — ${item.label}`;
                 const summary=getReportGeneralFields(item.tabId).map(k=>`${k.label}: ${k.value}`).join('\n');
-                const subject=encodeURIComponent(`Relatório — ${item.label}`);
-                const body=encodeURIComponent(`Olá,\n\nSegue o relatório do gráfico: ${item.label}.\n\n${cfg.includeFields && summary ? 'Campos gerais:\n'+summary+'\n\n' : ''}A imagem do gráfico foi copiada para a área de transferência. No e-mail, use Ctrl+V para inserir o gráfico.\n\nData: ${new Date().toLocaleString('pt-BR')}`);
-                window.location.href=`mailto:${encodeURIComponent(cfg.email)}?subject=${subject}&body=${body}`;
+                const body=`Olá,\n\nSegue o relatório completo de ${item.label}.\n\n${summary ? 'Campos gerais:\n'+summary+'\n\n' : ''}O gráfico está anexado como imagem, sem cortes.\n\nData: ${new Date().toLocaleString('pt-BR')}`;
+
+                // Em navegadores que suportam compartilhamento de arquivos, abre
+                // diretamente a janela de compartilhamento com o relatório anexado.
+                if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
+                    await navigator.share({title:subject,text:body,files:[file]});
+                    if(notice){notice.textContent='Relatório pronto para envio com o gráfico anexado.';notice.className='text-[11px] font-semibold text-emerald-600 self-center';}
+                } else {
+                    // Fallback seguro: abre o e-mail preenchido e baixa o anexo completo.
+                    // O navegador não permite anexar arquivos automaticamente ao mailto.
+                    downloadCanvasAsPNG(canvas,fileName);
+                    const mailto=`mailto:${encodeURIComponent(cfg.email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+                    window.location.href=mailto;
+                    if(notice){notice.textContent='Relatório gerado e e-mail aberto. O PNG completo foi baixado para anexar.';notice.className='text-[11px] font-semibold text-amber-600 self-center';}
+                }
                 localStorage.setItem('vazaoGlobalEmail',cfg.email);
                 localStorage.setItem('vazaoGlobalEmailChart',cfg.chartKey);
-                if(notice){notice.textContent='E-mail preparado. Use "Copiar gráfico" para colar a imagem no corpo da mensagem.';notice.className='text-[11px] text-emerald-600 self-center';}
-            }catch(e){console.error(e);if(notice){notice.textContent='Não foi possível preparar o envio: '+(e?.message||'erro desconhecido');notice.className='text-[11px] text-red-600 self-center';}}
+            }catch(e){
+                if(e?.name==='AbortError') {
+                    if(notice){notice.textContent='Envio cancelado.';notice.className='text-[11px] font-semibold text-slate-500 self-center';}
+                    return;
+                }
+                console.error(e);
+                if(notice){notice.textContent='Não foi possível preparar o envio: '+(e?.message||'erro desconhecido');notice.className='text-[11px] font-semibold text-red-600 self-center';}
+            }
+        }
+
+        function downloadCanvasAsPNG(canvas,fileName){
+            const link=document.createElement('a');
+            link.download=fileName;
+            link.href=canvas.toDataURL('image/png');
+            document.body.appendChild(link);link.click();link.remove();
         }
 
         async function copySelectedChartImage(){
