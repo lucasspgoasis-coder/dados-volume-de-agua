@@ -2896,7 +2896,7 @@ function toggleDropdown(id) {
             // data, por exemplo, ele deve ocupar toda a largura do card, e não
             // ficar com uma pequena faixa de gráfico no meio da margem.
             const availableWidth = dailyWrap ? Math.max(dailyWrap.clientWidth || 0, 1100) : 1100;
-            const pointsWidth = datesIso.length * (wells.length > 10 ? 190 : wells.length > 6 ? 175 : 155);
+            const pointsWidth = datesIso.length * (wells.length > 10 ? 210 : wells.length > 6 ? 195 : 180);
             const dailyWidth = Math.max(availableWidth, pointsWidth);
             if (dailyContainer) {
                 dailyContainer.style.width = dailyWidth + 'px';
@@ -2909,7 +2909,23 @@ function toggleDropdown(id) {
                 dailyWrap.style.width = '100%';
             }
 
-            renderChart('dailyFlowChart', 'dailyFlow', 'line', {
+            // Distribui verticalmente os rótulos da última data do Gráfico 02,
+// alternando acima e abaixo para mostrar todos os valores dos poços.
+const dailyLastLabelOffset = (ctx) => {
+    const datasetIndex = ctx.datasetIndex || 0;
+    const meta = ctx.chart.getDatasetMeta(datasetIndex);
+    const lastIndex = ctx.chart.data.labels.length - 1;
+    const el = meta?.data?.[lastIndex];
+    if (!el) return 8;
+    const center = ctx.chart.chartArea ? (ctx.chart.chartArea.top + ctx.chart.chartArea.bottom) / 2 : 0;
+    const y = el.y;
+    const step = 18;
+    const distance = Math.abs(y - center);
+    const direction = datasetIndex % 2 === 0 ? -1 : 1;
+    return 8 + Math.min(70, distance * 0.12 + step * Math.floor(datasetIndex / 2)) * direction;
+};
+
+renderChart('dailyFlowChart', 'dailyFlow', 'line', {
                 labels: dates,
                 datasets: datasetsDaily
             }, {
@@ -2965,8 +2981,18 @@ function toggleDropdown(id) {
                     },
                     tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${Number(ctx.raw).toLocaleString('pt-BR')} L/h` } },
                     datalabels: {
-                        display: ctx => ctx.dataset.data[ctx.dataIndex] != null,
-                        formatter: value => `${Math.round(Number(value)).toLocaleString('pt-BR')} L/h`,
+                            display: (ctx) => {
+                                const last = ctx.chart.data.labels.length - 1;
+                                return ctx.dataIndex === last;
+                            },
+                            align: (ctx) => (ctx.datasetIndex % 2 === 0 ? 'top' : 'bottom'),
+                            anchor: 'center',
+                            offset: dailyLastLabelOffset,
+                            clamp: true,
+                            clip: false,
+                            font: { size: 10, weight: 'bold' },
+                            formatter: (value) => value == null ? '' : Number(value).toLocaleString('pt-BR')
+                        } L/h`,
                         backgroundColor: ctx => ctx.dataset.borderColor,
                         borderColor: '#ffffff',
                         borderWidth: 1,
