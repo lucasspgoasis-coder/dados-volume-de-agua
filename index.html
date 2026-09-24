@@ -1469,8 +1469,8 @@
         // Formato final: paisagem, 16:9, um gráfico + campos gerais por página/arquivo.
         // A largura foi ampliada ligeiramente para dar folga aos textos dos KPIs,
         // sem alterar a altura de referência.
-        const REPORT_PAGE_W = 2400;
-        const REPORT_PAGE_H = 1350;
+        const REPORT_PAGE_W = 3200;
+        const REPORT_PAGE_H = 1800;
         const REPORT_MARGIN = 72;
 
         function getExportableSections(tabId) {
@@ -1822,7 +1822,7 @@
             return out;
         }
 
-        function downloadCanvasAsJPEG(canvas,fileName){const link=document.createElement('a');link.download=fileName;link.href=canvas.toDataURL('image/jpeg',0.97);document.body.appendChild(link);link.click();link.remove();}
+        function downloadCanvasAsJPEG(canvas,fileName){const link=document.createElement('a');link.download=fileName;link.href=canvas.toDataURL('image/jpeg',1.0);document.body.appendChild(link);link.click();link.remove();}
         async function exportSelectedSectionsJPEG(selected,tabId,tabName,btn){
             const original=btn.innerHTML;btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Gerando JPEG...';
             try{for(let i=0;i<selected.length;i++){const canvas=await composeSectionWithGeneralFields(selected[i],tabId,tabName);const safe=String(selected[i].title||`grafico_${i+1}`).replace(/[^a-z0-9áàâãéêíóôõúç _-]/gi,'').trim().replace(/\s+/g,'_').slice(0,80);downloadCanvasAsJPEG(canvas,`${tabName}_${safe}_${new Date().toISOString().slice(0,10)}.jpeg`);if(i<selected.length-1)await new Promise(r=>setTimeout(r,250));}}
@@ -2896,12 +2896,12 @@ function toggleDropdown(id) {
             // data, por exemplo, ele deve ocupar toda a largura do card, e não
             // ficar com uma pequena faixa de gráfico no meio da margem.
             const availableWidth = dailyWrap ? Math.max(dailyWrap.clientWidth || 0, 1100) : 1100;
-            const pointsWidth = datesIso.length * (wells.length > 10 ? 180 : wells.length > 6 ? 160 : wells.length > 3 ? 145 : 125);
+            const pointsWidth = datesIso.length * (wells.length > 12 ? 240 : wells.length > 9 ? 215 : wells.length > 6 ? 190 : wells.length > 3 ? 165 : 145);
             const dailyWidth = Math.max(availableWidth, pointsWidth);
             if (dailyContainer) {
                 dailyContainer.style.width = dailyWidth + 'px';
                 dailyContainer.style.minWidth = dailyWidth + 'px';
-                dailyContainer.style.height = Math.max(760, datesIso.length > 1 ? 900 : 760, wells.length > 10 ? 1040 : wells.length > 7 ? 960 : wells.length > 4 ? 900 : 760) + 'px';
+                dailyContainer.style.height = Math.max(820, datesIso.length > 1 ? 980 : 820, wells.length > 12 ? 1500 : wells.length > 9 ? 1320 : wells.length > 6 ? 1140 : wells.length > 4 ? 1020 : 820) + 'px';
                 dailyContainer.style.margin = '0';
             }
             if (dailyWrap) {
@@ -2972,37 +2972,44 @@ function toggleDropdown(id) {
                         borderWidth: 1,
                         borderRadius: 5,
                         color: '#ffffff',
-                        padding: { top: 3, bottom: 3, left: 5, right: 5 },
+                        padding: { top: 4, bottom: 4, left: 6, right: 6 },
                         anchor: 'end',
+                        font: (ctx) => {
+                            const n = Number(ctx?.chart?.data?.datasets?.length || 0);
+                            return { size: n > 14 ? 8 : n > 11 ? 9 : n > 8 ? 10 : 11, weight: '700' };
+                        },
                         align: (ctx) => {
                             const chart = ctx?.chart;
                             const chartArea = chart?.chartArea;
-                            const yScale = chart?.scales?.y;
                             const xScale = chart?.scales?.x;
-                            const y = yScale && ctx?.raw != null ? yScale.getPixelForValue(Number(ctx.raw)) : 0;
                             const x = xScale && ctx?.dataIndex != null ? xScale.getPixelForValue(ctx.dataIndex) : 0;
-                            const di = Number(ctx?.datasetIndex || 0);
-
-                            // Nas bordas, joga a etiqueta para dentro do gráfico.
-                            if (chartArea && x <= chartArea.left + 55) return 'right';
-                            if (chartArea && x >= chartArea.right - 55) return 'left';
-                            if (chartArea && y <= chartArea.top + 48) return 'bottom';
-
-                            // Cada poço recebe uma posição diferente. Isso evita que
-                            // várias etiquetas da mesma data fiquem exatamente umas
-                            // sobre as outras quando os valores são próximos.
-                            const positions = ['top', 'bottom', 'top', 'bottom', 'top', 'bottom'];
-                            return positions[di % positions.length];
+                            const idx = Number(ctx?.dataIndex || 0);
+                            const values = (chart?.data?.datasets || []).map((ds, di) => ({
+                                di,
+                                value: ds?.data?.[idx]
+                            })).filter(o => o.value != null && Number.isFinite(Number(o.value)))
+                              .sort((a,b) => Number(a.value) - Number(b.value));
+                            const rank = Math.max(0, values.findIndex(o => o.di === Number(ctx?.datasetIndex || 0)));
+                            const side = rank % 2 === 0 ? 'top' : 'bottom';
+                            if (chartArea && x <= chartArea.left + 70) return 'right';
+                            if (chartArea && x >= chartArea.right - 70) return 'left';
+                            return side;
                         },
                         offset: (ctx) => {
                             const chart = ctx?.chart;
                             const area = chart?.chartArea;
                             const xScale = chart?.scales?.x;
                             const x = xScale && ctx?.dataIndex != null ? xScale.getPixelForValue(ctx.dataIndex) : 0;
-                            const edge = area && (x <= area.left + 55 || x >= area.right - 55);
-                            const di = Number(ctx?.datasetIndex || 0);
-                            const offsets = [14, 18, 28, 32, 42, 46];
-                            return edge ? 26 : offsets[di % offsets.length];
+                            const idx = Number(ctx?.dataIndex || 0);
+                            const values = (chart?.data?.datasets || []).map((ds, di) => ({
+                                di,
+                                value: ds?.data?.[idx]
+                            })).filter(o => o.value != null && Number.isFinite(Number(o.value)))
+                              .sort((a,b) => Number(a.value) - Number(b.value));
+                            const rank = Math.max(0, values.findIndex(o => o.di === Number(ctx?.datasetIndex || 0)));
+                            const lane = Math.floor(rank / 2);
+                            const edge = area && (x <= area.left + 70 || x >= area.right - 70);
+                            return edge ? 24 + lane * 16 : 16 + lane * 22;
                         },
                         clamp: true,
                         clip: false,
@@ -4496,7 +4503,7 @@ function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
             <div class="px-5 pt-4">
                 <div class="grid grid-cols-2 gap-3">
                     <label class="export-option"><input type="radio" name="exportFormat" value="pdf" checked><span><b class="text-sm">PDF</b><small class="block text-[11px] text-slate-500">Cada gráfico/quadro em uma folha 1280×720</small></span></label>
-                    <label class="export-option"><input type="radio" name="exportFormat" value="jpeg"><span><b class="text-sm">JPEG</b><small class="block text-[11px] text-slate-500">Cada gráfico selecionado gera um JPEG 1280×720</small></span></label>
+                    <label class="export-option"><input type="radio" name="exportFormat" value="jpeg"><span><b class="text-sm">JPEG</b><small class="block text-[11px] text-slate-500">Cada gráfico selecionado gera um JPEG 3200×1800 em alta resolução</small></span></label>
                 </div>
             </div>
             <div class="p-5 max-h-[50vh] overflow-y-auto">
