@@ -2918,11 +2918,20 @@ function toggleDropdown(id) {
                 maintainAspectRatio: false,
                 plugins: {
                     datalabels: {
+                        display: ctx => ctx.raw != null && Number(ctx.raw) > 0,
                         anchor: 'end',
-                        align: 'end',
-                        formatter: (val) => val ? val.toLocaleString('pt-BR') : '',
+                        align: 'top',
+                        offset: 8,
+                        clamp: true,
+                        clip: false,
+                        formatter: (val) => val ? Number(val).toLocaleString('pt-BR') : '',
                         font: { size: 10, weight: 'bold' },
-                        color: '#0f172a'
+                        color: '#0f172a',
+                        backgroundColor: 'rgba(255,255,255,0.94)',
+                        borderColor: '#cbd5e1',
+                        borderWidth: 1,
+                        borderRadius: 5,
+                        padding: {top:3,bottom:3,left:6,right:6}
                     }
                 }
             });
@@ -2972,7 +2981,7 @@ function toggleDropdown(id) {
             if (dailyContainer) {
                 dailyContainer.style.width = dailyWidth + 'px';
                 dailyContainer.style.minWidth = dailyWidth + 'px';
-                dailyContainer.style.height = Math.max(720, datesIso.length > 1 ? 840 : 720, wells.length > 10 ? 900 : wells.length > 7 ? 840 : 720) + 'px';
+                dailyContainer.style.height = Math.max(780, datesIso.length > 1 ? 920 : 780, wells.length > 10 ? 980 : wells.length > 7 ? 900 : 780) + 'px';
                 dailyContainer.style.margin = '0';
             }
             if (dailyWrap) {
@@ -3022,7 +3031,7 @@ function toggleDropdown(id) {
                         ticks: { autoSkip: datesIso.length > 18, maxRotation: 45, minRotation: 0, padding: 6 }
                     }
                 },
-                layout: { padding: { top: 72, right: 80, bottom: 38, left: 80 } },
+                layout: { padding: { top: 100, right: 95, bottom: 50, left: 95 } },
                 plugins: {
                     legend: {
                         position: 'top',
@@ -3053,45 +3062,24 @@ function toggleDropdown(id) {
                             const chart = ctx?.chart;
                             const area = chart?.chartArea;
                             const xScale = chart?.scales?.x;
-                            const yScale = chart?.scales?.y;
                             const x = xScale ? xScale.getPixelForValue(ctx.dataIndex) : 0;
-                            const y = yScale && ctx.raw != null ? yScale.getPixelForValue(Number(ctx.raw)) : 0;
-
                             const sameDate = (chart?.data?.datasets || [])
                                 .map((ds, di) => ({ di, value: ds?.data?.[ctx.dataIndex] }))
                                 .filter(item => item.value != null && Number.isFinite(Number(item.value)))
                                 .sort((a,b) => Number(b.value) - Number(a.value));
-
                             const slot = Math.max(0, sameDate.findIndex(item => item.di === ctx.datasetIndex));
-                            let side = slot % 2 === 0 ? 'top' : 'bottom';
-
-                            // Mantém o rótulo dentro da área nas extremidades.
-                            if (area && y <= area.top + 50) side = 'bottom';
-                            else if (area && y >= area.bottom - 45) side = 'top';
-
-                            if (area && x <= area.left + 40) return 'right';
-                            if (area && x >= area.right - 40) return 'left';
-
-                            return side;
+                            if (area && x <= area.left + 55) return 'right';
+                            if (area && x >= area.right - 55) return 'left';
+                            return slot % 2 === 0 ? 'top' : 'bottom';
                         },
 
                         offset: (ctx) => {
-                            const chart = ctx?.chart;
-                            const area = chart?.chartArea;
-                            const xScale = chart?.scales?.x;
-                            const x = xScale ? xScale.getPixelForValue(ctx.dataIndex) : 0;
-
-                            const sameDate = (chart?.data?.datasets || [])
+                            const sameDate = (ctx?.chart?.data?.datasets || [])
                                 .map((ds, di) => ({ di, value: ds?.data?.[ctx.dataIndex] }))
                                 .filter(item => item.value != null && Number.isFinite(Number(item.value)))
                                 .sort((a,b) => Number(b.value) - Number(a.value));
-
                             const slot = Math.max(0, sameDate.findIndex(item => item.di === ctx.datasetIndex));
-                            const edge = area && (x <= area.left + 40 || x >= area.right - 40);
-
-                            // 1ª/2ª caixa: 10 px; 3ª/4ª: 26 px; 5ª/6ª: 42 px...
-                            const stagger = 10 + Math.floor(slot / 2) * 16;
-                            return edge ? Math.max(22, stagger) : stagger;
+                            return 9 + Math.floor(slot / 2) * 22;
                         },
 
                         clamp: true,
