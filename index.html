@@ -1469,9 +1469,9 @@
         // Formato final: paisagem, 16:9, um gráfico + campos gerais por página/arquivo.
         // A largura foi ampliada ligeiramente para dar folga aos textos dos KPIs,
         // sem alterar a altura de referência.
-        const REPORT_PAGE_W = 1600;
-        const REPORT_PAGE_H = 900;
-        const REPORT_MARGIN = 80;
+        const REPORT_PAGE_W = 1280;
+        const REPORT_PAGE_H = 720;
+        const REPORT_MARGIN = 56;
 
         function getExportableSections(tabId) {
             const tab = document.getElementById(tabId);
@@ -2893,45 +2893,62 @@ function toggleDropdown(id) {
             const wells = Array.from(new Set(filtered.map(d => d.Poco))).sort((a,b) => a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'}));
             const colors = ['#166534','#2563eb','#f59e0b','#64748b','#7c3aed','#0891b2','#be185d','#854d0e','#15803d','#1d4ed8','#ea580c','#475569','#9333ea','#0f766e'];
 
-            // Gráfico 02: usar os valores reais, sem deslocamento artificial entre os poços.
-            // Isso elimina o efeito de "cascata" e mantém cada linha exatamente na vazão registrada.
+            // Separação visual das séries: cada poço recebe um pequeno deslocamento
+            // vertical apenas na posição desenhada. Os rótulos e tooltips continuam
+            // mostrando a vazão real registrada, evitando que as linhas fiquem
+            // totalmente sobrepostas quando dois poços têm valores muito próximos.
+            const rawDailyValues = wells.flatMap(w => filtered.filter(d => d.Poco === w).map(d => Number(d.Vazao) || 0));
+            const rawMin = rawDailyValues.length ? Math.min(...rawDailyValues) : 0;
+            const rawMax = rawDailyValues.length ? Math.max(...rawDailyValues) : 1;
+            const rawRange = Math.max(1, rawMax - rawMin);
+            const laneGap = Math.max(rawRange * 0.11, 45);
+            const dailyOriginalData = {};
+
             const datasetsDaily = wells.map((w, idx) => {
                 const dataMap = {};
                 filtered.filter(d => d.Poco === w).forEach(d => { dataMap[d.IsoDate] = Number(d.Vazao) || 0; });
                 const c = colors[idx % colors.length];
                 const original = datesIso.map(iso => dataMap[iso] ?? null);
+                dailyOriginalData[w] = original;
                 return {
                     label: w,
-                    data: original,
+                    data: original.map(v => v == null ? null : v + (idx * laneGap)),
                     _originalData: original,
                     borderColor: c,
-                    backgroundColor: 'transparent',
-                    fill: false,
+                    // Formato "montanha" semelhante ao Looker Studio:
+                    // linha contínua com área preenchida suavemente abaixo dela.
+                    backgroundColor: c + '18',
+                    fill: 'origin',
                     pointBackgroundColor: c,
                     pointBorderColor: '#ffffff',
                     pointBorderWidth: 2,
                     pointRadius: 3.8,
                     pointHoverRadius: 5.5,
                     borderWidth: 2.5,
-                    tension: 0.30,
+                    tension: 0.38,
                     stepped: false,
                     cubicInterpolationMode: 'monotone',
                     spanGaps: true
                 };
             });
 
-            // Quando há muitas datas, o gráfico cresce horizontalmente para manter
-            // as datas e as etiquetas legíveis.
+            // Quando há muitas datas, o gráfico precisa crescer horizontalmente.
+            // Assim a última data/última vazão não fica espremida ou cortada.
             const dailyWrap = document.getElementById('dailyFlowChart')?.closest('.chart-scroll-wrapper');
             const dailyContainer = document.getElementById('dailyFlowChart')?.parentElement;
+            // Nunca deixar o canvas menor que a área disponível. Com uma única
+            // data, por exemplo, ele deve ocupar toda a largura do card, e não
+            // ficar com uma pequena faixa de gráfico no meio da margem.
             const availableWidth = dailyWrap ? Math.max(dailyWrap.clientWidth || 0, 900) : 900;
-            const edgeSpace = 180;
-            const pointsWidth = Math.max(availableWidth, datesIso.length * (wells.length > 6 ? 240 : wells.length > 3 ? 220 : 195));
+            const edgeSpace = 150;
+            const pointsWidth = Math.max(availableWidth, datesIso.length * (wells.length > 6 ? 225 : wells.length > 3 ? 205 : 185));
+            // Reserva espaço extra nas duas extremidades para que os rótulos
+            // da primeira e principalmente da última data nunca sejam cortados.
             const dailyWidth = Math.max(availableWidth, pointsWidth + edgeSpace);
             if (dailyContainer) {
                 dailyContainer.style.width = dailyWidth + 'px';
                 dailyContainer.style.minWidth = dailyWidth + 'px';
-                dailyContainer.style.height = Math.max(780, wells.length > 8 ? 940 : wells.length > 5 ? 880 : 800) + 'px';
+                dailyContainer.style.height = Math.max(760, wells.length > 8 ? 900 : wells.length > 5 ? 840 : 760) + 'px';
                 dailyContainer.style.margin = '0';
             }
             if (dailyWrap) {
@@ -2939,102 +2956,133 @@ function toggleDropdown(id) {
                 dailyWrap.style.width = '100%';
             }
 
-            // Etiquetas no estilo da imagem de referência: caixas coloridas,
-            // próximas aos pontos, sem alterar a posição real das linhas.
-            // O algoritmo é limitado e determinístico para não travar o dashboard.
+            // Etiquetas dos valores: posicionamento manual leve e determinístico.
+            // O objetivo é reproduzir o visual da referência: etiquetas curtas,
+            // próximas aos pontos, alternadas acima/abaixo e sem ficarem umas
+            // sobre as outras. O algoritmo é limitado (sem varreduras grandes),
+            // para não deixar a página presa em "carregando".
             const dailyFlowValueLabelsPlugin = {
                 id: 'dailyFlowValueLabels',
                 afterDatasetsDraw(chart) {
                     if (chart?.canvas?.id !== 'dailyFlowChart') return;
                     try {
                         const ctx = chart.ctx;
-                        const area = chart.chartArea;
-                        if (!area || !chart.data?.datasets?.length) return;
+                        const chartArea = chart.chartArea;
+                        if (!chartArea || !chart.data?.datasets?.length) return;
 
                         const placed = [];
-                        const gap = 4;
-                        const boxH = 18;
-                        const minX = area.left + 4;
-                        const maxX = area.right - 4;
-                        const minY = area.top + 4;
-                        const maxY = area.bottom - 4;
+                        const labels = chart.data.labels || [];
+                        const pad = 3;
+                        const gap = 3;
+                        const boxH = 17;
+                        const minX = chartArea.left + pad;
+                        const maxX = chartArea.right - pad;
+                        const minY = chartArea.top + pad;
+                        const maxY = chartArea.bottom - pad;
 
-                        const overlaps = (a,b) => !(a.x+a.w+gap < b.x || b.x+b.w+gap < a.x || a.y+a.h+gap < b.y || b.y+b.h+gap < a.y);
-                        const roundedRect = (c,x,y,w,h,r) => {
-                            r=Math.min(r,w/2,h/2); c.beginPath();
-                            c.moveTo(x+r,y); c.lineTo(x+w-r,y); c.quadraticCurveTo(x+w,y,x+w,y+r);
-                            c.lineTo(x+w,y+h-r); c.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
-                            c.lineTo(x+r,y+h); c.quadraticCurveTo(x,y+h,x,y+h-r);
-                            c.lineTo(x,y+r); c.quadraticCurveTo(x,y,x+r,y); c.closePath();
+                        const overlap = (a, b) =>
+                            !(a.x + a.w + gap < b.x || b.x + b.w + gap < a.x ||
+                              a.y + a.h + gap < b.y || b.y + b.h + gap < a.y);
+
+                        const roundedRect = (c, x, y, w, h, r) => {
+                            const rr = Math.min(r, w / 2, h / 2);
+                            c.beginPath();
+                            c.moveTo(x + rr, y);
+                            c.lineTo(x + w - rr, y);
+                            c.quadraticCurveTo(x + w, y, x + w, y + rr);
+                            c.lineTo(x + w, y + h - rr);
+                            c.quadraticCurveTo(x + w, y + h, x + w - rr, y + h);
+                            c.lineTo(x + rr, y + h);
+                            c.quadraticCurveTo(x, y + h, x, y + h - rr);
+                            c.lineTo(x, y + rr);
+                            c.quadraticCurveTo(x, y, x + rr, y);
+                            c.closePath();
                         };
 
-                        // Primeiro pontos por data e, dentro da mesma data, de cima para baixo.
-                        // Isso distribui melhor os rótulos quando vários poços têm valores próximos.
-                        const points = [];
+                        // Pontos de cada série. Ordenar pelo dataset/dataIndex faz
+                        // a posição das etiquetas ficar estável a cada atualização.
                         chart.data.datasets.forEach((ds, dsIndex) => {
-                            const meta=chart.getDatasetMeta(dsIndex);
-                            (meta?.data||[]).forEach((point,dataIndex)=>{
-                                const raw=ds._originalData?.[dataIndex];
-                                if(raw==null || !Number.isFinite(Number(raw))) return;
-                                const x=Number(point.x), y=Number(point.y);
-                                if(!Number.isFinite(x)||!Number.isFinite(y)) return;
-                                points.push({ds,dsIndex,dataIndex,x,y});
+                            const meta = chart.getDatasetMeta(dsIndex);
+                            (meta?.data || []).forEach((point, dataIndex) => {
+                                const original = ds._originalData?.[dataIndex];
+                                if (original == null || !Number.isFinite(Number(original))) return;
+
+                                const x = Number(point.x);
+                                const y = Number(point.y);
+                                if (!Number.isFinite(x) || !Number.isFinite(y)) return;
+
+                                const text = `${Math.round(Number(original)).toLocaleString('pt-BR')} L/h`;
+                                ctx.save();
+                                ctx.font = '700 8.5px Arial, sans-serif';
+                                const w = Math.ceil(ctx.measureText(text).width + 8);
+                                ctx.restore();
+                                const boxW = Math.max(42, Math.min(w, 78));
+
+                                const preferAbove = ((dsIndex + dataIndex) % 2 === 0);
+                                const vertical = preferAbove ? -1 : 1;
+                                const otherVertical = -vertical;
+                                const dx = [0, 0, 1, -1, 0.72, -0.72, 0.72, -0.72];
+                                const dy = [vertical, otherVertical, 0, 0, vertical, vertical, otherVertical, otherVertical];
+                                const distances = [11, 11, 15, 15, 13, 13, 22, 22];
+
+                                const candidates = [];
+                                for (let i = 0; i < dx.length; i++) {
+                                    let cx = x + dx[i] * distances[i] - boxW / 2;
+                                    let cy = y + dy[i] * distances[i] - boxH / 2;
+                                    cx = Math.max(minX, Math.min(cx, maxX - boxW));
+                                    cy = Math.max(minY, Math.min(cy, maxY - boxH));
+                                    candidates.push({ x: cx, y: cy, w: boxW, h: boxH });
+                                }
+
+                                // Escolhe primeiro uma posição totalmente livre.
+                                // Se todas estiverem ocupadas, usa a que tiver menor
+                                // quantidade/área de conflito, mantendo a etiqueta visível.
+                                let chosen = null;
+                                let bestScore = Infinity;
+                                for (const cand of candidates) {
+                                    let score = 0;
+                                    for (const prev of placed) {
+                                        if (overlap(cand, prev)) {
+                                            const ix = Math.max(0, Math.min(cand.x + cand.w, prev.x + prev.w) - Math.max(cand.x, prev.x));
+                                            const iy = Math.max(0, Math.min(cand.y + cand.h, prev.y + prev.h) - Math.max(cand.y, prev.y));
+                                            score += 1 + ix * iy;
+                                        }
+                                    }
+                                    const dist = Math.hypot((cand.x + cand.w / 2) - x, (cand.y + cand.h / 2) - y);
+                                    score = score * 10000 + dist;
+                                    if (score < bestScore) {
+                                        bestScore = score;
+                                        chosen = cand;
+                                    }
+                                    if (score < dist + 0.01) break;
+                                }
+                                if (!chosen) return;
+
+                                ctx.save();
+                                ctx.font = '700 8.5px Arial, sans-serif';
+                                ctx.textAlign = 'center';
+                                ctx.textBaseline = 'middle';
+                                ctx.fillStyle = ds.borderColor || '#475569';
+                                roundedRect(ctx, chosen.x, chosen.y, chosen.w, chosen.h, 4);
+                                ctx.fill();
+                                ctx.fillStyle = '#ffffff';
+                                ctx.fillText(text, chosen.x + chosen.w / 2, chosen.y + chosen.h / 2 + 0.3);
+                                ctx.restore();
+
+                                placed.push(chosen);
                             });
                         });
-                        points.sort((a,b)=>a.dataIndex-b.dataIndex || a.y-b.y || a.dsIndex-b.dsIndex);
-
-                        const verticalOffsets=[-12,12,-32,32,-52,52,-72,72,-92,92,-112,112];
-                        const horizontalOffsets=[0,0,0,0,0,0,0,0,42,-42,42,-42];
-
-                        for(const item of points){
-                            const {ds, x, y}=item;
-                            const text=`${Math.round(Number(ds._originalData[item.dataIndex])).toLocaleString('pt-BR')} L/h`;
-                            ctx.save(); ctx.font='700 8.5px Arial, sans-serif';
-                            const boxW=Math.max(44,Math.min(82,Math.ceil(ctx.measureText(text).width+10)));
-                            ctx.restore();
-
-                            let chosen=null;
-                            for(let i=0;i<verticalOffsets.length;i++){
-                                let cx=x+horizontalOffsets[i]-boxW/2;
-                                let cy=y+verticalOffsets[i]-boxH/2;
-                                cx=Math.max(minX,Math.min(cx,maxX-boxW));
-                                cy=Math.max(minY,Math.min(cy,maxY-boxH));
-                                const cand={x:cx,y:cy,w:boxW,h:boxH};
-                                if(!placed.some(p=>overlaps(cand,p))){ chosen=cand; break; }
-                            }
-                            if(!chosen){
-                                // Fallback seguro: posição mais próxima, sem sair do campo do gráfico.
-                                let best=null,bestScore=Infinity;
-                                for(const off of [-16,16,-40,40,-64,64]){
-                                    let cx=Math.max(minX,Math.min(x-boxW/2,maxX-boxW));
-                                    let cy=Math.max(minY,Math.min(y+off-boxH/2,maxY-boxH));
-                                    const cand={x:cx,y:cy,w:boxW,h:boxH};
-                                    let score=0;
-                                    placed.forEach(p=>{if(overlaps(cand,p)) score+=1000;});
-                                    score+=Math.abs(off);
-                                    if(score<bestScore){bestScore=score;best=cand;}
-                                }
-                                chosen=best;
-                            }
-                            if(!chosen) continue;
-
-                            ctx.save();
-                            ctx.font='700 8.5px Arial, sans-serif';
-                            ctx.textAlign='center'; ctx.textBaseline='middle';
-                            ctx.fillStyle=ds.borderColor||'#475569';
-                            roundedRect(ctx,chosen.x,chosen.y,chosen.w,chosen.h,4); ctx.fill();
-                            ctx.fillStyle='#fff';
-                            ctx.fillText(text,chosen.x+chosen.w/2,chosen.y+chosen.h/2+0.3);
-                            ctx.restore();
-                            placed.push(chosen);
-                        }
-                    } catch(err) {
-                        console.warn('dailyFlowValueLabels:',err);
+                    } catch (err) {
+                        // Uma falha de desenho das etiquetas nunca deve impedir
+                        // o restante do dashboard de carregar.
+                        console.warn('dailyFlowValueLabels:', err);
                     }
                 }
             };
 
-            const dailyDatalabels = { display: false };
+            const dailyDatalabels = {
+                display: false
+            };
 
             renderChart('dailyFlowChart', 'dailyFlow', 'line', {
                 labels: dates,
@@ -3046,7 +3094,7 @@ function toggleDropdown(id) {
                 scales: {
                     y: {
                         beginAtZero: false,
-                        title: { display: true, text: 'Vazão (L/h)' },
+                        title: { display: true, text: 'Vazão (L/h) — gráfico em montanha' },
                         ticks: { callback: v => Number(v).toLocaleString('pt-BR') }
                     },
                     x: {
