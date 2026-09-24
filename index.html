@@ -428,23 +428,6 @@
                                 </div>
                             </div>
 
-                            <div class="relative">
-                                <label class="block text-[11px] font-semibold text-slate-500 mb-0.5">Semanas</label>
-                                <button type="button" onclick="toggleDropdown('dropdownWeekTab1')" class="bg-white border border-slate-300 rounded-lg text-xs px-3 py-1.5 shadow-sm w-48 flex justify-between items-center">
-                                    <span id="labelWeekTab1">Todas as Semanas</span>
-                                    <i class="fa-solid fa-chevron-down text-slate-400 text-xs"></i>
-                                </button>
-                                <div id="dropdownWeekTab1" class="hidden absolute z-50 mt-1 w-64 bg-white border border-slate-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
-                                    <div class="p-2 border-b border-slate-200 bg-slate-50 sticky top-0 z-10">
-                                        <label class="flex items-center gap-2 px-1 py-1 hover:bg-slate-100 rounded cursor-pointer text-xs font-bold text-blue-600 transition">
-                                            <input type="checkbox" id="selectAllWeeksTab1" checked onchange="toggleSelectAllWeeksTab1(this)" class="w-3.5 h-3.5 text-blue-600 rounded">
-                                            Selecionar Todas
-                                        </label>
-                                    </div>
-                                    <div class="p-2 flex flex-col gap-1" id="weekCheckboxesTab1"></div>
-                                </div>
-                            </div>
-
                             <div>
                                 <label class="block text-[11px] font-semibold text-slate-500 mb-0.5">Data Inicial</label>
                                 <input type="date" id="filterStartDateTab1" onchange="applyFiltersTab1()" class="bg-white border border-slate-300 rounded-lg text-xs px-2.5 py-1.5 shadow-sm">
@@ -2195,7 +2178,6 @@ function toggleDropdown(id) {
                         
                         populateWellSelectors();
                         populateMonthSelectors();
-                        populateWeekSelectorsTab1();
                         populateLocalSelectors();
                         renderNivelAguaTanqueChart();
                         populateBlocoSelectorsTab5();
@@ -2732,53 +2714,6 @@ function toggleDropdown(id) {
             });
         }
 
-        function populateWeekSelectorsTab1() {
-            const source = Array.isArray(globalRawData) ? globalRawData : [];
-            const weeks = Array.from(new Set(source.map(d => {
-                const week = Number(d.SemanaNum);
-                const year = Number(d.Ano);
-                if (!Number.isFinite(week) || !Number.isFinite(year)) return '';
-                return `${year}|${String(week).padStart(2, '0')}`;
-            }).filter(Boolean))).sort((a,b) => {
-                const [ya, wa] = a.split('|').map(Number);
-                const [yb, wb] = b.split('|').map(Number);
-                return ya - yb || wa - wb;
-            });
-
-            const container = document.getElementById('weekCheckboxesTab1');
-            if (!container) return;
-            container.innerHTML = '';
-
-            weeks.forEach(key => {
-                const [year, week] = key.split('|');
-                const lbl = document.createElement('label');
-                lbl.className = 'flex items-center gap-2 px-1 py-0.5 hover:bg-slate-100 rounded cursor-pointer text-xs text-slate-700';
-                lbl.innerHTML = `<input type="checkbox" value="${key}" checked class="week-chk-1 w-3.5 h-3.5 text-blue-600 rounded" onchange="updateWeekLabelTab1(); applyFiltersTab1();"> Semana ${Number(week)} (${year})`;
-                container.appendChild(lbl);
-            });
-            updateWeekLabelTab1();
-        }
-
-        function updateWeekLabelTab1() {
-            const checked = document.querySelectorAll('.week-chk-1:checked');
-            const total = document.querySelectorAll('.week-chk-1');
-            const lbl = document.getElementById('labelWeekTab1');
-            if (!lbl) return;
-            if (checked.length === total.length) lbl.innerText = 'Todas as Semanas';
-            else if (checked.length === 0) lbl.innerText = 'Nenhuma Semana';
-            else if (checked.length === 1) {
-                const key = checked[0].value.split('|');
-                lbl.innerText = `Semana ${Number(key[1])} (${key[0]})`;
-            } else lbl.innerText = `${checked.length} de ${total.length} Semanas`;
-        }
-
-        function toggleSelectAllWeeksTab1(masterCheckbox) {
-            const isChecked = masterCheckbox.checked;
-            document.querySelectorAll('.week-chk-1').forEach(c => c.checked = isChecked);
-            updateWeekLabelTab1();
-            applyFiltersTab1();
-        }
-
         function populateLocalSelectors() {
             const locais = Array.from(new Set(globalSaidaData.map(d => d.Local))).filter(Boolean).sort((a,b) => a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'}));
             const container = document.getElementById('localCheckboxesTab4');
@@ -2865,8 +2800,6 @@ function toggleDropdown(id) {
         function applyFiltersTab1() {
             const selectedWells = Array.from(document.querySelectorAll('.well-chk-1:checked')).map(c => c.value);
             const selectedMonths = Array.from(document.querySelectorAll('.month-chk-1:checked')).map(c => c.value);
-            const selectedWeeks = Array.from(document.querySelectorAll('.week-chk-1:checked')).map(c => c.value);
-            const totalWeeks = document.querySelectorAll('.week-chk-1').length;
             const startDate = document.getElementById('filterStartDateTab1').value;
             const endDate = document.getElementById('filterEndDateTab1').value;
 
@@ -2875,10 +2808,6 @@ function toggleDropdown(id) {
                 // Registros sem data de manutenção ainda devem aparecer no relatório.
                 // O filtro por mês só deve restringir registros que realmente possuem mês.
                 if (selectedMonths.length > 0 && d.MesLabel !== 'N/I' && !selectedMonths.includes(d.MesLabel)) return false;
-                if (selectedWeeks.length > 0 && selectedWeeks.length < totalWeeks) {
-                    const weekKey = `${Number(d.Ano)}|${String(Number(d.SemanaNum)).padStart(2, '0')}`;
-                    if (!selectedWeeks.includes(weekKey)) return false;
-                }
                 const dia = String(d.IsoDate || d.DataFormatted || '').slice(0,10);
                 if (startDate && dia < startDate) return false;
                 if (endDate && dia > endDate) return false;
@@ -2918,20 +2847,11 @@ function toggleDropdown(id) {
                 maintainAspectRatio: false,
                 plugins: {
                     datalabels: {
-                        display: ctx => ctx.raw != null && Number(ctx.raw) > 0,
                         anchor: 'end',
-                        align: 'top',
-                        offset: 8,
-                        clamp: true,
-                        clip: false,
-                        formatter: (val) => val ? Number(val).toLocaleString('pt-BR') : '',
+                        align: 'end',
+                        formatter: (val) => val ? val.toLocaleString('pt-BR') : '',
                         font: { size: 10, weight: 'bold' },
-                        color: '#0f172a',
-                        backgroundColor: 'rgba(255,255,255,0.94)',
-                        borderColor: '#cbd5e1',
-                        borderWidth: 1,
-                        borderRadius: 5,
-                        padding: {top:3,bottom:3,left:6,right:6}
+                        color: '#0f172a'
                     }
                 }
             });
@@ -2976,12 +2896,12 @@ function toggleDropdown(id) {
             // data, por exemplo, ele deve ocupar toda a largura do card, e não
             // ficar com uma pequena faixa de gráfico no meio da margem.
             const availableWidth = dailyWrap ? Math.max(dailyWrap.clientWidth || 0, 1100) : 1100;
-            const pointsWidth = datesIso.length * (wells.length > 10 ? 210 : wells.length > 6 ? 185 : 160);
-            const dailyWidth = Math.max(availableWidth, pointsWidth);
+            const pointsWidth = datesIso.length * (wells.length > 10 ? 190 : wells.length > 6 ? 175 : 155);
+            const dailyWidth = Math.max(availableWidth, pointsWidth, 1400);
             if (dailyContainer) {
                 dailyContainer.style.width = dailyWidth + 'px';
                 dailyContainer.style.minWidth = dailyWidth + 'px';
-                dailyContainer.style.height = Math.max(780, datesIso.length > 1 ? 920 : 780, wells.length > 10 ? 980 : wells.length > 7 ? 900 : 780) + 'px';
+                dailyContainer.style.height = Math.max(720, datesIso.length > 1 ? 840 : 720, wells.length > 10 ? 900 : wells.length > 7 ? 840 : 720) + 'px';
                 dailyContainer.style.margin = '0';
             }
             if (dailyWrap) {
@@ -3020,9 +2940,14 @@ function toggleDropdown(id) {
                             }
                         },
                         ticks: {
+                            display: false,
                             stepSize: datesIso.length > 1 ? 500 : undefined,
                             padding: 8,
                             callback: v => Number(v).toLocaleString('pt-BR')
+                        },
+                        grid: {
+                            display: false,
+                            drawBorder: false
                         }
                     },
                     x: {
@@ -3031,7 +2956,7 @@ function toggleDropdown(id) {
                         ticks: { autoSkip: datesIso.length > 18, maxRotation: 45, minRotation: 0, padding: 6 }
                     }
                 },
-                layout: { padding: { top: 145, right: 120, bottom: 65, left: 120 } },
+                layout: { padding: { top: 72, right: 110, bottom: 38, left: 35 } },
                 plugins: {
                     legend: {
                         position: 'top',
@@ -3052,38 +2977,36 @@ function toggleDropdown(id) {
                         borderWidth: 1,
                         borderRadius: 5,
                         color: '#ffffff',
-                        padding: { top: 2, bottom: 2, left: 4, right: 4 },
-                        anchor: 'center',
+                        padding: { top: 3, bottom: 3, left: 5, right: 5 },
+                        anchor: 'end',
                         align: (ctx) => {
-                            const chart = ctx.chart;
-                            const area = chart.chartArea;
-                            const y = chart.scales.y.getPixelForValue(ctx.dataset.data[ctx.dataIndex]);
-                            const x = chart.scales.x.getPixelForValue(ctx.dataIndex);
-                            const items = chart.data.datasets.map((ds, di) => ({di, v: ds.data[ctx.dataIndex]}))
-                                .filter(o => o.v != null && Number.isFinite(Number(o.v)))
-                                .sort((a,b) => Number(b.v) - Number(a.v));
-                            const slot = Math.max(0, items.findIndex(o => o.di === ctx.datasetIndex));
-                            // Distribui metade para cima e metade para baixo.
-                            // Quando o ponto está perto do topo/rodapé, força o lado seguro.
-                            const nearTop = y < area.top + 85;
-                            const nearBottom = y > area.bottom - 85;
-                            if (nearTop) return 'bottom';
-                            if (nearBottom) return 'top';
-                            return slot % 2 === 0 ? 'top' : 'bottom';
+                            const chart = ctx?.chart;
+                            const chartArea = chart?.chartArea;
+                            const yScale = chart?.scales?.y;
+                            const xScale = chart?.scales?.x;
+                            const y = yScale && ctx?.raw != null ? yScale.getPixelForValue(Number(ctx.raw)) : 0;
+                            const x = xScale && ctx?.dataIndex != null ? xScale.getPixelForValue(ctx.dataIndex) : 0;
+
+                            // Topo e bordas: afasta o rótulo para dentro da área.
+                            if (chartArea && y <= chartArea.top + 55) return 'bottom';
+                            if (chartArea && x <= chartArea.left + 45) return 'right';
+                            if (chartArea && x >= chartArea.right - 45) return 'left';
+
+                            // Alternância entre acima/abaixo para reduzir sobreposição
+                            // quando vários poços têm valores próximos.
+                            return (Number(ctx?.datasetIndex || 0) + Number(ctx?.dataIndex || 0)) % 2 ? 'bottom' : 'top';
                         },
                         offset: (ctx) => {
-                            const items = ctx.chart.data.datasets.map((ds, di) => ({di, v: ds.data[ctx.dataIndex]}))
-                                .filter(o => o.v != null && Number.isFinite(Number(o.v)))
-                                .sort((a,b) => Number(b.v) - Number(a.v));
-                            const slot = Math.max(0, items.findIndex(o => o.di === ctx.datasetIndex));
-                            // Cada etiqueta recebe um nível próprio: 18, 46, 74...
-                            // Isso impede que caixas de valores próximos se cubram.
-                            return 18 + Math.floor(slot / 2) * 28;
+                            const chart = ctx?.chart;
+                            const area = chart?.chartArea;
+                            const xScale = chart?.scales?.x;
+                            const x = xScale && ctx?.dataIndex != null ? xScale.getPixelForValue(ctx.dataIndex) : 0;
+                            const edge = area && (x <= area.left + 45 || x >= area.right - 45);
+                            return edge ? 26 : (Number(ctx?.datasetIndex || 0) % 3 === 0 ? 12 : Number(ctx?.datasetIndex || 0) % 3 === 1 ? 22 : 32);
                         },
                         clamp: true,
                         clip: false,
-                        font: { size: 9, weight: '700' },
-                        overlap: false
+                        font: { size: 10, weight: '700' }
                     }
                 }
             });
@@ -3092,11 +3015,8 @@ function toggleDropdown(id) {
         function resetFiltersTab1() {
             document.querySelectorAll('.well-chk-1').forEach(c => c.checked = true);
             document.querySelectorAll('.month-chk-1').forEach(c => c.checked = true);
-            document.querySelectorAll('.week-chk-1').forEach(c => c.checked = true);
             const selAllW = document.getElementById('selectAllWellsTab1'); if(selAllW) selAllW.checked = true;
             const selAllM = document.getElementById('selectAllMonthsTab1'); if(selAllM) selAllM.checked = true;
-            const selAllWeek = document.getElementById('selectAllWeeksTab1'); if(selAllWeek) selAllWeek.checked = true;
-            updateWeekLabelTab1();
             document.getElementById('filterStartDateTab1').value = '';
             document.getElementById('filterEndDateTab1').value = '';
             updateWellLabel(1);
