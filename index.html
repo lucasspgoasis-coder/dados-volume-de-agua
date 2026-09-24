@@ -2976,7 +2976,7 @@ function toggleDropdown(id) {
             // data, por exemplo, ele deve ocupar toda a largura do card, e não
             // ficar com uma pequena faixa de gráfico no meio da margem.
             const availableWidth = dailyWrap ? Math.max(dailyWrap.clientWidth || 0, 1100) : 1100;
-            const pointsWidth = datesIso.length * (wells.length > 10 ? 145 : wells.length > 6 ? 132 : 115);
+            const pointsWidth = datesIso.length * (wells.length > 10 ? 210 : wells.length > 6 ? 185 : 160);
             const dailyWidth = Math.max(availableWidth, pointsWidth);
             if (dailyContainer) {
                 dailyContainer.style.width = dailyWidth + 'px';
@@ -3031,7 +3031,7 @@ function toggleDropdown(id) {
                         ticks: { autoSkip: datesIso.length > 18, maxRotation: 45, minRotation: 0, padding: 6 }
                     }
                 },
-                layout: { padding: { top: 100, right: 95, bottom: 50, left: 95 } },
+                layout: { padding: { top: 145, right: 120, bottom: 65, left: 120 } },
                 plugins: {
                     legend: {
                         position: 'top',
@@ -3052,39 +3052,38 @@ function toggleDropdown(id) {
                         borderWidth: 1,
                         borderRadius: 5,
                         color: '#ffffff',
-                        padding: { top: 3, bottom: 3, left: 5, right: 5 },
-                        anchor: 'end',
-
-                        // Distribui os rótulos de cada data em andares.
-                        // Assim, quando vários poços têm valores próximos,
-                        // as caixas não ficam umas sobre as outras.
+                        padding: { top: 2, bottom: 2, left: 4, right: 4 },
+                        anchor: 'center',
                         align: (ctx) => {
-                            const chart = ctx?.chart;
-                            const area = chart?.chartArea;
-                            const xScale = chart?.scales?.x;
-                            const x = xScale ? xScale.getPixelForValue(ctx.dataIndex) : 0;
-                            const sameDate = (chart?.data?.datasets || [])
-                                .map((ds, di) => ({ di, value: ds?.data?.[ctx.dataIndex] }))
-                                .filter(item => item.value != null && Number.isFinite(Number(item.value)))
-                                .sort((a,b) => Number(b.value) - Number(a.value));
-                            const slot = Math.max(0, sameDate.findIndex(item => item.di === ctx.datasetIndex));
-                            if (area && x <= area.left + 55) return 'right';
-                            if (area && x >= area.right - 55) return 'left';
+                            const chart = ctx.chart;
+                            const area = chart.chartArea;
+                            const y = chart.scales.y.getPixelForValue(ctx.dataset.data[ctx.dataIndex]);
+                            const x = chart.scales.x.getPixelForValue(ctx.dataIndex);
+                            const items = chart.data.datasets.map((ds, di) => ({di, v: ds.data[ctx.dataIndex]}))
+                                .filter(o => o.v != null && Number.isFinite(Number(o.v)))
+                                .sort((a,b) => Number(b.v) - Number(a.v));
+                            const slot = Math.max(0, items.findIndex(o => o.di === ctx.datasetIndex));
+                            // Distribui metade para cima e metade para baixo.
+                            // Quando o ponto está perto do topo/rodapé, força o lado seguro.
+                            const nearTop = y < area.top + 85;
+                            const nearBottom = y > area.bottom - 85;
+                            if (nearTop) return 'bottom';
+                            if (nearBottom) return 'top';
                             return slot % 2 === 0 ? 'top' : 'bottom';
                         },
-
                         offset: (ctx) => {
-                            const sameDate = (ctx?.chart?.data?.datasets || [])
-                                .map((ds, di) => ({ di, value: ds?.data?.[ctx.dataIndex] }))
-                                .filter(item => item.value != null && Number.isFinite(Number(item.value)))
-                                .sort((a,b) => Number(b.value) - Number(a.value));
-                            const slot = Math.max(0, sameDate.findIndex(item => item.di === ctx.datasetIndex));
-                            return 9 + Math.floor(slot / 2) * 22;
+                            const items = ctx.chart.data.datasets.map((ds, di) => ({di, v: ds.data[ctx.dataIndex]}))
+                                .filter(o => o.v != null && Number.isFinite(Number(o.v)))
+                                .sort((a,b) => Number(b.v) - Number(a.v));
+                            const slot = Math.max(0, items.findIndex(o => o.di === ctx.datasetIndex));
+                            // Cada etiqueta recebe um nível próprio: 18, 46, 74...
+                            // Isso impede que caixas de valores próximos se cubram.
+                            return 18 + Math.floor(slot / 2) * 28;
                         },
-
                         clamp: true,
                         clip: false,
-                        font: { size: 10, weight: '700' }
+                        font: { size: 9, weight: '700' },
+                        overlap: false
                     }
                 }
             });
