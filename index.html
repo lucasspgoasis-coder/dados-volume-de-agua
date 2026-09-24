@@ -1605,21 +1605,11 @@
                         };
                         dl.anchor = 'center';
                         dl.align = ctx => {
-                            const di = ctx.dataIndex;
-                            const last = (ctx.chart?.data?.labels?.length || 1) - 1;
-                            if (di === 0) return 'right';
-                            if (di === last) return 'left';
-                            const wellLane = ctx.datasetIndex % 6;
-                            return ((wellLane + di) % 2 === 0) ? 'top' : 'bottom';
+                            const pattern = (ctx.datasetIndex * 3 + ctx.dataIndex) % 8;
+                            return [-75, 75, -105, 105, -60, 60, -120, 120][pattern];
                         };
-                        dl.offset = ctx => {
-                            const wellLane = ctx.datasetIndex % 6;
-                            const di = ctx.dataIndex;
-                            const last = (ctx.chart?.data?.labels?.length || 1) - 1;
-                            if (di === 0 || di === last) return 10 + (wellLane % 3) * 5;
-                            return 10 + (wellLane % 6) * 5 + (di % 2) * 3;
-                        };
-                        dl.clamp = false;
+                        dl.offset = ctx => 7 + ((ctx.datasetIndex + ctx.dataIndex) % 3) * 2;
+                        dl.clamp = true;
                         dl.clip = false;
                         dl.padding = 2;
                     } else {
@@ -2094,7 +2084,7 @@ function toggleDropdown(id) {
                     pointBorderWidth: 1.5,
                     pointRadius: 3,
                     pointHoverRadius: 5,
-                    borderWidth: 2.5,
+                    borderWidth: 2.2,
                     tension: 0.25,
                     fill: true
                 }]
@@ -2927,15 +2917,15 @@ function toggleDropdown(id) {
                     borderColor: c,
                     // Formato "montanha" semelhante ao Looker Studio:
                     // linha contínua com área preenchida suavemente abaixo dela.
-                    backgroundColor: c + '22',
+                    backgroundColor: c + '18',
                     fill: 'origin',
                     pointBackgroundColor: c,
                     pointBorderColor: '#ffffff',
                     pointBorderWidth: 2,
-                    pointRadius: 4.5,
-                    pointHoverRadius: 6,
+                    pointRadius: 3.8,
+                    pointHoverRadius: 5.5,
                     borderWidth: 2.5,
-                    tension: 0.32,
+                    tension: 0.38,
                     stepped: false,
                     cubicInterpolationMode: 'monotone',
                     spanGaps: true
@@ -2985,7 +2975,7 @@ function toggleDropdown(id) {
                         ticks: { autoSkip: datesIso.length > 18, maxRotation: 45, minRotation: 0, padding: 6 }
                     }
                 },
-                layout: { padding: { top: 110, right: 150, bottom: 35, left: 75 } },
+                layout: { padding: { top: 55, right: 95, bottom: 35, left: 60 } },
                 plugins: {
                     legend: { position: 'top', labels: { usePointStyle: true, pointStyle: 'circle', padding: 18, font: { size: 11, weight: '600' } } },
                     tooltip: { callbacks: { label: ctx => {
@@ -3005,28 +2995,18 @@ function toggleDropdown(id) {
                         borderRadius: 5,
                         color: '#ffffff',
                         padding: { top: 2, bottom: 2, left: 4, right: 4 },
+                        // Cada etiqueta fica presa ao seu próprio ponto, com um pequeno
+                        // deslocamento radial. Assim ela não fica solta fora do gráfico.
                         anchor: 'center',
                         align: ctx => {
-                            // Cascata por poço: cada série recebe sua própria faixa
-                            // vertical para que as caixas de vazão não se cubram.
-                            const di = ctx.dataIndex;
-                            const last = (ctx.chart?.data?.labels?.length || 1) - 1;
-                            if (di === 0) return 'right';
-                            if (di === last) return 'left';
-                            const lane = ctx.datasetIndex % 10;
-                            return lane % 2 === 0 ? 'top' : 'bottom';
+                            const pattern = (ctx.datasetIndex * 3 + ctx.dataIndex) % 8;
+                            return [-75, 75, -105, 105, -60, 60, -120, 120][pattern];
                         },
-                        offset: ctx => {
-                            const lane = ctx.datasetIndex % 10;
-                            const di = ctx.dataIndex;
-                            const last = (ctx.chart?.data?.labels?.length || 1) - 1;
-                            if (di === 0 || di === last) return 18 + Math.floor(lane / 2) * 20;
-                            return 18 + Math.floor(lane / 2) * 24;
-                        },
-                        clamp: false,
+                        offset: ctx => 8 + ((ctx.datasetIndex + ctx.dataIndex) % 3) * 2,
+                        clamp: true,
                         clip: false,
                         textAlign: 'center',
-                        font: { size: 9, weight: '700' }
+                        font: { size: 8, weight: '700' }
                     }
                 }
             });
