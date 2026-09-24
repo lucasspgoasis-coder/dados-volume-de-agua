@@ -2987,66 +2987,17 @@ function toggleDropdown(id) {
                             if (chartArea && x <= chartArea.left + 45) return 'right';
                             if (chartArea && x >= chartArea.right - 45) return 'left';
 
-                            // Posicionamento inteligente dos valores do GRÁFICO 02 da ABA 01.
-                            // Se houver 2 valores na mesma data, separa um para cima e outro
-                            // para baixo. Com 3/4 ou mais valores, distribui os rótulos em
-                            // diferentes níveis para que nenhum fique colado/tampando o outro.
-                            const datasets = chart?.data?.datasets || [];
-                            const dataIndex = Number(ctx?.dataIndex || 0);
-                            const ativos = datasets
-                                .map((ds, idx) => ({ idx, value: ds.data?.[dataIndex] }))
-                                .filter(item => item.value != null && Number.isFinite(Number(item.value)));
-
-                            const pos = Math.max(0, ativos.findIndex(item => item.idx === ctx?.datasetIndex));
-                            const total = ativos.length;
-                            const chartArea2 = chart?.chartArea;
-                            const yScale2 = chart?.scales?.y;
-                            const y2 = yScale2 && ctx?.raw != null ? yScale2.getPixelForValue(Number(ctx.raw)) : 0;
-
-                            // Se houver espaço acima, aproveita esse espaço. Perto do topo,
-                            // joga o rótulo para baixo para não cortar.
-                            if (chartArea2 && y2 <= chartArea2.top + 75) return 'bottom';
-                            if (chartArea2 && y2 >= chartArea2.bottom - 65) return 'top';
-
-                            if (total <= 1) return 'top';
-
-                            // 2 valores: um acima e outro abaixo.
-                            if (total === 2) return pos === 0 ? 'top' : 'bottom';
-
-                            // 3/4 ou mais: alterna os lados e usa níveis diferentes.
-                            return pos % 2 === 0 ? 'top' : 'bottom';
+                            // Alternância entre acima/abaixo para reduzir sobreposição
+                            // quando vários poços têm valores próximos.
+                            return Number(ctx?.dataIndex || 0) % 2 ? 'bottom' : 'top';
                         },
                         offset: (ctx) => {
                             const chart = ctx?.chart;
                             const area = chart?.chartArea;
                             const xScale = chart?.scales?.x;
-                            const yScale = chart?.scales?.y;
                             const x = xScale && ctx?.dataIndex != null ? xScale.getPixelForValue(ctx.dataIndex) : 0;
-                            const y = yScale && ctx?.raw != null ? yScale.getPixelForValue(Number(ctx.raw)) : 0;
-                            const edgeX = area && (x <= area.left + 45 || x >= area.right - 45);
-
-                            const datasets = chart?.data?.datasets || [];
-                            const dataIndex = Number(ctx?.dataIndex || 0);
-                            const ativos = datasets
-                                .map((ds, idx) => ({ idx, value: ds.data?.[dataIndex] }))
-                                .filter(item => item.value != null && Number.isFinite(Number(item.value)));
-                            const pos = Math.max(0, ativos.findIndex(item => item.idx === ctx?.datasetIndex));
-                            const total = ativos.length;
-
-                            // Quanto mais campos estiverem colados na mesma data,
-                            // maior a distância entre eles.
-                            const nivel = Math.floor(pos / 2);
-                            const base = total === 2 ? 14 : total === 3 ? 13 : 11;
-                            const verticalOffset = base + (nivel * 22);
-
-                            // Nas extremidades, mantém o rótulo mais para dentro.
-                            if (edgeX) return Math.max(22, verticalOffset);
-
-                            // Se existe espaço em branco acima/abaixo, aproveita-o.
-                            if (area && y > area.top + 75 && y < area.bottom - 65) {
-                                return verticalOffset;
-                            }
-                            return Math.max(14, verticalOffset);
+                            const edge = area && (x <= area.left + 45 || x >= area.right - 45);
+                            return edge ? 22 : (Number(ctx?.datasetIndex || 0) % 2 ? 16 : 9);
                         },
                         clamp: true,
                         clip: false,
