@@ -209,7 +209,7 @@
 
         /* Impressão: somente a aba atual, sem filtros/controles. */
         @media print {
-            @page { size: A4 landscape; margin: 10mm; }
+            @page { size: A4 portrait; margin: 8mm; }
             body.printing { background: #fff !important; color: #0f172a !important; display: block !important; }
             body.printing > *:not(#main-content) { display: none !important; }
             body.printing #main-content { display: block !important; width: 100% !important; max-width: none !important; margin: 0 !important; padding: 0 !important; }
@@ -1469,9 +1469,9 @@
         // Formato final: paisagem, 16:9, um gráfico + campos gerais por página/arquivo.
         // A largura foi ampliada ligeiramente para dar folga aos textos dos KPIs,
         // sem alterar a altura de referência.
-        const REPORT_PAGE_W = 3200;
-        const REPORT_PAGE_H = 1800;
-        const REPORT_MARGIN = 72;
+        const REPORT_PAGE_W = 1920;
+        const REPORT_PAGE_H = 1080;
+        const REPORT_MARGIN = 56;
 
         function getExportableSections(tabId) {
             const tab = document.getElementById(tabId);
@@ -1591,48 +1591,17 @@
                     setFont(dl, 10, Math.min(1.35, scale));
                     saveProp(dl, 'anchor'); saveProp(dl, 'align'); saveProp(dl, 'offset'); saveProp(dl, 'clamp'); saveProp(dl, 'clip'); saveProp(dl, 'padding');
                     dl.anchor = 'end';
-                    dl.align = (ctx) => {
-                        const chart = ctx?.chart;
-                        const area = chart?.chartArea;
-                        const xScale = chart?.scales?.x;
-                        const yScale = chart?.scales?.y;
-                        const x = xScale && ctx?.dataIndex != null ? xScale.getPixelForValue(ctx.dataIndex) : 0;
-                        const idx = Number(ctx?.dataIndex || 0);
-                        const di = Number(ctx?.datasetIndex || 0);
-                        const values = (chart?.data?.datasets || []).map((ds, i) => ({i, v: ds?.data?.[idx]}))
-                            .filter(o => o.v != null && Number.isFinite(Number(o.v)))
-                            .sort((a,b) => Number(b.v) - Number(a.v));
-                        const rank = Math.max(0, values.findIndex(o => o.i === di));
-                        const y = yScale && ctx?.raw != null ? yScale.getPixelForValue(Number(ctx.raw)) : 0;
-                        if (area && x <= area.left + 80) return 'right';
-                        if (area && x >= area.right - 80) return 'left';
-                        if (area && y <= area.top + 38) return 'bottom';
-                        if (area && y >= area.bottom - 38) return 'top';
-                        return rank % 2 === 0 ? 'top' : 'bottom';
-                    };
-                    dl.offset = (ctx) => {
-                        const chart = ctx?.chart;
-                        const area = chart?.chartArea;
-                        const xScale = chart?.scales?.x;
-                        const x = xScale && ctx?.dataIndex != null ? xScale.getPixelForValue(ctx.dataIndex) : 0;
-                        const idx = Number(ctx?.dataIndex || 0);
-                        const di = Number(ctx?.datasetIndex || 0);
-                        const values = (chart?.data?.datasets || []).map((ds, i) => ({i, v: ds?.data?.[idx]}))
-                            .filter(o => o.v != null && Number.isFinite(Number(o.v)))
-                            .sort((a,b) => Number(b.v) - Number(a.v));
-                        const rank = Math.max(0, values.findIndex(o => o.i === di));
-                        const edge = area && (x <= area.left + 80 || x >= area.right - 80);
-                        return (edge ? 16 : 10) + Math.floor(rank / 2) * 15;
-                    };
-                    dl.clamp = true;
+                    dl.align = 'top';
+                    dl.offset = 5;
+                    dl.clamp = false;
                     dl.clip = false;
-                    dl.padding = {top: 2, bottom: 2, left: 4, right: 4};
+                    dl.padding = 1;
                     // Reduz somente a fonte dos rótulos quando há muitas barras,
                     // mantendo cada valor visível sem empilhar os números.
                     const count = Math.max(...(chart.data?.datasets || []).map(ds => Array.isArray(ds.data) ? ds.data.length : 0), 0);
                     const f = dl.font && typeof dl.font === 'object' ? dl.font : {};
                     const base = Number(f.size) || 10;
-                    dl.font = {...f, size: Math.max(8, Math.min(14, count > 70 ? 8 : count > 50 ? 9 : count > 30 ? 10 : base))};
+                    dl.font = {...f, size: Math.max(8, Math.min(13, count > 55 ? 8 : count > 40 ? 9 : count > 28 ? 10 : base))};
                 }
                 chart.canvas.style.width = exportWidth + 'px';
                 chart.canvas.style.height = exportHeight + 'px';
@@ -1836,7 +1805,7 @@
             }
             ctx.fillStyle='#dbe3ec';ctx.fillRect(M,separatorY,W-M*2,2);
 
-            const boxX=M,boxY=separatorY+28,boxW=W-M*2,boxH=H-boxY-M,inner=42;
+            const boxX=M,boxY=separatorY+22,boxW=W-M*2,boxH=H-boxY-M,inner=28;
             ctx.fillStyle='#fff';ctx.strokeStyle='#dbe3ec';ctx.lineWidth=2;ctx.beginPath();ctx.roundRect(boxX,boxY,boxW,boxH,14);ctx.fill();ctx.stroke();
             const sourceCanvas=item.card?.querySelector('canvas');if(!sourceCanvas)throw new Error('Gráfico não encontrado para exportação.');
             const chart=(window.Chart&&Chart.getChart)?Chart.getChart(sourceCanvas):null;let restore=()=>{};
@@ -1848,7 +1817,7 @@
             return out;
         }
 
-        function downloadCanvasAsJPEG(canvas,fileName){const link=document.createElement('a');link.download=fileName;link.href=canvas.toDataURL('image/jpeg',1.0);document.body.appendChild(link);link.click();link.remove();}
+        function downloadCanvasAsJPEG(canvas,fileName){const link=document.createElement('a');link.download=fileName;link.href=canvas.toDataURL('image/jpeg',0.97);document.body.appendChild(link);link.click();link.remove();}
         async function exportSelectedSectionsJPEG(selected,tabId,tabName,btn){
             const original=btn.innerHTML;btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Gerando JPEG...';
             try{for(let i=0;i<selected.length;i++){const canvas=await composeSectionWithGeneralFields(selected[i],tabId,tabName);const safe=String(selected[i].title||`grafico_${i+1}`).replace(/[^a-z0-9áàâãéêíóôõúç _-]/gi,'').trim().replace(/\s+/g,'_').slice(0,80);downloadCanvasAsJPEG(canvas,`${tabName}_${safe}_${new Date().toISOString().slice(0,10)}.jpeg`);if(i<selected.length-1)await new Promise(r=>setTimeout(r,250));}}
@@ -2921,13 +2890,13 @@ function toggleDropdown(id) {
             // Nunca deixar o canvas menor que a área disponível. Com uma única
             // data, por exemplo, ele deve ocupar toda a largura do card, e não
             // ficar com uma pequena faixa de gráfico no meio da margem.
-            const availableWidth = dailyWrap ? Math.max(dailyWrap.clientWidth || 0, 1100) : 1100;
-            const pointsWidth = datesIso.length * (wells.length > 12 ? 240 : wells.length > 9 ? 215 : wells.length > 6 ? 190 : wells.length > 3 ? 165 : 145);
+            const availableWidth = dailyWrap ? Math.max(dailyWrap.clientWidth || 0, 900) : 900;
+            const pointsWidth = datesIso.length * (wells.length > 6 ? 105 : 90);
             const dailyWidth = Math.max(availableWidth, pointsWidth);
             if (dailyContainer) {
                 dailyContainer.style.width = dailyWidth + 'px';
                 dailyContainer.style.minWidth = dailyWidth + 'px';
-                dailyContainer.style.height = Math.max(820, datesIso.length > 1 ? 980 : 820, wells.length > 12 ? 1500 : wells.length > 9 ? 1320 : wells.length > 6 ? 1140 : wells.length > 4 ? 1020 : 820) + 'px';
+                dailyContainer.style.height = Math.max(520, wells.length > 8 ? 600 : 520) + 'px';
                 dailyContainer.style.margin = '0';
             }
             if (dailyWrap) {
@@ -2946,30 +2915,7 @@ function toggleDropdown(id) {
                     y: {
                         beginAtZero: false,
                         title: { display: true, text: 'Vazão (L/h)' },
-                        afterBuildTicks: (axis) => {
-                            // Quando houver mais de uma data selecionada, usa uma
-                            // escala mais espaçada para separar os pontos e seus
-                            // valores, evitando que um rótulo cubra outro.
-                            const vals = (axis.chart?.data?.datasets || [])
-                                .flatMap(ds => Array.isArray(ds.data) ? ds.data : [])
-                                .filter(v => v != null && Number.isFinite(Number(v)))
-                                .map(Number);
-                            if (datesIso.length > 1 && vals.length) {
-                                const maxVal = Math.max(...vals);
-                                const minVal = Math.min(...vals);
-                                const step = 500;
-                                const niceMax = Math.max(5000, Math.ceil((maxVal + step) / step) * step);
-                                const niceMin = Math.max(0, Math.floor((minVal - step) / step) * step);
-                                axis.options.min = Math.max(0, niceMin);
-                                axis.options.max = niceMax;
-                                axis.options.ticks.stepSize = step;
-                            }
-                        },
-                        ticks: {
-                            stepSize: datesIso.length > 1 ? 500 : undefined,
-                            padding: 8,
-                            callback: v => Number(v).toLocaleString('pt-BR')
-                        }
+                        ticks: { callback: v => Number(v).toLocaleString('pt-BR') }
                     },
                     x: {
                         title: { display: true, text: 'Data' },
@@ -2977,82 +2923,23 @@ function toggleDropdown(id) {
                         ticks: { autoSkip: datesIso.length > 18, maxRotation: 45, minRotation: 0, padding: 6 }
                     }
                 },
-                layout: { padding: { top: 72, right: 80, bottom: 38, left: 80 } },
+                layout: { padding: { top: 28, right: 28, bottom: 10, left: 10 } },
                 plugins: {
-                    legend: {
-                        position: 'top',
-                        labels: {
-                            usePointStyle: true,
-                            pointStyle: 'circle',
-                            padding: 20,
-                            boxWidth: 12,
-                            font: { size: 12, weight: '700' }
-                        }
-                    },
+                    legend: { position: 'top', labels: { usePointStyle: true, pointStyle: 'circle', padding: 18, font: { size: 11, weight: '600' } } },
                     tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${Number(ctx.raw).toLocaleString('pt-BR')} L/h` } },
                     datalabels: {
                         display: ctx => ctx.dataset.data[ctx.dataIndex] != null,
                         formatter: value => `${Math.round(Number(value)).toLocaleString('pt-BR')} L/h`,
                         backgroundColor: ctx => ctx.dataset.borderColor,
-                        borderColor: '#ffffff',
-                        borderWidth: 1,
                         borderRadius: 5,
                         color: '#ffffff',
-                        padding: { top: 4, bottom: 4, left: 6, right: 6 },
+                        padding: { top: 4, bottom: 4, left: 5, right: 5 },
                         anchor: 'end',
-                        font: (ctx) => {
-                            const n = Number(ctx?.chart?.data?.datasets?.length || 0);
-                            return { size: n > 14 ? 8 : n > 11 ? 9 : n > 8 ? 10 : 11, weight: '700' };
-                        },
-                        align: (ctx) => {
-                            const chart = ctx?.chart;
-                            const area = chart?.chartArea;
-                            const xScale = chart?.scales?.x;
-                            const yScale = chart?.scales?.y;
-                            const x = xScale && ctx?.dataIndex != null ? xScale.getPixelForValue(ctx.dataIndex) : 0;
-                            const idx = Number(ctx?.dataIndex || 0);
-                            const dsIndex = Number(ctx?.datasetIndex || 0);
-                            const values = (chart?.data?.datasets || []).map((ds, di) => ({
-                                di,
-                                value: ds?.data?.[idx]
-                            })).filter(o => o.value != null && Number.isFinite(Number(o.value)))
-                              .sort((a,b) => Number(b.value) - Number(a.value));
-                            const rank = Math.max(0, values.findIndex(o => o.di === dsIndex));
-                            const y = yScale && ctx?.raw != null ? yScale.getPixelForValue(Number(ctx.raw)) : 0;
-                            const edge = area && (x <= area.left + 80 || x >= area.right - 80);
-
-                            // Padrão visual da referência: as etiquetas de uma mesma
-                            // data ficam alternadas acima/abaixo do ponto. A cada dois
-                            // rótulos é criada uma nova faixa, mantendo uma distância
-                            // suficiente para que valores próximos não se cubram.
-                            if (edge) return x <= area.left + 80 ? 'right' : 'left';
-                            if (area && y <= area.top + 34) return 'bottom';
-                            if (area && y >= area.bottom - 34) return 'top';
-                            return rank % 2 === 0 ? 'top' : 'bottom';
-                        },
-                        offset: (ctx) => {
-                            const chart = ctx?.chart;
-                            const area = chart?.chartArea;
-                            const xScale = chart?.scales?.x;
-                            const yScale = chart?.scales?.y;
-                            const x = xScale && ctx?.dataIndex != null ? xScale.getPixelForValue(ctx.dataIndex) : 0;
-                            const idx = Number(ctx?.dataIndex || 0);
-                            const dsIndex = Number(ctx?.datasetIndex || 0);
-                            const values = (chart?.data?.datasets || []).map((ds, di) => ({
-                                di,
-                                value: ds?.data?.[idx]
-                            })).filter(o => o.value != null && Number.isFinite(Number(o.value)))
-                              .sort((a,b) => Number(b.value) - Number(a.value));
-                            const rank = Math.max(0, values.findIndex(o => o.di === dsIndex));
-                            const y = yScale && ctx?.raw != null ? yScale.getPixelForValue(Number(ctx.raw)) : 0;
-                            const edge = area && (x <= area.left + 80 || x >= area.right - 80);
-                            if (edge) return 18 + Math.floor(rank / 2) * 13;
-                            if (area && (y <= area.top + 34 || y >= area.bottom - 34)) return 12 + Math.floor(rank / 2) * 14;
-                            return 12 + Math.floor(rank / 2) * 18;
-                        },
-                        clamp: true,
+                        align: 'top',
+                        offset: 5,
+                        clamp: false,
                         clip: false,
-                        font: { size: 10, weight: '700' }
+                        font: { size: 9.5, weight: '700' }
                     }
                 }
             });
@@ -4542,7 +4429,7 @@ function renderVazaoMediaDiaPocosTab4(filteredEntrada) {
             <div class="px-5 pt-4">
                 <div class="grid grid-cols-2 gap-3">
                     <label class="export-option"><input type="radio" name="exportFormat" value="pdf" checked><span><b class="text-sm">PDF</b><small class="block text-[11px] text-slate-500">Cada gráfico/quadro em uma folha 1280×720</small></span></label>
-                    <label class="export-option"><input type="radio" name="exportFormat" value="jpeg"><span><b class="text-sm">JPEG</b><small class="block text-[11px] text-slate-500">Cada gráfico selecionado gera um JPEG 3200×1800 em alta resolução</small></span></label>
+                    <label class="export-option"><input type="radio" name="exportFormat" value="jpeg"><span><b class="text-sm">JPEG</b><small class="block text-[11px] text-slate-500">Cada gráfico selecionado gera um JPEG 1280×720</small></span></label>
                 </div>
             </div>
             <div class="p-5 max-h-[50vh] overflow-y-auto">
