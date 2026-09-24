@@ -1605,12 +1605,18 @@
                         };
                         dl.anchor = 'center';
                         dl.align = ctx => {
-                            const lane = ctx.datasetIndex % 6;
-                            return lane % 2 === 0 ? 'top' : 'bottom';
+                            const wellLane = ctx.datasetIndex % 6;
+                            const dateLane = ctx.dataIndex % 4;
+                            const side = (wellLane + dateLane) % 4;
+                            if (side === 0) return 'top';
+                            if (side === 1) return 'bottom';
+                            if (side === 2) return 'left';
+                            return 'right';
                         };
                         dl.offset = ctx => {
-                            const lane = ctx.datasetIndex % 6;
-                            return 12 + Math.floor(lane / 2) * 18;
+                            const wellLane = ctx.datasetIndex % 6;
+                            const dateLane = ctx.dataIndex % 4;
+                            return 10 + wellLane * 4 + (dateLane % 2) * 4;
                         };
                         dl.clamp = false;
                         dl.clip = false;
@@ -2939,12 +2945,12 @@ function toggleDropdown(id) {
             // data, por exemplo, ele deve ocupar toda a largura do card, e não
             // ficar com uma pequena faixa de gráfico no meio da margem.
             const availableWidth = dailyWrap ? Math.max(dailyWrap.clientWidth || 0, 900) : 900;
-            const pointsWidth = datesIso.length * (wells.length > 6 ? 145 : wells.length > 3 ? 125 : 105);
+            const pointsWidth = datesIso.length * (wells.length > 6 ? 175 : wells.length > 3 ? 155 : 135);
             const dailyWidth = Math.max(availableWidth, pointsWidth);
             if (dailyContainer) {
                 dailyContainer.style.width = dailyWidth + 'px';
                 dailyContainer.style.minWidth = dailyWidth + 'px';
-                dailyContainer.style.height = Math.max(520, wells.length > 8 ? 600 : 520) + 'px';
+                dailyContainer.style.height = Math.max(570, wells.length > 8 ? 660 : 570) + 'px';
                 dailyContainer.style.margin = '0';
             }
             if (dailyWrap) {
@@ -2993,15 +2999,21 @@ function toggleDropdown(id) {
                         padding: { top: 3, bottom: 3, left: 5, right: 5 },
                         anchor: 'center',
                         align: ctx => {
-                            // Cada poço recebe uma "faixa" própria de rótulo.
-                            // Isso evita que os valores de poços diferentes fiquem
-                            // um em cima do outro no mesmo dia.
-                            const lane = ctx.datasetIndex % 6;
-                            return lane % 2 === 0 ? 'top' : 'bottom';
+                            // Alterna cima/baixo/lado conforme a data e cria uma
+                            // faixa própria para cada poço, evitando que os valores
+                            // ocupem o mesmo espaço quando várias datas estão selecionadas.
+                            const wellLane = ctx.datasetIndex % 6;
+                            const dateLane = ctx.dataIndex % 4;
+                            const side = (wellLane + dateLane) % 4;
+                            if (side === 0) return 'top';
+                            if (side === 1) return 'bottom';
+                            if (side === 2) return 'left';
+                            return 'right';
                         },
                         offset: ctx => {
-                            const lane = ctx.datasetIndex % 6;
-                            return 12 + Math.floor(lane / 2) * 18;
+                            const wellLane = ctx.datasetIndex % 6;
+                            const dateLane = ctx.dataIndex % 4;
+                            return 10 + wellLane * 4 + (dateLane % 2) * 5;
                         },
                         clamp: false,
                         clip: false,
