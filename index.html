@@ -2896,12 +2896,12 @@ function toggleDropdown(id) {
             // data, por exemplo, ele deve ocupar toda a largura do card, e não
             // ficar com uma pequena faixa de gráfico no meio da margem.
             const availableWidth = dailyWrap ? Math.max(dailyWrap.clientWidth || 0, 1100) : 1100;
-            const pointsWidth = datesIso.length * (wells.length > 10 ? 125 : wells.length > 6 ? 112 : 96);
+            const pointsWidth = datesIso.length * (wells.length > 10 ? 145 : wells.length > 6 ? 132 : 115);
             const dailyWidth = Math.max(availableWidth, pointsWidth);
             if (dailyContainer) {
                 dailyContainer.style.width = dailyWidth + 'px';
                 dailyContainer.style.minWidth = dailyWidth + 'px';
-                dailyContainer.style.height = Math.max(680, datesIso.length > 1 ? 760 : 680, wells.length > 10 ? 820 : wells.length > 7 ? 760 : 680) + 'px';
+                dailyContainer.style.height = Math.max(720, datesIso.length > 1 ? 840 : 720, wells.length > 10 ? 900 : wells.length > 7 ? 840 : 720) + 'px';
                 dailyContainer.style.margin = '0';
             }
             if (dailyWrap) {
@@ -2932,8 +2932,8 @@ function toggleDropdown(id) {
                                 const maxVal = Math.max(...vals);
                                 const minVal = Math.min(...vals);
                                 const step = 500;
-                                const niceMax = Math.max(5000, Math.ceil(maxVal / step) * step);
-                                const niceMin = Math.floor(minVal / step) * step;
+                                const niceMax = Math.max(5000, Math.ceil((maxVal + step) / step) * step);
+                                const niceMin = Math.max(0, Math.floor((minVal - step) / step) * step);
                                 axis.options.min = Math.max(0, niceMin);
                                 axis.options.max = niceMax;
                                 axis.options.ticks.stepSize = step;
@@ -2951,7 +2951,7 @@ function toggleDropdown(id) {
                         ticks: { autoSkip: datesIso.length > 18, maxRotation: 45, minRotation: 0, padding: 6 }
                     }
                 },
-                layout: { padding: { top: 58, right: 42, bottom: 18, left: 18 } },
+                layout: { padding: { top: 72, right: 80, bottom: 38, left: 80 } },
                 plugins: {
                     legend: {
                         position: 'top',
@@ -2975,12 +2975,30 @@ function toggleDropdown(id) {
                         padding: { top: 3, bottom: 3, left: 5, right: 5 },
                         anchor: 'end',
                         align: (ctx) => {
-                            const chartArea = ctx?.chart?.chartArea;
-                            const yScale = ctx?.chart?.scales?.y;
+                            const chart = ctx?.chart;
+                            const chartArea = chart?.chartArea;
+                            const yScale = chart?.scales?.y;
+                            const xScale = chart?.scales?.x;
                             const y = yScale && ctx?.raw != null ? yScale.getPixelForValue(Number(ctx.raw)) : 0;
-                            return chartArea && y <= chartArea.top + 44 ? 'bottom' : 'top';
+                            const x = xScale && ctx?.dataIndex != null ? xScale.getPixelForValue(ctx.dataIndex) : 0;
+
+                            // Topo e bordas: afasta o rótulo para dentro da área.
+                            if (chartArea && y <= chartArea.top + 55) return 'bottom';
+                            if (chartArea && x <= chartArea.left + 45) return 'right';
+                            if (chartArea && x >= chartArea.right - 45) return 'left';
+
+                            // Alternância entre acima/abaixo para reduzir sobreposição
+                            // quando vários poços têm valores próximos.
+                            return Number(ctx?.dataIndex || 0) % 2 ? 'bottom' : 'top';
                         },
-                        offset: (ctx) => (Number(ctx?.datasetIndex || 0) % 2 ? 16 : 9),
+                        offset: (ctx) => {
+                            const chart = ctx?.chart;
+                            const area = chart?.chartArea;
+                            const xScale = chart?.scales?.x;
+                            const x = xScale && ctx?.dataIndex != null ? xScale.getPixelForValue(ctx.dataIndex) : 0;
+                            const edge = area && (x <= area.left + 45 || x >= area.right - 45);
+                            return edge ? 22 : (Number(ctx?.datasetIndex || 0) % 2 ? 16 : 9);
+                        },
                         clamp: true,
                         clip: false,
                         font: { size: 10, weight: '700' }
