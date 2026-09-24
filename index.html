@@ -2956,6 +2956,103 @@ function toggleDropdown(id) {
                 dailyWrap.style.width = '100%';
             }
 
+            const dailyFlowValueLabelsPlugin = {
+                id: 'dailyFlowValueLabels',
+                afterDatasetsDraw(chart) {
+                    const {ctx, chartArea} = chart;
+                    if (!chartArea || !chart.data?.datasets?.length) return;
+                    const placed = [];
+                    const labels = chart.data.labels || [];
+                    const pad = 4;
+                    const boxH = 18;
+                    const maxX = chart.width - 3;
+                    const maxY = chart.height - 3;
+
+                    const rectsOverlap = (a,b) => !(a.x + a.w + 3 < b.x || b.x + b.w + 3 < a.x || a.y + a.h + 3 < b.y || b.y + b.h + 3 < a.y);
+                    const inside = r => r.x >= 3 && r.y >= 3 && r.x + r.w <= maxX && r.y + r.h <= maxY;
+
+                    // Processa por data e, dentro da data, pelos poços. Cada etiqueta
+                    // procura uma posição livre ao redor do seu próprio ponto.
+                    chart.data.datasets.forEach((ds, dsIndex) => {
+                        const meta = chart.getDatasetMeta(dsIndex);
+                        (meta.data || []).forEach((point, dataIndex) => {
+                            const original = ds._originalData?.[dataIndex];
+                            if (original == null || !Number.isFinite(Number(original))) return;
+                            const pos = point.getProps(['x','y'], true);
+                            const text = `${Math.round(Number(original)).toLocaleString('pt-BR')} L/h`;
+
+                            ctx.save();
+                            ctx.font = '700 8px Arial, sans-serif';
+                            const textW = ctx.measureText(text).width;
+                            const boxW = Math.ceil(textW + 10);
+                            const candidates = [];
+                            const radii = [10,18,27,38,50,64,80,98,118,140];
+                            const dirs = [
+                                [0,-1], [0,1], [1,0], [-1,0],
+                                [0.7,-0.7], [-0.7,-0.7], [0.7,0.7], [-0.7,0.7]
+                            ];
+                            for (const r of radii) {
+                                for (const [dx,dy] of dirs) {
+                                    let x = pos.x + dx*r - boxW/2;
+                                    let y = pos.y + dy*r - boxH/2;
+                                    // Primeira/última data: manter a etiqueta dentro do canvas.
+                                    if (dataIndex === 0) x = Math.max(4, pos.x + Math.max(12,r) - boxW/2);
+                                    if (dataIndex === labels.length - 1) x = Math.min(maxX-boxW, pos.x - Math.max(12,r) - boxW/2);
+                                    if (dy < 0 && y < chartArea.top + 2) y = chartArea.top + 2;
+                                    if (dy > 0 && y + boxH > chartArea.bottom - 2) y = chartArea.bottom - boxH - 2;
+                                    candidates.push({x,y,w:boxW,h:boxH});
+                                }
+                            }
+                            // Último recurso: varre uma grade próxima ao ponto até achar
+                            // uma área livre. Assim nenhum valor desaparece quando há
+                            // várias datas e vários poços.
+                            for (let gy=chartArea.top+2; gy<=chartArea.bottom-boxH-2 && candidates.length<400; gy+=14) {
+                                for (let gx=4; gx<=maxX-boxW; gx+=14) candidates.push({x:gx,y:gy,w:boxW,h:boxH});
+                            }
+
+                            let chosen = null;
+                            let bestScore = Infinity;
+                            for (const r of candidates) {
+                                if (!inside(r)) continue;
+                                if (placed.some(p => rectsOverlap(r,p.rect))) continue;
+                                const cx = r.x + r.w/2, cy = r.y + r.h/2;
+                                const dist = Math.hypot(cx-pos.x, cy-pos.y);
+                                if (dist < bestScore) { bestScore = dist; chosen = r; }
+                            }
+                            if (!chosen) {
+                                // Em uma situação extrema, cria uma pequena coluna de
+                                // etiquetas na lateral, sem cobrir outra etiqueta.
+                                const colX = dataIndex === labels.length-1 ? Math.max(4, maxX-boxW) : 4;
+                                let y = chartArea.top + 2;
+                                while (y + boxH <= chartArea.bottom - 2 && placed.some(p => rectsOverlap({x:colX,y,w:boxW,h:boxH},p.rect))) y += boxH + 4;
+                                chosen = {x:colX,y:Math.min(y, chartArea.bottom-boxH-2),w:boxW,h:boxH};
+                            }
+
+                            // Linha-guia curta mantém a etiqueta claramente ligada ao ponto.
+                            const bx = Math.max(chosen.x, Math.min(pos.x, chosen.x+chosen.w));
+                            const by = Math.max(chosen.y, Math.min(pos.y, chosen.y+chosen.h));
+                            ctx.strokeStyle = ds.borderColor || '#475569';
+                            ctx.globalAlpha = 0.55;
+                            ctx.lineWidth = 1;
+                            ctx.beginPath(); ctx.moveTo(pos.x,pos.y); ctx.lineTo(bx,by); ctx.stroke();
+                            ctx.globalAlpha = 1;
+
+                            ctx.fillStyle = ds.borderColor || '#475569';
+                            ctx.beginPath();
+                            const rr=4;
+                            ctx.roundRect(chosen.x,chosen.y,chosen.w,chosen.h,rr);
+                            ctx.fill();
+                            ctx.fillStyle = '#fff';
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'middle';
+                            ctx.fillText(text, chosen.x+chosen.w/2, chosen.y+chosen.h/2+0.5);
+                            ctx.restore();
+                            placed.push({rect:chosen, dsIndex, dataIndex});
+                        });
+                    });
+                }
+            };
+
             renderChart('dailyFlowChart', 'dailyFlow', 'line', {
                 labels: dates,
                 datasets: datasetsDaily
@@ -2975,55 +3072,16 @@ function toggleDropdown(id) {
                         ticks: { autoSkip: datesIso.length > 18, maxRotation: 45, minRotation: 0, padding: 6 }
                     }
                 },
-                layout: { padding: { top: 55, right: 95, bottom: 35, left: 60 } },
+                layout: { padding: { top: 60, right: 110, bottom: 40, left: 60 } },
                 plugins: {
                     legend: { position: 'top', labels: { usePointStyle: true, pointStyle: 'circle', padding: 18, font: { size: 11, weight: '600' } } },
                     tooltip: { callbacks: { label: ctx => {
                         const original = ctx.dataset._originalData?.[ctx.dataIndex];
                         return `${ctx.dataset.label}: ${Number(original ?? ctx.raw).toLocaleString('pt-BR')} L/h`;
                     } } },
-                    datalabels: {
-                        // TODOS os pontos continuam mostrando o valor real.
-                        // A posição é alternada por poço e por data para que, por exemplo,
-                        // um período de 12 a 23 mostre cada valor sem esconder o ponto vizinho.
-                        display: ctx => {
-                            const original = ctx.dataset._originalData || [];
-                            return original[ctx.dataIndex] != null;
-                        },
-                        formatter: (value, ctx) => `${Math.round(Number(ctx.dataset._originalData?.[ctx.dataIndex] ?? value)).toLocaleString('pt-BR')} L/h`,
-                        backgroundColor: ctx => ctx.dataset.borderColor,
-                        borderRadius: 5,
-                        color: '#ffffff',
-                        padding: { top: 2, bottom: 2, left: 4, right: 4 },
-                        // A etiqueta fica ancorada exatamente no ponto. Para datas
-                        // intermediárias alternamos acima/abaixo da linha. Na primeira
-                        // data ela abre para a direita; na última data abre para a
-                        // esquerda, acompanhando o ponto final sem sair do gráfico.
-                        anchor: 'center',
-                        align: ctx => {
-                            const di = ctx.dataIndex;
-                            const ds = ctx.datasetIndex;
-                            const last = (ctx.chart?.data?.labels?.length || 1) - 1;
-                            if (di === 0) return 'right';
-                            if (di === last) return 'left';
-                            return ((ds + di) % 2 === 0) ? 'top' : 'bottom';
-                        },
-                        offset: ctx => {
-                            const di = ctx.dataIndex;
-                            const ds = ctx.datasetIndex;
-                            const last = (ctx.chart?.data?.labels?.length || 1) - 1;
-                            // A última data usa o afastamento apenas o suficiente para
-                            // não tocar a linha; os próprios pontos já estão em faixas
-                            // verticais diferentes por poço.
-                            if (di === 0 || di === last) return 11 + (ds % 3) * 2;
-                            return 10 + ((ds + di) % 3) * 3;
-                        },
-                        clamp: true,
-                        clip: false,
-                        textAlign: 'center',
-                        font: { size: 8, weight: '700' }
-                    }
-                }
+                    datalabels: { display: false }
+                },
+                __plugins: [dailyFlowValueLabelsPlugin]
             });
         }
 
