@@ -1799,9 +1799,9 @@
             const cols=Math.min(3,Math.max(1,kpis.length));
             const rows=Math.ceil(kpis.length/cols);
             const kpiGapX=isDailyExactReport ? 24 : 28;
-            const kpiGapY=isDailyExactReport ? 12 : 22;
-            const kpiY=isDailyExactReport ? 20 : 28;
-            const kpiH=isDailyExactReport ? 94 : 126;
+            const kpiGapY=isDailyExactReport ? 10 : 22;
+            const kpiY=isDailyExactReport ? 16 : 28;
+            const kpiH=isDailyExactReport ? 82 : 126;
             const kpiW=(W-M*2-kpiGapX*(cols-1))/cols;
             for(let i=0;i<kpis.length;i++){
                 const k=kpis[i],col=i%cols,row=Math.floor(i/cols);
@@ -2911,7 +2911,7 @@ function toggleDropdown(id) {
             const rawMin = rawDailyValues.length ? Math.min(...rawDailyValues) : 0;
             const rawMax = rawDailyValues.length ? Math.max(...rawDailyValues) : 1;
             const rawRange = Math.max(1, rawMax - rawMin);
-            const laneGap = Math.max(rawRange * 0.045, 20);
+            const laneGap = Math.max(rawRange * 0.075, 32);
             const dailyOriginalData = {};
 
             const datasetsDaily = wells.map((w, idx) => {
